@@ -1,0 +1,42 @@
+version: '3.8'
+# You can just enable docker for psql database, Or run whole project on docker container
+
+# Database service
+services:
+  treadx-db:
+    image: postgres:latest
+    container_name: treadx
+    environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: password
+        POSTGRES_DB: treadx
+        PGDATA: /var/lib/postgresql/data
+    ports:
+        - "5236:5432"
+    networks:
+      - treadx-net
+    restart: unless-stopped
+
+# application service
+#
+#  treadx-app:
+#    build: .
+#    image: treadx-app
+#    depends_on:
+#      - treadx-db
+#    container_name: treadx-backend
+#    ports:
+#      - "3003:3003"
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://treadx_dp:5236/treadx
+#      SPRING_DATASOURCE_USERNAME: postgres
+#      SPRING_DATASOURCE_PASSWORD: password
+#      SPRING_DATASOURCE_DATABASE: treadx
+#    networks:
+#      - treadx-net
+
+networks:
+  treadx-net:
+    external: true
+#volumes:
+#  db-data:
