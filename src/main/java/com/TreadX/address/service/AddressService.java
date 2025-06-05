@@ -16,8 +16,8 @@ import com.TreadX.address.repository.StateRepository;
 import com.TreadX.address.repository.SystemCityRepository;
 import com.TreadX.address.repository.SystemCountryRepository;
 import com.TreadX.address.repository.SystemProvinceRepository;
+import com.TreadX.utils.exception.ConflictException;
 import com.TreadX.utils.exception.ResourceNotFoundException;
-import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +52,7 @@ public class AddressService {
     @Autowired
     private AddressRepository addressRepository;
 
-    public Address createAddress(AddressRequestDTO addressRequestDTO) {
+    public Address createOrReturnAddress(AddressRequestDTO addressRequestDTO) {
         // Find the related entities
         log.info("Creating new address");
         log.info("addressRequestDTO: {}", addressRequestDTO);
@@ -84,9 +84,10 @@ public class AddressService {
                 ).orElse(Collections.emptyList());
 
         if (!addresses.isEmpty()) {
-            Address existedAddress = addresses.get(0);
-            log.info("Address already exists with id: {}", existedAddress.getId());
-            return existedAddress;
+            throw new ConflictException("Address already exists");
+//            Address existedAddress = addresses.get(0);
+//            log.info("Address already exists with id: {}", existedAddress.getId());
+//            return existedAddress;
         }
 
         Address address = new Address();
@@ -96,48 +97,59 @@ public class AddressService {
         address.setCity((SystemCity) map.get("systemCity"));
         address.setCountry((SystemCountry) map.get("systemCountry"));
         address.setProvince((SystemProvince) map.get("systemProvince"));
+        address.setSpecialInstructions(addressRequestDTO.getSpecialInstructions());
 
         return addressRepository.save(address);
     }
 
     public Map<String,Object> processAddressForSystemEntries(Country country, State state, City city) {
-        // Process Country
+        // Process Country (3 digits)
         SystemCountry systemCountry = systemCountryRepository.findByCountryEntity(country)
                 .orElseGet(() -> {
                     SystemCountry newSystemCountry = new SystemCountry();
                     newSystemCountry.setCountry(country.getName());
                     Optional<SystemCountry> topCountry = systemCountryRepository.findTopByOrderByCountryUniqueIdDesc();
-                    String nextId = generateNextUniqueId(topCountry.map(sc -> String.valueOf(sc.getCountryUniqueId())).orElse(null), 3);
-                    newSystemCountry.setCountryUniqueId(Long.parseLong(nextId));
+                    String nextId = generateNextUniqueId(topCountry.map(sc -> sc.getCountryUniqueId()).orElse(null), 3);
+                    newSystemCountry.setCountryUniqueId(nextId);
                     newSystemCountry.setCountryEntity(country);
                     return systemCountryRepository.save(newSystemCountry);
                 });
         Map<String, Object> map = new HashMap<>();
         map.put("systemCountry", systemCountry);
 
-        // Process Province/State
+        // Process Province/State (5 digits: countryId + 2 digits)
         SystemProvince systemProvince = systemProvinceRepository.findByProvinceEntity(state)
                 .orElseGet(() -> {
                     SystemProvince newSystemProvince = new SystemProvince();
                     newSystemProvince.setProvince(state.getName());
-                    Optional<SystemProvince> topProvince = systemProvinceRepository.findTopByOrderByProvinceUniqueIdDesc();
-                    String nextId = generateNextUniqueId(topProvince.map(sp -> String.valueOf(sp.getProvinceUniqueId())).orElse(null), 2);
-                    newSystemProvince.setProvinceUniqueId(Long.parseLong(nextId));
+                    // Find the highest province ID for this country
+                    Optional<SystemProvince> topProvince = systemProvinceRepository.findTopBySystemCountryOrderByProvinceUniqueIdDesc(systemCountry);
+                    String countryId = systemCountry.getCountryUniqueId();
+                    String nextProvinceId = generateNextUniqueId(
+                        topProvince.map(sp -> sp.getProvinceUniqueId().substring(3)).orElse(null), 
+                        2
+                    );
+                    newSystemProvince.setProvinceUniqueId(countryId + nextProvinceId);
                     newSystemProvince.setSystemCountry(systemCountry);
                     newSystemProvince.setProvinceEntity(state);
                     return systemProvinceRepository.save(newSystemProvince);
                 });
         map.put("systemProvince", systemProvince);
 
-        // Process City
+        // Process City (9 digits: provinceId + 4 digits)
         SystemCity systemCity = systemCityRepository.findByCityEntity(city)
                 .orElseGet(() -> {
                     SystemCity newSystemCity = new SystemCity();
                     newSystemCity.setCity(city.getName());
                     newSystemCity.setCityEntity(city);
-                    Optional<SystemCity> topCity = systemCityRepository.findTopByOrderByCityUniqueIdDesc();
-                    String nextId = generateNextUniqueId(topCity.map(sc -> String.valueOf(sc.getCityUniqueId())).orElse(null), 4);
-                    newSystemCity.setCityUniqueId(Long.parseLong(nextId));
+                    // Find the highest city ID for this province
+                    Optional<SystemCity> topCity = systemCityRepository.findTopBySystemProvinceOrderByCityUniqueIdDesc(systemProvince);
+                    String provinceId = systemProvince.getProvinceUniqueId();
+                    String nextCityId = generateNextUniqueId(
+                        topCity.map(sc -> sc.getCityUniqueId().substring(5)).orElse(null), 
+                        4
+                    );
+                    newSystemCity.setCityUniqueId(provinceId + nextCityId);
                     newSystemCity.setSystemProvince(systemProvince);
                     newSystemCity.setSystemCountry(systemCountry);
                     return systemCityRepository.save(newSystemCity);
@@ -163,6 +175,22 @@ public class AddressService {
         return String.format("%0" + numberOfDigits + "d", numericId);
     }
 
+    // Helper methods to extract IDs from hierarchical IDs
+    private String extractCountryId(String hierarchicalId) {
+        if (hierarchicalId == null) return null;
+        return hierarchicalId.split("-")[0];
+    }
+
+    private String extractProvinceId(String hierarchicalId) {
+        if (hierarchicalId == null) return null;
+        return hierarchicalId.split("-")[1];
+    }
+
+    private String extractCityId(String hierarchicalId) {
+        if (hierarchicalId == null) return null;
+        return hierarchicalId.split("-")[2];
+    }
+
     public Optional<SystemCountry> getSystemCountryByEntity(Country country) {
         return systemCountryRepository.findByCountryEntity(country);
     }
@@ -186,8 +214,9 @@ public class AddressService {
                 .streetName(address.getStreetName())
                 .postalCode(address.getPostalCode())
                 .city(address.getCity() != null ? address.getCity().getCity() : null)
-                .state(address.getProvince() != null ? address.getProvince().getProvince() : null)
+                .province(address.getProvince() != null ? address.getProvince().getProvince() : null)
                 .country(address.getCountry() != null ? address.getCountry().getCountry() : null)
+                .specialInstructions(address.getSpecialInstructions())
                 .build();
     }
 }

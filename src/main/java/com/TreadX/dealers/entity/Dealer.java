@@ -38,7 +38,7 @@ public class Dealer extends AuditedEntity {
     @Column(unique = true)
     private String dealerUniqueId;
 
-    @OneToMany(mappedBy = "dealer", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "business", cascade = CascadeType.ALL)
     private List<DealerContact> contacts;
 
     @OneToMany(mappedBy = "dealer", cascade = CascadeType.ALL)

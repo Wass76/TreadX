@@ -36,7 +36,7 @@ public class DealerService {
         // Create address if provided
         Address address = null;
         if (request.getAddress() != null) {
-            address = addressService.createAddress(request.getAddress());
+            address = addressService.createOrReturnAddress(request.getAddress());
         }
 
         // Create dealer with address
@@ -46,12 +46,9 @@ public class DealerService {
         // Save the dealer first to get the dealer ID
         Dealer savedDealer = dealerRepository.save(dealer);
 
-        // Set dealerUniqueId based on address information
-        if (address != null) {
-            String dealerUniqueId = String.format("%03d", address.getCountry().getId()) +
-                                   String.format("%02d", address.getProvince().getId()) +
-                                   String.format("%04d", address.getCity().getId()) +
-                                   String.valueOf(savedDealer.getId());
+        // Set dealerUniqueId based on cityUniqueId
+        if (address != null && address.getCity() != null) {
+            String dealerUniqueId = address.getCity().getCityUniqueId() + savedDealer.getId();
             savedDealer.setDealerUniqueId(dealerUniqueId);
             savedDealer = dealerRepository.save(savedDealer);
         }
@@ -90,15 +87,14 @@ public class DealerService {
 
         // Update address if provided
         if (request.getAddress() != null) {
-            Address address = addressService.createAddress(request.getAddress());
+            Address address = addressService.createOrReturnAddress(request.getAddress());
             dealer.setAddress(address);
             
-            // Update dealerUniqueId based on new address
-            String dealerUniqueId = String.format("%03d", address.getCountry().getId()) +
-                                   String.format("%02d", address.getProvince().getId()) +
-                                   String.format("%04d", address.getCity().getId()) +
-                                   String.valueOf(dealer.getId());
-            dealer.setDealerUniqueId(dealerUniqueId);
+            // Update dealerUniqueId based on new cityUniqueId
+            if (address.getCity() != null) {
+                String dealerUniqueId = address.getCity().getCityUniqueId() + dealer.getId();
+                dealer.setDealerUniqueId(dealerUniqueId);
+            }
         }
 
         dealerMapper.updateEntityFromRequest(dealer, request);

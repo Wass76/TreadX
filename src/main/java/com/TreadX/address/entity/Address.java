@@ -14,20 +14,24 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = true)
 public class Address extends AuditedEntity {
     @Column(nullable = false)
-    private String street;
+    private String streetName;
+    private String streetNumber;
+    private String unitNumber;
     
     @ManyToOne
     @JoinColumn(name = "city_id", nullable = false)
-    private City city;
+    private SystemCity city;
     
     @ManyToOne
     @JoinColumn(name = "province_id", nullable = false)
-    private Province province;
+    private SystemProvince province;
     
     @ManyToOne
     @JoinColumn(name = "country_id", nullable = false)
-    private Country country;
+    private SystemCountry country;
     
     @Column(name = "postal_code")
     private String postalCode;
+
+    private String specialInstructions;
 }

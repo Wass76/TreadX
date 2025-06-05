@@ -24,6 +24,7 @@ public class LeadsResponseDTO {
     private AddressResponseDTO address;
     private String notes;
     private Long dealerId;
+    private String dealerUniqueId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long addedBy;

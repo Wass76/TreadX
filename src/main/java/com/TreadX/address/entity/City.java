@@ -18,9 +18,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(value = AuditingEntityListener.class)
-@Table(name = "CITY")
-@EqualsAndHashCode(callSuper = true)
-public class City extends AuditedEntity {
+@Table(name = "CITIES")
+public class City{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,8 +29,8 @@ public class City extends AuditedEntity {
     private String name;
 
     @ManyToOne
-    @JoinColumn(name = "province_id", nullable = false)
-    private Province province;
+    @JoinColumn(name = "state_id", nullable = false)
+    private State state;
 
     @ManyToOne
     @JoinColumn(name = "country_id")

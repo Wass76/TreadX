@@ -36,6 +36,7 @@ public class LeadsMapper {
                 .status(leads.getStatus())
                 .notes(leads.getNotes())
                 .dealerId(leads.getDealer() != null ? leads.getDealer().getId() : null)
+                .dealerUniqueId(leads.getDealer() != null ? leads.getDealer().getDealerUniqueId() : null)
                 .createdAt(leads.getCreatedAt())
                 .updatedAt(leads.getUpdatedAt())
                 .addedBy(leads.getCreatedBy())

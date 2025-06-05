@@ -11,10 +11,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AddressResponseDTO {
     private Long id;
-    private String street;
+    private String streetName;
+    private String streetNumber;
+    private String postalCode;
+    private String unitNumber;
     private String city;
     private String province;
     private String country;
-    private String postalCode;
+    private String specialInstructions;
 }
  

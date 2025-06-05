@@ -3,7 +3,7 @@ package com.TreadX.dealers.controller;
 import com.TreadX.dealers.dto.CustomerRequestDTO;
 import com.TreadX.dealers.dto.CustomerResponseDTO;
 import com.TreadX.dealers.service.CustomerService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,15 +11,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/customers")
+@RequestMapping("/api/v1/customers")
+@RequiredArgsConstructor
 public class CustomerController {
 
     private final CustomerService customerService;
-
-    @Autowired
-    public CustomerController(CustomerService customerService) {
-        this.customerService = customerService;
-    }
 
     @GetMapping
     public ResponseEntity<List<CustomerResponseDTO>> getAllCustomers() {
@@ -29,24 +25,32 @@ public class CustomerController {
 
     @GetMapping("/{id}")
     public ResponseEntity<CustomerResponseDTO> getCustomerById(@PathVariable("id") Long id) {
-        CustomerResponseDTO customer = customerService.getCustomer(id);
+        CustomerResponseDTO customer = customerService.getCustomerById(id);
         return new ResponseEntity<>(customer, HttpStatus.OK);
     }
 
+    @GetMapping("/dealer/{dealerId}")
+    public ResponseEntity<List<CustomerResponseDTO>> getCustomersByDealer(@PathVariable("dealerId") Long dealerId) {
+        List<CustomerResponseDTO> customers = customerService.getCustomersByDealer(dealerId);
+        return new ResponseEntity<>(customers, HttpStatus.OK);
+    }
+
     @PostMapping
-    public ResponseEntity<CustomerResponseDTO> createCustomer(@RequestBody CustomerRequestDTO customerRequestDTO) {
-        CustomerResponseDTO createdCustomer = customerService.createCustomer(customerRequestDTO);
+    public ResponseEntity<CustomerResponseDTO> createCustomer(@RequestBody CustomerRequestDTO request) {
+        CustomerResponseDTO createdCustomer = customerService.createCustomer(request);
         return new ResponseEntity<>(createdCustomer, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CustomerResponseDTO> updateCustomer(@PathVariable("id") Long id, @RequestBody CustomerRequestDTO customerRequestDTO) {
-        CustomerResponseDTO updatedCustomer = customerService.updateCustomer(id, customerRequestDTO);
+    public ResponseEntity<CustomerResponseDTO> updateCustomer(
+            @PathVariable("id") Long id,
+            @RequestBody CustomerRequestDTO request) {
+        CustomerResponseDTO updatedCustomer = customerService.updateCustomer(id, request);
         return new ResponseEntity<>(updatedCustomer, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCustomer(@PathVariable("id") Long id) {
+    public ResponseEntity<HttpStatus> deleteCustomer(@PathVariable("id") Long id) {
         customerService.deleteCustomer(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

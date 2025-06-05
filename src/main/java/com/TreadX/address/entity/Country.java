@@ -20,18 +20,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "COUNTRY")
-@EqualsAndHashCode(callSuper = true)
-public class Country extends AuditedEntity {
+@Table(name = "COUNTRIES")
+public class Country {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, unique = true)
     private String name;
-    
-    @Column(nullable = false, unique = true, length = 2)
-    private String code;
 
     @Column(name = "iso3", length = 3)
     private String iso3;
@@ -102,5 +98,5 @@ public class Country extends AuditedEntity {
     private String wikiDataId;
 
     @OneToMany(mappedBy = "country", cascade = CascadeType.ALL)
-    private List<Province> provinces;
+    private List<State> states;
 }

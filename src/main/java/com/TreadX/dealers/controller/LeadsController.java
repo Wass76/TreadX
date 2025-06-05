@@ -1,7 +1,10 @@
 package com.TreadX.dealers.controller;
 
+import com.TreadX.dealers.dto.DealerContactRequestDTO;
+import com.TreadX.dealers.dto.DealerContactResponseDTO;
 import com.TreadX.dealers.dto.LeadsRequestDTO;
 import com.TreadX.dealers.dto.LeadsResponseDTO;
+import com.TreadX.dealers.service.ConversionService;
 import com.TreadX.dealers.service.LeadsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -17,6 +20,7 @@ import java.util.Optional;
 public class LeadsController {
 
     private final LeadsService leadsService;
+    private final ConversionService conversionService;
 
     @GetMapping
     public ResponseEntity<?> getAllLeads() {
@@ -47,5 +51,13 @@ public class LeadsController {
     public ResponseEntity<HttpStatus> deleteLead(@PathVariable("id") Long id) {
         leadsService.deleteLead(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @PostMapping("/{id}/convert-to-contact")
+    @ResponseStatus(HttpStatus.CREATED)
+    public DealerContactResponseDTO convertToContact(
+            @PathVariable Long id,
+            @RequestBody DealerContactRequestDTO request) {
+        return conversionService.convertLeadToContact(id, request);
     }
 } 

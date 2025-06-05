@@ -11,7 +11,6 @@ import com.TreadX.dealers.repository.LeadsRepository;
 import com.TreadX.utils.exception.ConflictException;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import com.TreadX.address.service.AddressService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +41,7 @@ public class LeadsService {
         // Create address if provided
         Address address = null;
         if (request.getAddress() != null) {
-            address = addressService.createAddress(request.getAddress());
+            address = addressService.createOrReturnAddress(request.getAddress());
         }
 
         // Create lead with address
@@ -67,7 +66,7 @@ public class LeadsService {
 
         // Update address if provided
         if (request.getAddress() != null) {
-            Address address = addressService.createAddress(request.getAddress());
+            Address address = addressService.createOrReturnAddress(request.getAddress());
             leads.setAddress(address);
         }
 

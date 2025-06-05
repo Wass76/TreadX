@@ -1,22 +1,13 @@
 package com.TreadX.dealers.dto;
 
 import com.TreadX.address.dto.AddressResponseDTO;
-import com.TreadX.address.entity.Address;
 import com.TreadX.dealers.entity.Dealer;
 import com.TreadX.dealers.enums.Channel;
 import com.TreadX.user.entity.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.LocalDateTime;
 
@@ -32,12 +23,15 @@ public class DealerContactResponseDTO {
     private String businessEmail;
     private String businessPhone;
     private String source;
-    private User owner;
+    private Long ownerId;
+    private String ownerName;
     private Channel channel;
     private String ex;
     private AddressResponseDTO address;
     private String position;
-    private Dealer Business;
+//    private DealerResponseDTO business;
+    private Long dealerId;
+    private String dealerUniqueId;
     private String notes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

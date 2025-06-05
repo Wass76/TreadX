@@ -58,8 +58,10 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(req ->
                         req.requestMatchers(WHITE_LIST_URL)
                                 .permitAll()
-                                .requestMatchers("/api/v1/leads").authenticated()
-                                .requestMatchers("/api/v1/dealer-contacts").authenticated()
+                                .requestMatchers("/api/v1/leads/**").authenticated()
+                                .requestMatchers("/api/v1/dealer-contacts/**").authenticated()
+                                .requestMatchers("api/v1/dealers/**").authenticated()
+                                .requestMatchers("api/v1/customers/**").authenticated()
                                 .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))

@@ -17,7 +17,7 @@ public class SystemProvince  {
     private Long id;
 
     @Column(unique = true)
-    private Long provinceUniqueId;
+    private String provinceUniqueId;
 
     private String province;
 

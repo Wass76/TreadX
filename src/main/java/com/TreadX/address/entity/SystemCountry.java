@@ -17,7 +17,7 @@ public class SystemCountry {
     private Long id;
 
     @Column(unique = true)
-    private Long countryUniqueId;
+    private String countryUniqueId;
 
     private String country;
 

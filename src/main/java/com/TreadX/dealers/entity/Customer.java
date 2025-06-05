@@ -1,5 +1,6 @@
 package com.TreadX.dealers.entity;
 
+import com.TreadX.address.entity.Address;
 import com.TreadX.utils.entity.AuditedEntity;
 import com.TreadX.address.entity.City;
 import com.TreadX.address.entity.Country;
@@ -10,6 +11,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import java.util.List;
 
 @Entity
 @Table(name = "customer")
@@ -23,30 +26,17 @@ public class Customer extends AuditedEntity {
     private String lastName;
     private String email;
 
-    @ManyToOne
-    @JoinColumn(name = "phoneNumber")
-    private CustomerPhone customerPhone;
-    private String homePhone;
-    private String businessPhone;
+    @ManyToMany
+    @JoinTable(
+            name = "CUSTOMER_PHONE_NUMBER",
+            joinColumns =@JoinColumn(name = "customer_id"),
+            inverseJoinColumns = @JoinColumn(name = "phone_number_id")
+    )
+    private List<CustomerPhone> customerPhone;
 
     // Address fields
-    private String streetNumber;
-    private String streetName;
-    private String postalCode;
-    private String unitNumber;
-    private String specialInstructions;
-
     @ManyToOne
-    @JoinColumn(name = "country_id")
-    private Country country;
-
-    @ManyToOne
-    @JoinColumn(name = "state_id")
-    private State state;
-
-    @ManyToOne
-    @JoinColumn(name = "city_id")
-    private City city;
+    private Address address;
 
     @ManyToOne
     @JoinColumn(name = "dealer_id")
@@ -55,7 +45,4 @@ public class Customer extends AuditedEntity {
 
     @Column(unique = true)
     private String customerUniqueId;
-
-    @Column(unique = true)
-    private String dealerCustomerUniqueId;
 } 

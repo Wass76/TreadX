@@ -17,7 +17,7 @@ public class SystemCity {
     private Long id;
 
     @Column(unique = true)
-    private Long cityUniqueId;
+    private String cityUniqueId;
 
     private String city;
 
@@ -31,4 +31,4 @@ public class SystemCity {
     @ManyToOne
     @JoinColumn(name = "system_country_id")
     private SystemCountry systemCountry;
-} 
+}

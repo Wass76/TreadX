@@ -1,12 +1,12 @@
 package com.TreadX.dealers.mapper;
 
-import com.TreadX.address.entity.Address;
 import com.TreadX.address.service.AddressService;
 import com.TreadX.dealers.dto.DealerContactRequestDTO;
 import com.TreadX.dealers.dto.DealerContactResponseDTO;
 import com.TreadX.dealers.entity.DealerContact;
 import com.TreadX.dealers.enums.Channel;
 import com.TreadX.dealers.enums.LeadSource;
+import com.TreadX.dealers.repository.DealerRepository;
 import com.TreadX.user.repository.UserRepository;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -18,20 +18,32 @@ public class DealerContactMapper {
 
     private final AddressService addressService;
     private final UserRepository userRepository;
+    private final DealerRepository dealerRepository;
+    private final DealerMapper dealerMapper;
 
     public DealerContact toEntity(DealerContactRequestDTO request) {
-        return DealerContact.builder()
+        DealerContact dealerContact = DealerContact.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .businessName(request.getBusinessName())
                 .businessEmail(request.getBusinessEmail())
                 .businessPhone(request.getBusinessPhone())
-                .source(LeadSource.valueOf(request.getSource()))
-                .channel(Channel.valueOf(request.getChannel()))
+//                .source(LeadSource.valueOf(request.getSource()))
+//                .channel(Channel.valueOf(request.getChannel()))
                 .position(request.getPosition())
                 .ex(request.getEx())
                 .notes(request.getNotes())
                 .build();
+        if(request.getChannel()!= null){
+            dealerContact.setChannel(Channel.valueOf(request.getChannel()));
+        }
+        if(request.getSource() != null){
+            dealerContact.setSource(LeadSource.valueOf(request.getSource()));
+        }
+        if(request.getBusiness() != null){
+            dealerContact.setBusiness(dealerRepository.findById(request.getBusiness()).orElse(null));
+        }
+        return dealerContact;
     }
 
     public DealerContactResponseDTO toResponse(DealerContact dealerContact) {
@@ -42,17 +54,29 @@ public class DealerContactMapper {
                 .businessName(dealerContact.getBusinessName())
                 .businessEmail(dealerContact.getBusinessEmail())
                 .businessPhone(dealerContact.getBusinessPhone())
-                .source(dealerContact.getSource().toString())
-                .channel(dealerContact.getChannel())
+//                .source(dealerContact.getSource().toString())
+//                .channel(dealerContact.getChannel())
                 .position(dealerContact.getPosition())
                 .ex(dealerContact.getEx())
                 .notes(dealerContact.getNotes())
-                .owner(dealerContact.getOwner())
+                .ownerId(dealerContact.getOwner().getId())
+                .ownerName(dealerContact.getOwner().getFirstName()+" " + dealerContact.getOwner().getLastName())
                 .createdAt(dealerContact.getCreatedAt())
                 .updatedAt(dealerContact.getUpdatedAt())
                 .createdBy(dealerContact.getCreatedBy())
                 .lastModifiedBy(dealerContact.getLastModifiedBy())
                 .build();
+
+        if(dealerContact.getChannel() != null){
+            response.setChannel(dealerContact.getChannel());
+        }
+        if(dealerContact.getSource() != null){
+            response.setSource(dealerContact.getSource().toString());
+        }
+        if(dealerContact.getBusiness() != null){
+            response.setDealerId(dealerContact.getBusiness().getId());
+            response.setDealerUniqueId(dealerContact.getBusiness().getDealerUniqueId());
+        }
 
         // Add address information if available
         if (dealerContact.getAddress() != null) {

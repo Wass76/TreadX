@@ -1,8 +1,15 @@
 package com.TreadX.dealers.dto;
 
+import com.TreadX.address.dto.AddressRequestDTO;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CustomerRequestDTO {
     private String firstName;
     private String lastName;
@@ -12,15 +19,7 @@ public class CustomerRequestDTO {
     private String homePhone;
     private String businessPhone;
     private String customerUniqueId;
-    private String dealerCustomerUniqueId;
     
     // Address fields
-    private String streetNumber;
-    private String streetName;
-    private String postalCode;
-    private String unitNumber;
-    private String specialInstructions;
-    private String countryName;
-    private String stateName;
-    private String cityName;
+    private AddressRequestDTO address;
 } 

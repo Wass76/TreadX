@@ -2,6 +2,7 @@ package com.TreadX.dealers.entity;
 
 import com.TreadX.address.entity.Address;
 import com.TreadX.dealers.enums.Channel;
+import com.TreadX.dealers.enums.ContactStatus;
 import com.TreadX.dealers.enums.LeadSource;
 import com.TreadX.user.entity.User;
 import com.TreadX.utils.entity.AuditedEntity;
@@ -33,7 +34,11 @@ public class DealerContact extends AuditedEntity {
     @Enumerated(EnumType.STRING)
     private LeadSource source;
 
-    @ManyToOne
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ContactStatus status;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     private User owner;
 
     @Enumerated(EnumType.STRING)
@@ -49,6 +54,10 @@ public class DealerContact extends AuditedEntity {
     @ManyToOne
     @JoinColumn(name = "dealer_id")
     private Dealer business;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "converted_from_lead_id")
+    private Leads convertedFromLead;
 
     private String notes;
 } 
