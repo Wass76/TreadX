@@ -1,5 +1,6 @@
 package com.TreadX.dealers.service;
 
+import com.TreadX.address.dto.AddressRequestDTO;
 import com.TreadX.address.entity.Address;
 import com.TreadX.dealers.dto.DealerRequestDTO;
 import com.TreadX.dealers.dto.DealerResponseDTO;
@@ -33,22 +34,24 @@ public class DealerService {
             throw new ConflictException("Phone number already exists");
         }
 
-        // Create address if provided
-        Address address = null;
-        if (request.getAddress() != null) {
-            address = addressService.createOrReturnAddress(request.getAddress());
-        }
-
         // Create dealer with address
         Dealer dealer = dealerMapper.toEntity(request);
-        dealer.setAddress(address);
+        
+        // Handle address - if it's already an entity, use it directly, otherwise create new
+        if (request.getAddress() != null) {
+            if (request.getAddress() instanceof Address) {
+                dealer.setAddress((Address) request.getAddress());
+            } else if (request.getAddress() instanceof AddressRequestDTO) {
+                dealer.setAddress(addressService.createOrReturnAddress((AddressRequestDTO) request.getAddress()));
+            }
+        }
 
         // Save the dealer first to get the dealer ID
         Dealer savedDealer = dealerRepository.save(dealer);
 
         // Set dealerUniqueId based on cityUniqueId
-        if (address != null && address.getCity() != null) {
-            String dealerUniqueId = address.getCity().getCityUniqueId() + savedDealer.getId();
+        if (savedDealer.getAddress() != null && savedDealer.getAddress().getCity() != null) {
+            String dealerUniqueId = savedDealer.getAddress().getCity().getCityUniqueId() + savedDealer.getId();
             savedDealer.setDealerUniqueId(dealerUniqueId);
             savedDealer = dealerRepository.save(savedDealer);
         }
@@ -87,12 +90,15 @@ public class DealerService {
 
         // Update address if provided
         if (request.getAddress() != null) {
-            Address address = addressService.createOrReturnAddress(request.getAddress());
-            dealer.setAddress(address);
+            if (request.getAddress() instanceof Address) {
+                dealer.setAddress((Address) request.getAddress());
+            } else if (request.getAddress() instanceof AddressRequestDTO) {
+                dealer.setAddress(addressService.createOrReturnAddress((AddressRequestDTO) request.getAddress()));
+            }
             
             // Update dealerUniqueId based on new cityUniqueId
-            if (address.getCity() != null) {
-                String dealerUniqueId = address.getCity().getCityUniqueId() + dealer.getId();
+            if (dealer.getAddress() != null && dealer.getAddress().getCity() != null) {
+                String dealerUniqueId = dealer.getAddress().getCity().getCityUniqueId() + dealer.getId();
                 dealer.setDealerUniqueId(dealerUniqueId);
             }
         }

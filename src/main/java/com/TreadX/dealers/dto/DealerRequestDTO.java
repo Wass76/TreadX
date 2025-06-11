@@ -1,6 +1,7 @@
 package com.TreadX.dealers.dto;
 
 import com.TreadX.address.dto.AddressRequestDTO;
+import com.TreadX.address.entity.Address;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -27,6 +28,6 @@ public class DealerRequestDTO {
     private Integer accessCount;
     private String status;
 
-    // Address information
-    private AddressRequestDTO address;
+    // Address information - can be either DTO or Entity
+    private Object address;
 } 

@@ -1,6 +1,7 @@
 package com.TreadX.dealers.dto;
 
 import com.TreadX.address.dto.AddressRequestDTO;
+import com.TreadX.dealers.enums.LeadSource;
 import com.TreadX.dealers.enums.LeadStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -24,7 +25,7 @@ public class LeadsRequestDTO {
     @NotBlank(message = "Phone number is required")
     private String phoneNumber;
 
-    private String source;
+    private LeadSource source;
     private LeadStatus status;
     private String notes;
 

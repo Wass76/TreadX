@@ -20,8 +20,8 @@ public class LeadsMapper {
                 .businessName(request.getBusinessName())
                 .businessEmail(request.getBusinessEmail())
                 .phoneNumber(request.getPhoneNumber())
-                .source(LeadSource.valueOf(request.getSource()))
-                .status(request.getStatus())
+                .source(request.getSource() == null ? null : request.getSource())
+                .status(request.getStatus() == null ? null : request.getStatus())
                 .notes(request.getNotes())
                 .build();
     }
@@ -62,7 +62,7 @@ public class LeadsMapper {
             leads.setPhoneNumber(request.getPhoneNumber());
         }
         if (request.getSource() != null) {
-            leads.setSource(LeadSource.valueOf(request.getSource()));
+            leads.setSource(request.getSource());
         }
         if (request.getStatus() != null) {
             leads.setStatus(request.getStatus());

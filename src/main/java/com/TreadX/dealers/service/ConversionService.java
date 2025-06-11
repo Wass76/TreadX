@@ -44,6 +44,9 @@ public class ConversionService {
         if (request.getBusinessName() == null) {
             request.setBusinessName(lead.getBusinessName());
         }
+        if(request.getSource() == null){
+            request.setSource(lead.getSource());
+        }
         if (request.getAddress() == null && lead.getAddress() != null) {
             // Reuse the lead's address
             Address address = lead.getAddress();
@@ -89,18 +92,8 @@ public class ConversionService {
             request.setName(contact.getBusinessName());
         }
         if (request.getAddress() == null && contact.getAddress() != null) {
-            // Reuse the contact's address
-            Address address = contact.getAddress();
-            request.setAddress(AddressRequestDTO.builder()
-                    .streetName(address.getStreetName())
-                    .streetNumber(address.getStreetNumber())
-                    .cityId(address.getCity().getId())
-                    .countryId(address.getCountry().getId())
-                    .unitNumber(address.getUnitNumber())
-                    .stateId(address.getProvince().getId())
-                    .postalCode(address.getPostalCode())
-                    .specialInstructions(address.getSpecialInstructions())
-                    .build());
+            // Pass the address entity directly
+            request.setAddress(contact.getAddress());
         }
 
         // Create the dealer
@@ -121,7 +114,6 @@ public class ConversionService {
             ));
             leadsRepository.save(lead);
         }
-
         return dealer;
     }
 

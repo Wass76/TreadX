@@ -3,6 +3,8 @@ package com.TreadX.dealers.dto;
 import com.TreadX.address.dto.AddressResponseDTO;
 import com.TreadX.dealers.entity.Dealer;
 import com.TreadX.dealers.enums.Channel;
+import com.TreadX.dealers.enums.ContactStatus;
+import com.TreadX.dealers.enums.LeadSource;
 import com.TreadX.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +24,8 @@ public class DealerContactResponseDTO {
     private String businessName;
     private String businessEmail;
     private String businessPhone;
-    private String source;
+    private LeadSource source;
+    private ContactStatus status;
     private Long ownerId;
     private String ownerName;
     private Channel channel;
