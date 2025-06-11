@@ -30,22 +30,25 @@ public class DealerContactService {
     private final DealerContactRepository dealerContactRepository;
     private final DealerRepository dealerRepository;
     private final DealerContactMapper dealerContactMapper;
-    private final AddressService addressService;
-    private final UserRepository userRepository;
+    @Autowired
+    private AddressService addressService;
+    @Autowired
+    private UserRepository userRepository;
     @Autowired
     private LeadsRepository leadsRepository;
 
     @Transactional
     public DealerContactResponseDTO createDealerContact(DealerContactRequestDTO request) {
+
         // Create address if provided
         Address address = null;
-        if (request.getAddress() != null) {
-            // If this contact is converted from a lead, reuse the lead's address
-            if (request.getConvertedFromLeadId() != null) {
-                Leads lead = leadsRepository.findById(request.getConvertedFromLeadId())
+        // If this contact is converted from a lead, reuse the lead's address
+        if (request.getConvertedFromLeadId() != null) {
+            Leads lead = leadsRepository.findById(request.getConvertedFromLeadId())
                     .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + request.getConvertedFromLeadId()));
-                address = lead.getAddress();
-            } else {
+            address = lead.getAddress();
+        } else {
+            if (request.getAddress() != null) {
                 address = addressService.createOrReturnAddress(request.getAddress());
             }
         }
@@ -53,14 +56,6 @@ public class DealerContactService {
         // Create dealer contact with address
         DealerContact dealerContact = dealerContactMapper.toEntity(request);
         dealerContact.setAddress(address);
-        dealerContact.setStatus(ContactStatus.OPENED);  // Set initial status
-
-        // Set dealer if provided
-        if (request.getBusiness() != null) {
-            Dealer dealer = dealerRepository.findById(request.getBusiness())
-                    .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + request.getBusiness()));
-            dealerContact.setBusiness(dealer);
-        }
 
         // Set the lead if this contact was converted from a lead
         if (request.getConvertedFromLeadId() != null) {

@@ -1,6 +1,7 @@
 package com.TreadX.dealers.mapper;
 
 import com.TreadX.address.entity.Address;
+import com.TreadX.address.mapper.AddressMapper;
 import com.TreadX.address.service.AddressService;
 import com.TreadX.dealers.dto.LeadsRequestDTO;
 import com.TreadX.dealers.dto.LeadsResponseDTO;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class LeadsMapper {
 
     private final AddressService addressService;
+    private final AddressMapper addressMapper;
 
     public Leads toEntity(LeadsRequestDTO request) {
         return Leads.builder()
@@ -45,7 +47,7 @@ public class LeadsMapper {
 
         // Add address information if available
         if (leads.getAddress() != null) {
-            response.setAddress(addressService.getAddressResponse(leads.getAddress()));
+            response.setAddress(addressMapper.toResponseDTO(leads.getAddress()));
         }
 
         return response;

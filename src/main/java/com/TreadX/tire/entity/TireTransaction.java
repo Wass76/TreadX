@@ -38,4 +38,9 @@ public class TireTransaction extends AuditedEntity {
     private LocalDateTime transactionDate;
     private String paymentMethod;
     private String notes;
+
+    @Override
+    protected String getSequenceName() {
+        return "tire_transaction_id_seq";
+    }
 } 

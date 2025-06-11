@@ -11,6 +11,9 @@ import com.TreadX.utils.exception.ConflictException;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import com.TreadX.address.service.AddressService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,12 +24,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DealerService {
 
-    private final DealerRepository dealerRepository;
-    private final DealerMapper dealerMapper;
-    private final AddressService addressService;
+    private static final Logger log = LoggerFactory.getLogger(DealerService.class);
+    @Autowired
+    private DealerRepository dealerRepository;
+    @Autowired
+    private DealerMapper dealerMapper;
+    @Autowired
+    private AddressService addressService;
 
     @Transactional
-    public DealerResponseDTO createDealer(DealerRequestDTO request) {
+    public DealerResponseDTO createDealer(DealerRequestDTO request , Address address) {
         if (dealerRepository.existsByEmail(request.getEmail())) {
             throw new ConflictException("Email already exists");
         }
@@ -37,13 +44,13 @@ public class DealerService {
         // Create dealer with address
         Dealer dealer = dealerMapper.toEntity(request);
         
-        // Handle address - if it's already an entity, use it directly, otherwise create new
-        if (request.getAddress() != null) {
-            if (request.getAddress() instanceof Address) {
-                dealer.setAddress((Address) request.getAddress());
-            } else if (request.getAddress() instanceof AddressRequestDTO) {
-                dealer.setAddress(addressService.createOrReturnAddress((AddressRequestDTO) request.getAddress()));
-            }
+        // Handle address
+        if (address != null) {
+            dealer.setAddress(address);
+        }
+        else {
+            log.info("Adding new address to new dealer");
+            dealer.setAddress(addressService.createOrReturnAddress(request.getAddress()));
         }
 
         // Save the dealer first to get the dealer ID
@@ -90,12 +97,8 @@ public class DealerService {
 
         // Update address if provided
         if (request.getAddress() != null) {
-            if (request.getAddress() instanceof Address) {
-                dealer.setAddress((Address) request.getAddress());
-            } else if (request.getAddress() instanceof AddressRequestDTO) {
-                dealer.setAddress(addressService.createOrReturnAddress((AddressRequestDTO) request.getAddress()));
-            }
-            
+            dealer.setAddress(addressService.createOrReturnAddress((AddressRequestDTO) request.getAddress()));
+
             // Update dealerUniqueId based on new cityUniqueId
             if (dealer.getAddress() != null && dealer.getAddress().getCity() != null) {
                 String dealerUniqueId = dealer.getAddress().getCity().getCityUniqueId() + dealer.getId();

@@ -26,13 +26,14 @@ public class DealerContactResponseDTO {
     private String businessPhone;
     private LeadSource source;
     private ContactStatus status;
+    private Long convertedFromLeadId;  // ID of the lead this contact was converted from
     private Long ownerId;
     private String ownerName;
     private Channel channel;
     private String ex;
     private AddressResponseDTO address;
     private String position;
-//    private DealerResponseDTO business;
+    //    private DealerResponseDTO business;
     private Long dealerId;
     private String dealerUniqueId;
     private String notes;
@@ -40,4 +41,4 @@ public class DealerContactResponseDTO {
     private LocalDateTime updatedAt;
     private Long createdBy;
     private Long lastModifiedBy;
-} 
+}

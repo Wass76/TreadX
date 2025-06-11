@@ -22,6 +22,11 @@ public class User extends BaseUser {
 
     private String position;
 
+    @Override
+    protected String getSequenceName() {
+        return "user_id_seq";
+    }
+
 //    @Override
 //    public String getUsername() {
 //        return email;  // Use email as username for authentication

@@ -45,4 +45,9 @@ public class Customer extends AuditedEntity {
 
     @Column(unique = true)
     private String customerUniqueId;
+
+    @Override
+    protected String getSequenceName() {
+        return "customer_id_seq";
+    }
 } 

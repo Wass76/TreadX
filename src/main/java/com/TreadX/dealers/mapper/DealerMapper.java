@@ -21,7 +21,7 @@ public class DealerMapper {
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .accessCount(request.getAccessCount())
-                .status(DealerStatus.valueOf(request.getStatus() != null ? request.getStatus() : "ACTIVE"))
+                .status(request.getStatus() != null ? request.getStatus() : DealerStatus.ACTIVE)
                 .build();
     }
 
@@ -31,13 +31,13 @@ public class DealerMapper {
                 .name(dealer.getName())
                 .email(dealer.getEmail())
                 .phone(dealer.getPhone())
-                .status(String.valueOf(dealer.getStatus()))
+                .status(dealer.getStatus())
                 .accessCount(dealer.getAccessCount())
                 .dealerUniqueId(dealer.getDealerUniqueId())
                 .build();
 
         if (dealer.getAddress() != null) {
-            response.setAddress(addressMapper.toResponse(dealer.getAddress()));
+            response.setAddress(addressMapper.toResponseDTO(dealer.getAddress()));
         }
 
         return response;
@@ -49,7 +49,7 @@ public class DealerMapper {
         dealer.setPhone(request.getPhone());
         dealer.setAccessCount(request.getAccessCount());
         if (request.getStatus() != null) {
-            dealer.setStatus(DealerStatus.valueOf(request.getStatus()));
+            dealer.setStatus(request.getStatus());
         }
     }
 } 

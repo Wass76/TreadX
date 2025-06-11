@@ -1,222 +1,208 @@
 package com.TreadX.address.service;
 
 import com.TreadX.address.dto.AddressRequestDTO;
-import com.TreadX.address.dto.AddressResponseDTO;
-import com.TreadX.address.entity.Address;
-import com.TreadX.address.entity.City;
-import com.TreadX.address.entity.Country;
-import com.TreadX.address.entity.State;
-import com.TreadX.address.entity.SystemCity;
-import com.TreadX.address.entity.SystemCountry;
-import com.TreadX.address.entity.SystemProvince;
-import com.TreadX.address.repository.AddressRepository;
-import com.TreadX.address.repository.CityRepository;
-import com.TreadX.address.repository.CountryRepository;
-import com.TreadX.address.repository.StateRepository;
-import com.TreadX.address.repository.SystemCityRepository;
-import com.TreadX.address.repository.SystemCountryRepository;
-import com.TreadX.address.repository.SystemProvinceRepository;
-import com.TreadX.utils.exception.ConflictException;
+import com.TreadX.address.entity.*;
+import com.TreadX.address.repository.*;
 import com.TreadX.utils.exception.ResourceNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AddressService {
-
     private static final Logger log = LoggerFactory.getLogger(AddressService.class);
-    @Autowired
-    private SystemCountryRepository systemCountryRepository;
+    
+    // Constants for ID generation
+    private static final int COUNTRY_ID_LENGTH = 3;
+    private static final int PROVINCE_ID_LENGTH = 2;
+    private static final int CITY_ID_LENGTH = 4;
 
-    @Autowired
-    private SystemProvinceRepository systemProvinceRepository;
+    private final SystemCountryRepository systemCountryRepository;
+    private final SystemProvinceRepository systemProvinceRepository;
+    private final SystemCityRepository systemCityRepository;
+    private final CountryRepository countryRepository;
+    private final StateRepository stateRepository;
+    private final CityRepository cityRepository;
+    private final AddressRepository addressRepository;
 
-    @Autowired
-    private SystemCityRepository systemCityRepository;
-
-    @Autowired
-    private CountryRepository countryRepository;
-
-    @Autowired
-    private StateRepository stateRepository;
-
-    @Autowired
-    private CityRepository cityRepository;
-
-    @Autowired
-    private AddressRepository addressRepository;
-
+    /**
+     * Creates a new address or returns an existing one based on the provided DTO.
+     * This method handles the creation of system entries (country, province, city) if they don't exist.
+     *
+     * @param addressRequestDTO The address data to create
+     * @return The created or existing address
+     * @throws ResourceNotFoundException if any of the required entities (country, state, city) are not found
+     */
+    @Transactional
     public Address createOrReturnAddress(AddressRequestDTO addressRequestDTO) {
-        // Find the related entities
-        log.info("Creating new address");
-        log.info("addressRequestDTO: {}", addressRequestDTO);
-        log.info("CountryId: {}", addressRequestDTO.getCountryId());
-        Country country = countryRepository.findById(addressRequestDTO.getCountryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Country not found with id: " + addressRequestDTO.getCountryId()));
-        log.info("Country: {}", country);
-        log.info("StateId: {}", addressRequestDTO.getStateId());
-        State state = stateRepository.findById(addressRequestDTO.getStateId())
-                .orElseThrow(() -> new ResourceNotFoundException("State not found with id: " + addressRequestDTO.getStateId()));
-        log.info("State: {}", state);
-        log.info("CityId: {}", addressRequestDTO.getCityId());
-        City city = cityRepository.findById(addressRequestDTO.getCityId())
-                .orElseThrow(() -> new ResourceNotFoundException("City not found with id: " + addressRequestDTO.getCityId()));
-        log.info("City: {}", city);
-        // Process system entries
-        Map<String,Object> map = processAddressForSystemEntries(country, state, city);
+        log.info("Creating new address for request: {}", addressRequestDTO);
+        
+        // Find and validate required entities
+        Country country = findAndValidateCountry(addressRequestDTO.getCountryId());
+        State state = findAndValidateState(addressRequestDTO.getStateId());
+        City city = findAndValidateCity(addressRequestDTO.getCityId());
 
-        // Create and save the address
-        List<Address> addresses = addressRepository
-                .findByStreetNameAndStreetNumberAndCountryAndCityAndProvinceAndUnitNumberAndPostalCode(
-                        addressRequestDTO.getStreetName(),
-                        addressRequestDTO.getStreetNumber(),
-                        (SystemCountry) map.get("systemCountry"),
-                        (SystemCity) map.get("systemCity"),
-                        (SystemProvince) map.get("systemProvince"),
-                        addressRequestDTO.getUnitNumber(),
-                        addressRequestDTO.getPostalCode()
-                ).orElse(Collections.emptyList());
-
-        if (!addresses.isEmpty()) {
-            throw new ConflictException("Address already exists");
-//            Address existedAddress = addresses.get(0);
-//            log.info("Address already exists with id: {}", existedAddress.getId());
-//            return existedAddress;
-        }
-
-        Address address = new Address();
-        address.setStreetNumber(addressRequestDTO.getStreetNumber());
-        address.setStreetName(addressRequestDTO.getStreetName());
-        address.setPostalCode(addressRequestDTO.getPostalCode());
-        address.setCity((SystemCity) map.get("systemCity"));
-        address.setCountry((SystemCountry) map.get("systemCountry"));
-        address.setProvince((SystemProvince) map.get("systemProvince"));
-        address.setSpecialInstructions(addressRequestDTO.getSpecialInstructions());
-
-        return addressRepository.save(address);
+        // Process system entries and create address
+        Map<String, Object> systemEntries = processAddressForSystemEntries(country, state, city);
+        return getOrCreateAddressBySystemEntities((SystemCountry) systemEntries.get("systemCountry"), (SystemProvince) systemEntries.get("systemProvince"), (SystemCity) systemEntries.get("systemCity"), addressRequestDTO);
     }
 
-    public Map<String,Object> processAddressForSystemEntries(Country country, State state, City city) {
-        // Process Country (3 digits)
-        SystemCountry systemCountry = systemCountryRepository.findByCountryEntity(country)
-                .orElseGet(() -> {
-                    SystemCountry newSystemCountry = new SystemCountry();
-                    newSystemCountry.setCountry(country.getName());
-                    Optional<SystemCountry> topCountry = systemCountryRepository.findTopByOrderByCountryUniqueIdDesc();
-                    String nextId = generateNextUniqueId(topCountry.map(sc -> sc.getCountryUniqueId()).orElse(null), 3);
-                    newSystemCountry.setCountryUniqueId(nextId);
-                    newSystemCountry.setCountryEntity(country);
-                    return systemCountryRepository.save(newSystemCountry);
-                });
+    /**
+     * Gets an existing address or creates a new one based on system entities.
+     * This method is used when we already have the system entities and want to ensure
+     * we don't create duplicate addresses.
+     */
+    @Transactional
+    public Address getOrCreateAddressBySystemEntities(
+            SystemCountry systemCountry,
+            SystemProvince systemProvince,
+            SystemCity systemCity,
+            AddressRequestDTO addressRequestDTO) {
+        
+        // Try to find existing address with these system entities
+        Address existingAddress = addressRepository.findByCountryAndProvinceAndCityAndPostalCodeAndStreetNameAndStreetNumberAndUnitNumber(
+           systemCountry ,  systemProvince, systemCity, addressRequestDTO.getPostalCode()  ,addressRequestDTO.getStreetName() , addressRequestDTO.getStreetNumber() ,addressRequestDTO.getUnitNumber()).get().getFirst();
+            
+        if (existingAddress != null) {
+            log.info("Found existing address with ID: {}", existingAddress.getId());
+            return existingAddress;
+        }
+
+        // Create new address if none exists
+        Map<String, Object> systemEntries = new HashMap<>();
+        systemEntries.put("systemCountry", systemCountry);
+        systemEntries.put("systemProvince", systemProvince);
+        systemEntries.put("systemCity", systemCity);
+        
+        return createAddress(addressRequestDTO, systemCountry , systemProvince , systemCity);
+    }
+
+    /**
+     * Processes the system entries (country, province, city) for the given entities.
+     * Creates new system entries if they don't exist.
+     */
+    private Map<String, Object> processAddressForSystemEntries(Country country, State state, City city) {
         Map<String, Object> map = new HashMap<>();
+        
+        SystemCountry systemCountry = processSystemCountry(country);
         map.put("systemCountry", systemCountry);
 
-        // Process Province/State (5 digits: countryId + 2 digits)
-        SystemProvince systemProvince = systemProvinceRepository.findByProvinceEntity(state)
-                .orElseGet(() -> {
-                    SystemProvince newSystemProvince = new SystemProvince();
-                    newSystemProvince.setProvince(state.getName());
-                    // Find the highest province ID for this country
-                    Optional<SystemProvince> topProvince = systemProvinceRepository.findTopBySystemCountryOrderByProvinceUniqueIdDesc(systemCountry);
-                    String countryId = systemCountry.getCountryUniqueId();
-                    String nextProvinceId = generateNextUniqueId(
-                        topProvince.map(sp -> sp.getProvinceUniqueId().substring(3)).orElse(null), 
-                        2
-                    );
-                    newSystemProvince.setProvinceUniqueId(countryId + nextProvinceId);
-                    newSystemProvince.setSystemCountry(systemCountry);
-                    newSystemProvince.setProvinceEntity(state);
-                    return systemProvinceRepository.save(newSystemProvince);
-                });
+        SystemProvince systemProvince = processSystemProvince(state, systemCountry);
         map.put("systemProvince", systemProvince);
 
-        // Process City (9 digits: provinceId + 4 digits)
-        SystemCity systemCity = systemCityRepository.findByCityEntity(city)
-                .orElseGet(() -> {
-                    SystemCity newSystemCity = new SystemCity();
-                    newSystemCity.setCity(city.getName());
-                    newSystemCity.setCityEntity(city);
-                    // Find the highest city ID for this province
-                    Optional<SystemCity> topCity = systemCityRepository.findTopBySystemProvinceOrderByCityUniqueIdDesc(systemProvince);
-                    String provinceId = systemProvince.getProvinceUniqueId();
-                    String nextCityId = generateNextUniqueId(
-                        topCity.map(sc -> sc.getCityUniqueId().substring(5)).orElse(null), 
-                        4
-                    );
-                    newSystemCity.setCityUniqueId(provinceId + nextCityId);
-                    newSystemCity.setSystemProvince(systemProvince);
-                    newSystemCity.setSystemCountry(systemCountry);
-                    return systemCityRepository.save(newSystemCity);
-                });
+        SystemCity systemCity = processSystemCity(city, systemProvince, systemCountry);
         map.put("systemCity", systemCity);
+
         return map;
     }
 
-    // Helper method to generate the next sequential unique ID with specified number of digits
-    private String generateNextUniqueId(String currentMaxId, int numberOfDigits) {
-        int numericId = 1; // Default starting ID
-
-        if (currentMaxId != null) {
-            try {
-                numericId = Integer.parseInt(currentMaxId) + 1;
-            } catch (NumberFormatException e) {
-                // Handle the case where the existing ID is not in the expected format
-                // Log the error or handle it as appropriate
-                // Fallback to starting ID
-            }
-        }
-
-        return String.format("%0" + numberOfDigits + "d", numericId);
+    private SystemCountry processSystemCountry(Country country) {
+        return systemCountryRepository.findByCountryEntity(country)
+                .orElseGet(() -> createNewSystemCountry(country));
     }
 
-    // Helper methods to extract IDs from hierarchical IDs
-    private String extractCountryId(String hierarchicalId) {
-        if (hierarchicalId == null) return null;
-        return hierarchicalId.split("-")[0];
+    private SystemCountry createNewSystemCountry(Country country) {
+        Optional<SystemCountry> topCountry = systemCountryRepository.findTopByOrderByCountryUniqueIdDesc();
+        String nextId = UniqueIdUtils.generateNextUniqueId(
+            topCountry.map(sc -> sc.getCountryUniqueId()).orElse(null),
+            COUNTRY_ID_LENGTH
+        );
+
+        log.info("Creating new country with ID: {}", nextId);
+
+        SystemCountry newSystemCountry = new SystemCountry();
+        newSystemCountry.setCountry(country.getName());
+        newSystemCountry.setCountryUniqueId(nextId);
+        newSystemCountry.setCountryEntity(country);
+        
+        return systemCountryRepository.save(newSystemCountry);
     }
 
-    private String extractProvinceId(String hierarchicalId) {
-        if (hierarchicalId == null) return null;
-        return hierarchicalId.split("-")[1];
+    private SystemProvince processSystemProvince(State state, SystemCountry systemCountry) {
+        return systemProvinceRepository.findByProvinceEntity(state)
+                .orElseGet(() -> createNewSystemProvince(state, systemCountry));
     }
 
-    private String extractCityId(String hierarchicalId) {
-        if (hierarchicalId == null) return null;
-        return hierarchicalId.split("-")[2];
+    private SystemProvince createNewSystemProvince(State state, SystemCountry systemCountry) {
+        Optional<SystemProvince> topProvince = systemProvinceRepository.findTopBySystemCountryOrderByProvinceUniqueIdDesc(systemCountry);
+        String countryId = systemCountry.getCountryUniqueId();
+        String nextProvinceId = UniqueIdUtils.generateNextUniqueId(
+            topProvince.map(sp -> sp.getProvinceUniqueId().substring(COUNTRY_ID_LENGTH)).orElse(null), 
+            PROVINCE_ID_LENGTH
+        );
+
+        String provinceUniqueId = countryId + nextProvinceId;
+        log.info("Creating new province with uniqueId: {}", provinceUniqueId);
+
+        SystemProvince newSystemProvince = new SystemProvince();
+        newSystemProvince.setProvince(state.getName());
+        newSystemProvince.setProvinceUniqueId(provinceUniqueId);
+        newSystemProvince.setSystemCountry(systemCountry);
+        newSystemProvince.setProvinceEntity(state);
+        
+        return systemProvinceRepository.save(newSystemProvince);
     }
 
-    public Optional<SystemCountry> getSystemCountryByEntity(Country country) {
-        return systemCountryRepository.findByCountryEntity(country);
+    private SystemCity processSystemCity(City city, SystemProvince systemProvince, SystemCountry systemCountry) {
+        return systemCityRepository.findByCityEntity(city)
+                .orElseGet(() -> createNewSystemCity(city, systemProvince, systemCountry));
     }
 
-    public Optional<SystemProvince> getSystemProvinceByEntity(State state) {
-        return systemProvinceRepository.findByProvinceEntity(state);
+    private SystemCity createNewSystemCity(City city, SystemProvince systemProvince, SystemCountry systemCountry) {
+        Optional<SystemCity> topCity = systemCityRepository.findTopBySystemProvinceOrderByCityUniqueIdDesc(systemProvince);
+        String provinceId = systemProvince.getProvinceUniqueId();
+        String nextCityId = UniqueIdUtils.generateNextUniqueId(
+            topCity.map(sc -> sc.getCityUniqueId().substring(COUNTRY_ID_LENGTH + PROVINCE_ID_LENGTH)).orElse(null), 
+            CITY_ID_LENGTH
+        );
+
+        String cityUniqueId = provinceId + nextCityId;
+        log.info("Creating new city with uniqueId: {}", cityUniqueId);
+
+        SystemCity newSystemCity = new SystemCity();
+        newSystemCity.setCity(city.getName());
+        newSystemCity.setCityEntity(city);
+        newSystemCity.setCityUniqueId(cityUniqueId);
+        newSystemCity.setSystemProvince(systemProvince);
+        newSystemCity.setSystemCountry(systemCountry);
+        
+        return systemCityRepository.save(newSystemCity);
     }
 
-    public Optional<SystemCity> getSystemCityByEntity(City city) {
-        return systemCityRepository.findByCityEntity(city);
-    }
-
-    public AddressResponseDTO getAddressResponse(Address address) {
-        if (address == null) {
-            return null;
-        }
-
-        return AddressResponseDTO.builder()
-                .id(address.getId())
-                .streetNumber(address.getStreetNumber())
-                .streetName(address.getStreetName())
-                .postalCode(address.getPostalCode())
-                .city(address.getCity() != null ? address.getCity().getCity() : null)
-                .province(address.getProvince() != null ? address.getProvince().getProvince() : null)
-                .country(address.getCountry() != null ? address.getCountry().getCountry() : null)
-                .specialInstructions(address.getSpecialInstructions())
+    private Address createAddress(AddressRequestDTO request,SystemCountry systemCountry , SystemProvince systemProvince , SystemCity systemCity) {
+        Address newAddress = Address.builder()
+                .streetName(request.getStreetName())
+                .streetNumber(request.getStreetNumber())
+                .unitNumber(request.getUnitNumber())
+                .city(systemCity)
+                .province(systemProvince)
+                .country(systemCountry)
+                .postalCode(request.getPostalCode())
+                .specialInstructions(request.getSpecialInstructions())
                 .build();
+        return addressRepository.save(newAddress);
+    }
+
+    private Country findAndValidateCountry(Long countryId) {
+        return countryRepository.findById(countryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Country not found with id: " + countryId));
+    }
+
+    private State findAndValidateState(Long stateId) {
+        return stateRepository.findById(stateId)
+                .orElseThrow(() -> new ResourceNotFoundException("State not found with id: " + stateId));
+    }
+
+    private City findAndValidateCity(Long cityId) {
+        return cityRepository.findById(cityId)
+                .orElseThrow(() -> new ResourceNotFoundException("City not found with id: " + cityId));
     }
 }

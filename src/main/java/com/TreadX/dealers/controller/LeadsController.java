@@ -7,6 +7,7 @@ import com.TreadX.dealers.dto.LeadsResponseDTO;
 import com.TreadX.dealers.service.ConversionService;
 import com.TreadX.dealers.service.LeadsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,11 +17,12 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/leads")
-@RequiredArgsConstructor
 public class LeadsController {
 
-    private final LeadsService leadsService;
-    private final ConversionService conversionService;
+    @Autowired
+    private LeadsService leadsService;
+    @Autowired
+    private ConversionService conversionService;
 
     @GetMapping
     public ResponseEntity<?> getAllLeads() {

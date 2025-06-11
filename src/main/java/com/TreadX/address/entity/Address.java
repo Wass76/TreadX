@@ -34,4 +34,9 @@ public class Address extends AuditedEntity {
     private String postalCode;
 
     private String specialInstructions;
+
+    @Override
+    protected String getSequenceName() {
+        return "address_id_seq";
+    }
 }

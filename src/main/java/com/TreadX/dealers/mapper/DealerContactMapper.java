@@ -1,8 +1,10 @@
 package com.TreadX.dealers.mapper;
 
+import com.TreadX.address.mapper.AddressMapper;
 import com.TreadX.address.service.AddressService;
 import com.TreadX.dealers.dto.DealerContactRequestDTO;
 import com.TreadX.dealers.dto.DealerContactResponseDTO;
+import com.TreadX.dealers.entity.Dealer;
 import com.TreadX.dealers.entity.DealerContact;
 import com.TreadX.dealers.enums.Channel;
 import com.TreadX.dealers.enums.ContactStatus;
@@ -20,6 +22,7 @@ public class DealerContactMapper {
     private final AddressService addressService;
     private final UserRepository userRepository;
     private final DealerRepository dealerRepository;
+    private final AddressMapper addressMapper;
 //    private final DealerMapper dealerMapper;
 
     public DealerContact toEntity(DealerContactRequestDTO request) {
@@ -29,7 +32,6 @@ public class DealerContactMapper {
                 .businessName(request.getBusinessName())
                 .businessEmail(request.getBusinessEmail())
                 .businessPhone(request.getBusinessPhone())
-                // commented to be handling below (null safety)
                 .source(request.getSource() == null ? null : request.getSource())
                 .status(request.getStatus() == null ? ContactStatus.OPENED : request.getStatus())
                 .channel(request.getChannel() == null ? null : request.getChannel())
@@ -38,8 +40,11 @@ public class DealerContactMapper {
                 .notes(request.getNotes())
                 .build();
 
-        if(request.getBusiness() != null){
-            dealerContact.setBusiness(dealerRepository.findById(request.getBusiness()).orElse(null));
+        // Set dealer if provided
+        if (request.getBusiness() != null) {
+            Dealer dealer = dealerRepository.findById(request.getBusiness())
+                    .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + request.getBusiness()));
+            dealerContact.setBusiness(dealer);
         }
         return dealerContact;
     }
@@ -66,12 +71,7 @@ public class DealerContactMapper {
                 .lastModifiedBy(dealerContact.getLastModifiedBy())
                 .build();
 
-//        if(dealerContact.getChannel() != null){
-//            response.setChannel(dealerContact.getChannel());
-//        }
-//        if(dealerContact.getSource() != null){
-//            response.setSource(dealerContact.getSource().toString());
-//        }
+        // Set dealer if provided
         if(dealerContact.getBusiness() != null){
             response.setDealerId(dealerContact.getBusiness().getId());
             response.setDealerUniqueId(dealerContact.getBusiness().getDealerUniqueId());
@@ -79,8 +79,14 @@ public class DealerContactMapper {
 
         // Add address information if available
         if (dealerContact.getAddress() != null) {
-            response.setAddress(addressService.getAddressResponse(dealerContact.getAddress()));
+            response.setAddress(addressMapper.toResponseDTO(dealerContact.getAddress()));
         }
+
+        // Add converted from lead ID if available
+        if (dealerContact.getConvertedFromLead() != null) {
+            response.setConvertedFromLeadId(dealerContact.getConvertedFromLead().getId());
+        }
+
         return response;
     }
 

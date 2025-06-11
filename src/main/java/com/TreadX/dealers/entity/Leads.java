@@ -39,4 +39,9 @@ public class Leads extends AuditedEntity {
     @ManyToOne
     @JoinColumn(name = "dealer_id")
     private Dealer dealer;
+
+    @Override
+    protected String getSequenceName() {
+        return "leads_id_seq";
+    }
 } 

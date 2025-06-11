@@ -1,6 +1,7 @@
 package com.TreadX.dealers.dto;
 
 import com.TreadX.address.dto.AddressResponseDTO;
+import com.TreadX.dealers.enums.DealerStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +16,7 @@ public class DealerResponseDTO {
     private String name;
     private String email;
     private String phone;
-    private String status;
+    private DealerStatus status;
     private Integer accessCount;
     private String dealerUniqueId;
     private AddressResponseDTO address;

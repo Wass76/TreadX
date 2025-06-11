@@ -23,4 +23,9 @@ public class Package extends AuditedEntity {
     private String status;
     private Integer maxTires;
     private String features;
+
+    @Override
+    protected String getSequenceName() {
+        return "package_id_seq";
+    }
 } 

@@ -44,4 +44,9 @@ public class Tire extends AuditedEntity {
     private Double price;
     private Integer stock;
     private String description;
+
+    @Override
+    protected String getSequenceName() {
+        return "tire_id_seq";
+    }
 }

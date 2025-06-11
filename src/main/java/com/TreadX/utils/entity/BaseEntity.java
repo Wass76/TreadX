@@ -12,10 +12,10 @@ import java.io.Serializable;
 @MappedSuperclass
 @SuperBuilder
 @NoArgsConstructor
-public class BaseEntity implements Serializable {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE , generator = "id")
-    @SequenceGenerator(name = "id", allocationSize = 1 , sequenceName = "id")
-    private Long id;
+public class BaseEntity extends BaseIdEntity implements Serializable {
+    @Override
+    protected String getSequenceName() {
+        throw new IllegalStateException("getSequenceName() must be overridden by the entity class");
+    }
+    // No need for ID field as it's inherited from BaseIdEntity
 }

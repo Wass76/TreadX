@@ -7,6 +7,7 @@ import com.TreadX.dealers.dto.DealerResponseDTO;
 import com.TreadX.dealers.service.ConversionService;
 import com.TreadX.dealers.service.DealerContactService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,8 +20,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class DealerContactController {
 
-    private final DealerContactService dealerContactService;
-    private final ConversionService conversionService;
+    @Autowired
+    private DealerContactService dealerContactService;
+    @Autowired
+    private ConversionService conversionService;
 
     @GetMapping
     public ResponseEntity<?> getAllDealerContacts() {

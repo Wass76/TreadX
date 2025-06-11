@@ -10,5 +10,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface AddressRepository extends JpaRepository<Address, Long> {
-    Optional<List<Address>> findByStreetNameAndStreetNumberAndCountryAndCityAndProvinceAndUnitNumberAndPostalCode(String streetName, String streetNumber, SystemCountry country, SystemCity city, SystemProvince province, String unitNumber, String postalCode);
+    Optional<List<Address>> findByCountryAndProvinceAndCityAndPostalCodeAndStreetNameAndStreetNumberAndUnitNumber(SystemCountry country,SystemProvince province, SystemCity city,  String postalCode ,String streetName, String streetNumber, String unitNumber);
+    Optional<Address> findByCityAndProvinceAndCountry(SystemCity city, SystemProvince province, SystemCountry country);
 }

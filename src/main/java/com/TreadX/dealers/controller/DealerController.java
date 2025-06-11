@@ -5,6 +5,7 @@ import com.TreadX.dealers.dto.DealerResponseDTO;
 import com.TreadX.dealers.service.DealerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DealerController {
 
-    private final DealerService dealerService;
+    @Autowired
+    private DealerService dealerService;
 
     @GetMapping
     public ResponseEntity<List<DealerResponseDTO>> getAllDealers() {
@@ -32,7 +34,7 @@ public class DealerController {
 
     @PostMapping
     public ResponseEntity<DealerResponseDTO> createDealer(@Valid @RequestBody DealerRequestDTO dealerRequestDTO) {
-        DealerResponseDTO createdDealer = dealerService.createDealer(dealerRequestDTO);
+        DealerResponseDTO createdDealer = dealerService.createDealer(dealerRequestDTO , null);
         return new ResponseEntity<>(createdDealer, HttpStatus.CREATED);
     }
 

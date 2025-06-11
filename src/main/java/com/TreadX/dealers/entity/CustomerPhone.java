@@ -38,4 +38,9 @@ public class CustomerPhone extends AuditedEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PhoneStatus phoneStatus;
+
+    @Override
+    protected String getSequenceName() {
+        return "customer_phone_id_seq";
+    }
 } 

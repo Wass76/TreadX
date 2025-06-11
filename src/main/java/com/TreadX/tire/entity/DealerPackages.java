@@ -28,4 +28,9 @@ public class DealerPackages extends AuditedEntity {
     private String status;
     private Double price;
     private String description;
+
+    @Override
+    protected String getSequenceName() {
+        return "dealer_packages_id_seq";
+    }
 } 

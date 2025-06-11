@@ -60,4 +60,9 @@ public class DealerContact extends AuditedEntity {
     private Leads convertedFromLead;
 
     private String notes;
+
+    @Override
+    protected String getSequenceName() {
+        return "dealer_contact_id_seq";
+    }
 } 
