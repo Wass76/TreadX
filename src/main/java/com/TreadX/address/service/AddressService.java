@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -68,21 +69,19 @@ public class AddressService {
             AddressRequestDTO addressRequestDTO) {
         
         // Try to find existing address with these system entities
-        Address existingAddress = addressRepository.findByCountryAndProvinceAndCityAndPostalCodeAndStreetNameAndStreetNumberAndUnitNumber(
-           systemCountry ,  systemProvince, systemCity, addressRequestDTO.getPostalCode()  ,addressRequestDTO.getStreetName() , addressRequestDTO.getStreetNumber() ,addressRequestDTO.getUnitNumber()).get().getFirst();
+        Optional<List<Address>> existingAddresses = addressRepository.findByCountryAndProvinceAndCityAndPostalCodeAndStreetNameAndStreetNumberAndUnitNumber(
+            systemCountry, systemProvince, systemCity, addressRequestDTO.getPostalCode(),
+            addressRequestDTO.getStreetName(), addressRequestDTO.getStreetNumber(), addressRequestDTO.getUnitNumber());
             
-        if (existingAddress != null) {
+        if (existingAddresses.isPresent() && !existingAddresses.get().isEmpty()) {
+            Address existingAddress = existingAddresses.get().get(0);
             log.info("Found existing address with ID: {}", existingAddress.getId());
             return existingAddress;
         }
 
         // Create new address if none exists
-        Map<String, Object> systemEntries = new HashMap<>();
-        systemEntries.put("systemCountry", systemCountry);
-        systemEntries.put("systemProvince", systemProvince);
-        systemEntries.put("systemCity", systemCity);
-        
-        return createAddress(addressRequestDTO, systemCountry , systemProvince , systemCity);
+        log.info("No existing address found, creating new address");
+        return createAddress(addressRequestDTO, systemCountry, systemProvince, systemCity);
     }
 
     /**
@@ -177,17 +176,16 @@ public class AddressService {
         return systemCityRepository.save(newSystemCity);
     }
 
-    private Address createAddress(AddressRequestDTO request,SystemCountry systemCountry , SystemProvince systemProvince , SystemCity systemCity) {
-        Address newAddress = Address.builder()
-                .streetName(request.getStreetName())
-                .streetNumber(request.getStreetNumber())
-                .unitNumber(request.getUnitNumber())
-                .city(systemCity)
-                .province(systemProvince)
-                .country(systemCountry)
-                .postalCode(request.getPostalCode())
-                .specialInstructions(request.getSpecialInstructions())
-                .build();
+    private Address createAddress(AddressRequestDTO request, SystemCountry systemCountry, SystemProvince systemProvince, SystemCity systemCity) {
+        Address newAddress = new Address();
+        newAddress.setStreetName(request.getStreetName());
+        newAddress.setStreetNumber(request.getStreetNumber());
+        newAddress.setUnitNumber(request.getUnitNumber());
+        newAddress.setCity(systemCity);
+        newAddress.setProvince(systemProvince);
+        newAddress.setCountry(systemCountry);
+        newAddress.setPostalCode(request.getPostalCode());
+        newAddress.setSpecialInstructions(request.getSpecialInstructions());
         return addressRepository.save(newAddress);
     }
 

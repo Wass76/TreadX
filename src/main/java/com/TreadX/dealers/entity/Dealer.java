@@ -16,13 +16,13 @@ import java.util.List;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class Dealer extends AuditedEntity {
-    @Column(nullable = false)
+    @Column(nullable = false,updatable = false)
     private String name;
     
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true,updatable = false)
     private String email;
     
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true,updatable = false)
     private String phone;
     
     @OneToOne(cascade = CascadeType.ALL)
@@ -35,7 +35,7 @@ public class Dealer extends AuditedEntity {
     
     private Integer accessCount;
     
-    @Column(unique = true)
+    @Column(unique = true,updatable = false)
     private String dealerUniqueId;
 
     @OneToMany(mappedBy = "business", cascade = CascadeType.ALL)

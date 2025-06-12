@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 public enum Role {
 
     SUPER_ADMIN(Set.of()),
+    HR_MANAGER(Set.of()),
     PLATFORM_ADMIN(Set.of()),
     SALES_MANAGER(Set.of()),
     SALES_AGENT(Set.of()),
