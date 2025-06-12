@@ -1,7 +1,7 @@
 package com.TreadX;
 
-import com.TreadX.user.Enum.Role;
 import com.TreadX.user.entity.User;
+import com.TreadX.user.repository.RoleRepository;
 import com.TreadX.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -30,6 +30,8 @@ public class TreadXApplication implements CommandLineRunner {
 	private String superAdminPassword = "Wassem7676.tn";
 	@Autowired
 	private UserRepository userRepository;
+    @Autowired
+    private RoleRepository roleRepository;
 
 	public static void main(String[] args) {
 		SpringApplication.run(TreadXApplication.class, args);
@@ -42,7 +44,9 @@ public class TreadXApplication implements CommandLineRunner {
 					.lastName("Tenbakji")
 					.email("wasee.tenbakji@gmail.com")
 					.password(passwordEncoder.encode(superAdminPassword))
-					.role(Role.SUPER_ADMIN)
+					.role(roleRepository.findById(1L).orElseThrow(
+							() -> new RuntimeException("No role found")
+					))
 					.build();
 			userRepository.save(superAdmin);
 			Logger logger = Logger.getLogger(TreadXApplication.class.getName());
@@ -54,7 +58,9 @@ public class TreadXApplication implements CommandLineRunner {
 					.lastName("admin")
 					.email("admin@gmail.com")
 					.password(passwordEncoder.encode(superAdminPassword))
-					.role(Role.PLATFORM_ADMIN)
+					.role(roleRepository.findById(3L).orElseThrow(
+							() -> new RuntimeException("No role found")
+					))
 					.build();
 			userRepository.save(platformAdmin);
 			logger.info("Platform admin Email: " + platformAdmin.getEmail());

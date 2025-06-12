@@ -1,6 +1,5 @@
 package com.TreadX.user.response;
 
-import com.TreadX.user.Enum.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,5 +15,5 @@ public class UserAuthenticationResponse {
     private String firstName;
     private String lastName;
 //    private String username;
-    private Role role;
+    private String role;
 } 

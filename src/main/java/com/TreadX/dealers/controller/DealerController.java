@@ -3,52 +3,55 @@ package com.TreadX.dealers.controller;
 import com.TreadX.dealers.dto.DealerRequestDTO;
 import com.TreadX.dealers.dto.DealerResponseDTO;
 import com.TreadX.dealers.service.DealerService;
-import jakarta.validation.Valid;
+import com.TreadX.user.service.AuthorizationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/dealers")
+@RequestMapping("/api/dealers")
 @RequiredArgsConstructor
 public class DealerController {
 
-    @Autowired
-    private DealerService dealerService;
+    private final DealerService dealerService;
+    private final AuthorizationService authorizationService;
 
     @GetMapping
+    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT') or hasRole('PLATFORM_ADMIN')")
     public ResponseEntity<List<DealerResponseDTO>> getAllDealers() {
-        List<DealerResponseDTO> dealers = dealerService.getAllDealers();
-        return new ResponseEntity<>(dealers, HttpStatus.OK);
+        return ResponseEntity.ok(dealerService.getAllDealers());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DealerResponseDTO> getDealerById(@PathVariable Long id) {
-        DealerResponseDTO dealer = dealerService.getDealerById(id);
-        return new ResponseEntity<>(dealer, HttpStatus.OK);
+    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT') or hasRole('PLATFORM_ADMIN')")
+    public ResponseEntity<DealerResponseDTO> getDealer(@PathVariable Long id) {
+        return ResponseEntity.ok(dealerService.getDealerById(id));
     }
 
     @PostMapping
-    public ResponseEntity<DealerResponseDTO> createDealer(@Valid @RequestBody DealerRequestDTO dealerRequestDTO) {
-        DealerResponseDTO createdDealer = dealerService.createDealer(dealerRequestDTO , null);
-        return new ResponseEntity<>(createdDealer, HttpStatus.CREATED);
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public ResponseEntity<DealerResponseDTO> createDealer(@RequestBody DealerRequestDTO dealerDTO) {
+        authorizationService.checkDealerManagementAccess();
+        return ResponseEntity.ok(dealerService.createDealer(dealerDTO, null));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
     public ResponseEntity<DealerResponseDTO> updateDealer(
             @PathVariable Long id,
-            @Valid @RequestBody DealerRequestDTO dealerRequestDTO) {
-        DealerResponseDTO updatedDealer = dealerService.updateDealer(id, dealerRequestDTO);
-        return new ResponseEntity<>(updatedDealer, HttpStatus.OK);
+            @RequestBody DealerRequestDTO dealerDTO) {
+        authorizationService.checkDealerManagementAccess();
+        return ResponseEntity.ok(dealerService.updateDealer(id, dealerDTO));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
     public ResponseEntity<Void> deleteDealer(@PathVariable Long id) {
+        authorizationService.checkDealerManagementAccess();
         dealerService.deleteDealer(id);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ResponseEntity.ok().build();
     }
 } 

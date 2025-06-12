@@ -6,60 +6,79 @@ import com.TreadX.dealers.dto.LeadsRequestDTO;
 import com.TreadX.dealers.dto.LeadsResponseDTO;
 import com.TreadX.dealers.service.ConversionService;
 import com.TreadX.dealers.service.LeadsService;
+import com.TreadX.user.service.AuthorizationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/leads")
+@RequiredArgsConstructor
 public class LeadsController {
 
-    @Autowired
-    private LeadsService leadsService;
-    @Autowired
-    private ConversionService conversionService;
+    private final LeadsService leadsService;
+    private final ConversionService conversionService;
+    private final AuthorizationService authorizationService;
 
     @GetMapping
-    public ResponseEntity<?> getAllLeads() {
+    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    public ResponseEntity<List<LeadsResponseDTO>> getAllLeads() {
         List<LeadsResponseDTO> leads = leadsService.getAllLeads();
         return new ResponseEntity<>(leads, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getLeadById(@PathVariable("id") Long id) {
-        Optional<LeadsResponseDTO> lead = Optional.ofNullable(leadsService.getLeadById(id));
-        return lead.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    @PreAuthorize("hasRole('SALES_MANAGER') or @authz.isLeadOwner(#id)")
+    public ResponseEntity<LeadsResponseDTO> getLeadById(@PathVariable("id") Long id) {
+        authorizationService.checkLeadAccess(id, "READ");
+        LeadsResponseDTO lead = leadsService.getLeadById(id);
+        return new ResponseEntity<>(lead, HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<?> createLead(@RequestBody LeadsRequestDTO lead) {
+    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    public ResponseEntity<LeadsResponseDTO> createLead(@RequestBody LeadsRequestDTO lead) {
         LeadsResponseDTO createdLead = leadsService.createLead(lead);
         return new ResponseEntity<>(createdLead, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateLead(@PathVariable("id") Long id, @RequestBody LeadsRequestDTO leadDetails) {
+    @PreAuthorize("hasRole('SALES_MANAGER') or @authz.isLeadOwner(#id)")
+    public ResponseEntity<LeadsResponseDTO> updateLead(@PathVariable("id") Long id, @RequestBody LeadsRequestDTO leadDetails) {
+        authorizationService.checkLeadAccess(id, "UPDATE");
         LeadsResponseDTO updatedLead = leadsService.updateLead(id, leadDetails);
         return new ResponseEntity<>(updatedLead, HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> deleteLead(@PathVariable("id") Long id) {
+    @PreAuthorize("hasRole('SALES_MANAGER') or @authz.isLeadOwner(#id)")
+    public ResponseEntity<Void> deleteLead(@PathVariable("id") Long id) {
+        authorizationService.checkLeadAccess(id, "DELETE");
         leadsService.deleteLead(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @PostMapping("/{id}/convert-to-contact")
-    @ResponseStatus(HttpStatus.CREATED)
-    public DealerContactResponseDTO convertToContact(
-            @PathVariable Long id,
+    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    public ResponseEntity<DealerContactResponseDTO> convertToContact(
+            @PathVariable("id") Long id,
             @RequestBody DealerContactRequestDTO request) {
-        return conversionService.convertLeadToContact(id, request);
+        authorizationService.checkContactConversionAccess();
+        DealerContactResponseDTO contact = conversionService.convertLeadToContact(id, request);
+        return new ResponseEntity<>(contact, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/{id}/convert-to-dealer")
+    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    public ResponseEntity<?> convertToDealer(
+            @PathVariable("id") Long id,
+            @RequestBody DealerContactRequestDTO request) {
+        authorizationService.checkDealerConversionAccess();
+        // TODO: Implement dealer conversion
+        return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
     }
 } 
