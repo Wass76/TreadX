@@ -33,7 +33,7 @@ services:
     ports:
       - "9003:9003"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://treadx_dp:5432/treadx
+      SPRING_DATASOURCE_URL: jdbc:postgresql://treadx-db:5432/treadx
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_DATASOURCE_DATABASE: treadx
