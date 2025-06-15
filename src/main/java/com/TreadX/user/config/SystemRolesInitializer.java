@@ -137,6 +137,7 @@ public class SystemRolesInitializer implements CommandLineRunner {
                     .description(description)
                     .isActive(true)
                     .isSystem(true)
+                    .createdBy(1L)
                     .build();
                 return roleRepository.save(newRole);
             });
