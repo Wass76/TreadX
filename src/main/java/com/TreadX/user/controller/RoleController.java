@@ -25,6 +25,7 @@ import java.util.Set;
 @RequestMapping("/api/v1/roles")
 @RequiredArgsConstructor
 @Tag(name = "Role Management", description = "APIs for managing system roles and permissions")
+@CrossOrigin("*")
 public class RoleController {
 
     private final RoleService roleService;

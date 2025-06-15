@@ -14,6 +14,7 @@ import java.util.List;
 //@RequestMapping("/api/v1/tires")
 @RequiredArgsConstructor
 @Tag(name = "Tire Management", description = "APIs for managing tires")
+@CrossOrigin("*")
 public class TireController {
     private final TireService tireService;
 

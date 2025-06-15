@@ -26,6 +26,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/addresses")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 @Tag(name = "Address Management", description = "APIs for managing addresses and location data")
 public class AddressController {
 

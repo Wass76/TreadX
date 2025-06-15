@@ -29,6 +29,7 @@ import java.util.Set;
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 @Tag(name = "User Management", description = "APIs for managing system users and their information")
+@CrossOrigin("*")
 public class UserController {
 
     private final UserService userService;

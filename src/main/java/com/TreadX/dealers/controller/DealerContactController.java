@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/contacts")
 @Tag(name = "Contacts", description = "Contacts management APIs")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class DealerContactController {
 
     private final DealerContactService dealerContactService;

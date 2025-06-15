@@ -17,6 +17,7 @@ import java.util.Optional;
 //@RestController
 //@RequestMapping("/api/employees")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class DealerEmployeeController {
 
 //    @Autowired

@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/leads")
 @Tag(name = "Leads", description = "Leads management APIs")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class LeadsController {
 
     private final LeadsService leadsService;
