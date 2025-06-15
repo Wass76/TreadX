@@ -24,21 +24,21 @@ services:
 
 # application service
 #
-#  treadx-app:
-#    build: .
-#    image: treadx-app
-#    depends_on:
-#      - treadx-db
-#    container_name: treadx-backend
-#    ports:
-#      - "3003:3003"
-#    environment:
-#      SPRING_DATASOURCE_URL: jdbc:postgresql://treadx_dp:5236/treadx
-#      SPRING_DATASOURCE_USERNAME: postgres
-#      SPRING_DATASOURCE_PASSWORD: password
-#      SPRING_DATASOURCE_DATABASE: treadx
-#    networks:
-#      - treadx-net
+  treadx-app:
+    build: .
+    image: treadx-app
+    depends_on:
+      - treadx-db
+    container_name: treadx-backend
+    ports:
+      - "9003:9003"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://treadx_dp:5432/treadx
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_DATABASE: treadx
+    networks:
+      - treadx-net
 
 networks:
   treadx-net:
