@@ -7,15 +7,20 @@ services:
     image: postgres:latest
     container_name: treadx
     environment:
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: password
-        POSTGRES_DB: treadx
-        PGDATA: /var/lib/postgresql/data
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: treadx
+      PGDATA: /var/lib/postgresql/data # This is the internal path where Postgres stores data
     ports:
-        - "5432:5432"
+      - "5432:5432"
     networks:
       - treadx-net
     restart: unless-stopped
+    volumes:
+      # Mount for SQL Initialization Scripts (for first-time setup)
+      - ./src/main/resources/db/migration:/docker-entrypoint-initdb.d
+      # Named Volume for Persistent Database Data (THIS IS CRUCIAL FOR DATA PERSISTENCE)
+      - treadx_pg_data:/var/lib/postgresql/data # Maps internal PGDATA to a named volume on the Docker host
 
 # application service
 #
@@ -38,5 +43,7 @@ services:
 networks:
   treadx-net:
     external: true
-#volumes:
-#  db-data:
+
+# Define the named volume for data persistence
+volumes:
+  treadx_pg_data: # This is the named volume that Docker manages on your host
