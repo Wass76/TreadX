@@ -124,6 +124,8 @@ public class SystemRolesInitializer implements CommandLineRunner {
             .resource(resource)
             .action(action)
             .isActive(true)
+            .isSystemGenerated(true)
+            .createdBy(1L) // Set to system user ID
             .build();
     }
 
