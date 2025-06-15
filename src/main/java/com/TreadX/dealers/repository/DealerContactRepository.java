@@ -20,5 +20,6 @@ public interface DealerContactRepository extends JpaRepository<DealerContact, Lo
     @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM DealerContact c WHERE c.id = :contactId AND c.owner.id = :userId")
     boolean isContactOwner(@Param("contactId") Long contactId, @Param("userId") Long userId);
     Page<DealerContact> findAll(Pageable pageable);
-    Page<DealerContact> findByDealerId(Long dealerId, Pageable pageable);
+    @Query("SELECT c FROM DealerContact c WHERE c.business.id = :dealerId")
+    Page<DealerContact> findByBusinessId(@Param("dealerId") Long dealerId, Pageable pageable);
 } 

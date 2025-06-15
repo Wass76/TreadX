@@ -127,7 +127,7 @@ public class DealerContactService {
     }
 
     public Page<DealerContactResponseDTO> getContactsByDealer(Long dealerId, Pageable pageable) {
-        return dealerContactRepository.findByDealerId(dealerId, pageable)
+        return dealerContactRepository.findByBusinessId(dealerId, pageable)
                 .map(dealerContactMapper::toResponse);
     }
 } 
