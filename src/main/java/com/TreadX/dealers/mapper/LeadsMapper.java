@@ -7,6 +7,7 @@ import com.TreadX.dealers.dto.LeadsRequestDTO;
 import com.TreadX.dealers.dto.LeadsResponseDTO;
 import com.TreadX.dealers.entity.Leads;
 import com.TreadX.dealers.enums.LeadSource;
+import com.TreadX.dealers.enums.LeadStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +24,7 @@ public class LeadsMapper {
                 .businessEmail(request.getBusinessEmail())
                 .phoneNumber(request.getPhoneNumber())
                 .source(request.getSource() == null ? null : request.getSource())
-                .status(request.getStatus() == null ? null : request.getStatus())
+                .status(request.getStatus() == null ? LeadStatus.NEW : request.getStatus())
                 .notes(request.getNotes())
                 .build();
     }

@@ -88,4 +88,14 @@ public class AbstractRestHandler {
         return new ResponseEntity<>(apiException,conflict);
     }
 
+    @ExceptionHandler(value = {InvalidStatusTransitionException.class})
+    public ResponseEntity<Object> handleInvalidStatusTransitionException(InvalidStatusTransitionException e){
+        HttpStatus invalidStatus = HttpStatus.BAD_REQUEST;
+        ApiException apiException = new ApiException(
+                e.getMessage(),
+                invalidStatus,
+                LocalDateTime.now()
+        );
+        return new ResponseEntity<>(apiException,invalidStatus);
+    }
 }

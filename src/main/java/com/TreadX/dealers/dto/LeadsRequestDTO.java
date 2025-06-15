@@ -3,6 +3,7 @@ package com.TreadX.dealers.dto;
 import com.TreadX.address.dto.AddressRequestDTO;
 import com.TreadX.dealers.enums.LeadSource;
 import com.TreadX.dealers.enums.LeadStatus;
+import com.TreadX.utils.annotation.ValidEnum;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -25,7 +26,9 @@ public class LeadsRequestDTO {
     @NotBlank(message = "Phone number is required")
     private String phoneNumber;
 
+    @ValidEnum(enumClass = LeadStatus.class)
     private LeadSource source;
+    @ValidEnum(enumClass = LeadStatus.class)
     private LeadStatus status;
     private String notes;
 

@@ -1,22 +1,13 @@
 package com.TreadX.dealers.service;
 
-import com.TreadX.address.dto.AddressRequestDTO;
 import com.TreadX.address.entity.Address;
-import com.TreadX.address.entity.SystemCity;
-import com.TreadX.address.entity.SystemCountry;
-import com.TreadX.address.entity.SystemProvince;
 import com.TreadX.address.mapper.AddressMapper;
-import com.TreadX.address.service.AddressService;
 import com.TreadX.dealers.dto.DealerContactRequestDTO;
 import com.TreadX.dealers.dto.DealerContactResponseDTO;
 import com.TreadX.dealers.dto.DealerRequestDTO;
 import com.TreadX.dealers.dto.DealerResponseDTO;
-import com.TreadX.dealers.entity.Dealer;
 import com.TreadX.dealers.entity.DealerContact;
 import com.TreadX.dealers.entity.Leads;
-import com.TreadX.dealers.enums.ContactStatus;
-import com.TreadX.dealers.enums.DealerStatus;
-import com.TreadX.dealers.enums.LeadStatus;
 import com.TreadX.dealers.mapper.DealerContactMapper;
 import com.TreadX.dealers.mapper.DealerMapper;
 import com.TreadX.dealers.repository.DealerContactRepository;

@@ -3,6 +3,7 @@ package com.TreadX.dealers.dto;
 import com.TreadX.address.dto.AddressRequestDTO;
 import com.TreadX.address.entity.Address;
 import com.TreadX.dealers.enums.DealerStatus;
+import com.TreadX.utils.annotation.ValidEnum;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -27,6 +28,7 @@ public class DealerRequestDTO {
     @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number format")
     private String phone;
     private Integer accessCount;
+    @ValidEnum(enumClass = DealerStatus.class)
     private DealerStatus status;
 
     // Address information
