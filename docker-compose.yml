@@ -12,7 +12,7 @@ services:
         POSTGRES_DB: treadx
         PGDATA: /var/lib/postgresql/data
     ports:
-        - "5236:5432"
+        - "5432:5432"
     networks:
       - treadx-net
     restart: unless-stopped
