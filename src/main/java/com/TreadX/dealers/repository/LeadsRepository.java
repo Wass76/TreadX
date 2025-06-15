@@ -17,6 +17,6 @@ public interface LeadsRepository extends JpaRepository<Leads, Long> {
     Boolean existsByPhoneNumber(String phoneNumber);
     Boolean existsByBusinessEmail(String businessEmail);
     Boolean existsByAddress(Address address);
-    @Query("SELECT CASE WHEN COUNT(l) > 0 THEN true ELSE false END FROM Leads l WHERE l.id = :leadId AND l.createdBy.id = :userId")
+    @Query("SELECT CASE WHEN COUNT(l) > 0 THEN true ELSE false END FROM Leads l WHERE l.id = :leadId AND l.createdBy = :userId")
     boolean isLeadOwner(@Param("leadId") Long leadId, @Param("userId") Long userId);
 }
