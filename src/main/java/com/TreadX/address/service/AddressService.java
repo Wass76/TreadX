@@ -1,7 +1,9 @@
 package com.TreadX.address.service;
 
 import com.TreadX.address.dto.AddressRequestDTO;
+import com.TreadX.address.dto.AddressResponseDTO;
 import com.TreadX.address.entity.*;
+import com.TreadX.address.mapper.AddressMapper;
 import com.TreadX.address.repository.*;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -33,6 +36,98 @@ public class AddressService {
     private final StateRepository stateRepository;
     private final CityRepository cityRepository;
     private final AddressRepository addressRepository;
+    private final AddressMapper addressMapper;
+
+    /**
+     * Get all addresses in the system
+     */
+    public List<AddressResponseDTO> getAllAddresses() {
+        return addressRepository.findAll().stream()
+                .map(addressMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all countries in the system
+     */
+    public List<SystemCountry> getAllCountries() {
+        return systemCountryRepository.findAll();
+    }
+
+    /**
+     * Get all base countries
+     */
+    public List<Country> getAllBaseCountries() {
+        return countryRepository.findAll();
+    }
+
+    /**
+     * Get all base states
+     */
+    public List<State> getAllBaseStates() {
+        return stateRepository.findAll();
+    }
+
+    /**
+     * Get all base cities
+     */
+    public List<City> getAllBaseCities() {
+        return cityRepository.findAll();
+    }
+
+    /**
+     * Get all base cities for a specific province/state
+     */
+    public List<City> getBaseCitiesByProvince(Long provinceId) {
+        State state = stateRepository.findById(provinceId)
+                .orElseThrow(() -> new ResourceNotFoundException("State not found with id: " + provinceId));
+        return cityRepository.findByState(state);
+    }
+
+    /**
+     * Get all base cities for a specific country
+     */
+    public List<City> getBaseCitiesByCountry(Long countryId) {
+        Country country = countryRepository.findById(countryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Country not found with id: " + countryId));
+        return cityRepository.findByCountry(country);
+    }
+
+    /**
+     * Get all base provinces/states for a specific country
+     */
+    public List<State> getBaseProvincesByCountry(Long countryId) {
+        Country country = countryRepository.findById(countryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Country not found with id: " + countryId));
+        return stateRepository.findByCountry(country);
+    }
+
+    /**
+     * Get all provinces/states for a specific country
+     */
+    public List<SystemProvince> getProvincesByCountry(Long countryId) {
+        SystemCountry country = systemCountryRepository.findById(countryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Country not found with id: " + countryId));
+        return systemProvinceRepository.findBySystemCountry(country);
+    }
+
+    /**
+     * Get all cities for a specific province/state
+     */
+    public List<SystemCity> getCitiesByProvince(Long provinceId) {
+        SystemProvince province = systemProvinceRepository.findById(provinceId)
+                .orElseThrow(() -> new ResourceNotFoundException("Province not found with id: " + provinceId));
+        return systemCityRepository.findBySystemProvince(province);
+    }
+
+    /**
+     * Get all cities for a specific country
+     */
+    public List<SystemCity> getCitiesByCountry(Long countryId) {
+        SystemCountry country = systemCountryRepository.findById(countryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Country not found with id: " + countryId));
+        return systemCityRepository.findBySystemCountry(country);
+    }
 
     /**
      * Creates a new address or returns an existing one based on the provided DTO.

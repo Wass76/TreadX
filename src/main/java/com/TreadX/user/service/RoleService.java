@@ -1,9 +1,11 @@
 package com.TreadX.user.service;
 
+import com.TreadX.user.dto.RoleRequestDTO;
 import com.TreadX.user.entity.Permission;
 import com.TreadX.user.entity.Role;
 import com.TreadX.user.repository.PermissionRepository;
 import com.TreadX.user.repository.RoleRepository;
+import com.TreadX.utils.exception.ResourceNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,15 +32,33 @@ public class RoleService {
     }
 
     @Transactional
-    public Role createRole(Role role) {
-        if (roleRepository.existsByName(role.getName())) {
-            throw new IllegalArgumentException("Role with name " + role.getName() + " already exists");
+    public Role createRole(RoleRequestDTO requestDTO) {
+        if (roleRepository.existsByName(requestDTO.getName())) {
+            throw new IllegalArgumentException("Role with name " + requestDTO.getName() + " already exists");
         }
-        return roleRepository.save(role);
+        Role roleEntity = new Role();
+        roleEntity.setName(requestDTO.getName());
+        roleEntity.setDescription(requestDTO.getDescription());
+        roleEntity.setActive(requestDTO.getIsActive());
+        roleEntity.setPermissions(
+                requestDTO.getPermissionIds()
+                        .stream()
+                        .map(id -> permissionRepository.findById(id)
+                                .orElseThrow(
+                                        () -> new EntityNotFoundException("Permission not found with id: " + id)))
+                .collect(Collectors.toSet())
+        );
+        return roleRepository.save(roleEntity);
+    }
+
+    public List<String> getPermissionsByRoleId(Long id) {
+        return roleRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("Role not exist with Id: " + id)
+            ).getPermissions().stream().map(permission -> permission.getName()).collect(Collectors.toList());
     }
 
     @Transactional
-    public Role updateRole(Long id, Role roleDetails) {
+    public Role updateRole(Long id, RoleRequestDTO roleDetails) {
         Role role = getRoleById(id);
         
         if (role.isSystem()) {
@@ -52,7 +72,7 @@ public class RoleService {
         
         role.setName(roleDetails.getName());
         role.setDescription(roleDetails.getDescription());
-        role.setActive(roleDetails.isActive());
+        role.setActive(roleDetails.getIsActive());
         
         return roleRepository.save(role);
     }

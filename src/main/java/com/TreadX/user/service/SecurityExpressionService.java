@@ -7,18 +7,26 @@ import com.TreadX.user.entity.User;
 import com.TreadX.user.repository.UserRepository;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service("authz")
-@RequiredArgsConstructor
-public class SecurityExpressionService {
+public class SecurityExpressionService extends BaseSecurityService {
 
-    private final UserRepository userRepository;
-    private final LeadsRepository leadsRepository;
-    private final DealerContactRepository dealerContactRepository;
-    private final DealerRepository dealerRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private LeadsRepository leadsRepository;
+    @Autowired
+    private DealerContactRepository dealerContactRepository;
+    @Autowired
+    private DealerRepository dealerRepository;
+
+    public SecurityExpressionService(UserRepository userRepository) {
+        super(userRepository);
+    }
 
     /**
      * Checks if the current user is a Sales Manager
@@ -65,11 +73,33 @@ public class SecurityExpressionService {
     }
 
     /**
-     * Helper method to get current user
+     * Checks if the current user is the same as the requested user
+     * @param userId ID of the user to check against
+     * @return true if the current user is the same as the requested user
      */
-    private User getCurrentUser() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    public boolean isCurrentUser(Long userId) {
+        User currentUser = getCurrentUser();
+        return currentUser.getId().equals(userId);
+    }
+
+    /**
+     * Checks if the current user has a specific permission
+     * @param permissionName The permission to check for
+     * @return true if the user has the permission
+     */
+    public boolean hasPermission(String permissionName) {
+        User currentUser = getCurrentUser();
+        
+        // Check role permissions
+        boolean hasRolePermission = currentUser.getRole().getPermissions().stream()
+                .anyMatch(permission -> permission.getName().equals(permissionName));
+        
+        if (hasRolePermission) {
+            return true;
+        }
+        
+        // Check additional permissions
+        return currentUser.getAdditionalPermissions().stream()
+                .anyMatch(permission -> permission.getName().equals(permissionName));
     }
 } 

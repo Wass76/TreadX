@@ -7,137 +7,143 @@ import com.TreadX.user.entity.User;
 import com.TreadX.user.repository.UserRepository;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
-public class AuthorizationService {
+public class AuthorizationService extends BaseSecurityService {
 
-    private final UserRepository userRepository;
-    private final LeadsRepository leadsRepository;
-    private final DealerContactRepository dealerContactRepository;
-    private final DealerRepository dealerRepository;
+    @Autowired
+    private LeadsRepository leadsRepository;
+    @Autowired
+    private DealerContactRepository dealerContactRepository;
+    @Autowired
+    private DealerRepository dealerRepository;
+
+    public AuthorizationService(
+            UserRepository userRepository,
+            LeadsRepository leadsRepository,
+            DealerContactRepository dealerContactRepository,
+            DealerRepository dealerRepository) {
+        super(userRepository);
+        this.leadsRepository = leadsRepository;
+        this.dealerContactRepository = dealerContactRepository;
+        this.dealerRepository = dealerRepository;
+    }
 
     /**
      * Checks if the current user has access to a lead
      * @param leadId ID of the lead to check access for
      * @param operation Type of operation (READ, UPDATE, DELETE)
+     * @return true if the user has access
      */
-    public void checkLeadAccess(Long leadId, String operation) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        // Get the lead
-        var lead = leadsRepository.findById(leadId)
-                .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + leadId));
-
-        // Sales Manager has full access
-        if (currentUser.getRole().getName().equals("SALES_MANAGER")) {
-            return;
+    public boolean hasAccessToLead(Long leadId, String operation) {
+        User currentUser = getCurrentUser();
+        
+        // Platform admin has full access
+        if (isAdmin()) {
+            return true;
         }
-
-        // Sales Agent can only access their own leads
-        if (currentUser.getRole().getName().equals("SALES_AGENT")) {
-            if (!lead.getCreatedBy().equals(currentUser.getId())) {
-                throw new AccessDeniedException("You don't have permission to " + operation + " this lead");
-            }
+        
+        // Sales manager has full access
+        if (hasRole("SALES_MANAGER")) {
+            return true;
         }
+        
+        // Sales agent can only access their own leads
+        if (hasRole("SALES_AGENT")) {
+            return leadsRepository.findById(leadId)
+                    .map(lead -> lead.getCreatedBy().equals(currentUser.getId()))
+                    .orElse(false);
+        }
+        
+        return false;
     }
 
     /**
-     * Checks if the current user has access to a contact
+     * Checks if the current user has access to a dealer contact
      * @param contactId ID of the contact to check access for
      * @param operation Type of operation (READ, UPDATE, DELETE)
+     * @return true if the user has access
      */
-    public void checkContactAccess(Long contactId, String operation) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        // Get the contact
-        var contact = dealerContactRepository.findById(contactId)
-                .orElseThrow(() -> new ResourceNotFoundException("Contact not found with id: " + contactId));
-
-        // Sales Manager has full access
-        if (currentUser.getRole().getName().equals("SALES_MANAGER")) {
-            return;
+    public boolean hasAccessToDealerContact(Long contactId, String operation) {
+        User currentUser = getCurrentUser();
+        
+        // Platform admin has full access
+        if (isAdmin()) {
+            return true;
         }
-
-        // Sales Agent can only access their own contacts
-        if (currentUser.getRole().getName().equals("SALES_AGENT")) {
-            if (!contact.getOwner().getId().equals(currentUser.getId())) {
-                throw new AccessDeniedException("You don't have permission to " + operation + " this contact");
-            }
+        
+        // Sales manager has full access
+        if (hasRole("SALES_MANAGER")) {
+            return true;
         }
+        
+        // Sales agent can only access contacts they created
+        if (hasRole("SALES_AGENT")) {
+            return dealerContactRepository.findById(contactId)
+                    .map(contact -> contact.getCreatedBy().equals(currentUser.getId()))
+                    .orElse(false);
+        }
+        
+        return false;
     }
 
     /**
      * Checks if the current user has access to a dealer
      * @param dealerId ID of the dealer to check access for
      * @param operation Type of operation (READ, UPDATE, DELETE)
+     * @return true if the user has access
      */
-    public void checkDealerAccess(Long dealerId, String operation) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        User currentUser = userRepository.findByEmail(auth.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        // Get the dealer
-        var dealer = dealerRepository.findById(dealerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + dealerId));
-
-        // Platform Admin has full access
-        if (currentUser.getRole().getName().equals("PLATFORM_ADMIN")) {
-            return;
+    public boolean hasAccessToDealer(Long dealerId, String operation) {
+        User currentUser = getCurrentUser();
+        
+        // Platform admin has full access
+        if (isAdmin()) {
+            return true;
         }
-
-        // Sales Manager and Sales Agent can only read dealers
-        if (currentUser.getRole().getName().equals("SALES_MANAGER") || currentUser.getRole().getName().equals("SALES_AGENT")) {
-            if (!operation.equals("READ")) {
-                throw new AccessDeniedException("You don't have permission to " + operation + " dealers");
-            }
+        
+        // Sales manager has full access
+        if (hasRole("SALES_MANAGER")) {
+            return true;
         }
+        
+        // Sales agent can only access dealers they created
+        if (hasRole("SALES_AGENT")) {
+            return dealerRepository.findById(dealerId)
+                    .map(dealer -> dealer.getCreatedBy().equals(currentUser.getId()))
+                    .orElse(false);
+        }
+        
+        return false;
     }
 
     /**
      * Checks if the current user has permission to convert leads to contacts
+     * @return true if the user has permission
      */
-    public void checkContactConversionAccess() {
-        User currentUser = userRepository.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        // Only Sales Manager and Sales Agent can convert leads to contacts
-        if (!currentUser.getRole().getName().equals("SALES_MANAGER") && !currentUser.getRole().getName().equals("SALES_AGENT")) {
-            throw new AccessDeniedException("Only Sales Manager and Sales Agent can convert leads to contacts");
-        }
+    public boolean hasContactConversionAccess() {
+        User currentUser = getCurrentUser();
+        return hasRole("SALES_MANAGER") || hasRole("SALES_AGENT");
     }
 
     /**
      * Checks if the current user has permission to convert leads to dealers
+     * @return true if the user has permission
      */
-    public void checkDealerConversionAccess() {
-        User currentUser = userRepository.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        // Only Sales Manager and Sales Agent can convert leads to dealers
-        if (!currentUser.getRole().getName().equals("SALES_MANAGER") && !currentUser.getRole().getName().equals("SALES_AGENT")) {
-            throw new AccessDeniedException("Only Sales Manager and Sales Agent can convert leads to dealers");
-        }
+    public boolean hasDealerConversionAccess() {
+        User currentUser = getCurrentUser();
+        return hasRole("SALES_MANAGER") || hasRole("SALES_AGENT");
     }
 
     /**
-     * Checks if the current user has permission to manage dealers
+     * Checks if the current user is the same as the requested user
+     * @param userId ID of the user to check against
+     * @return true if the current user is the same as the requested user
      */
-    public void checkDealerManagementAccess() {
-        User currentUser = userRepository.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        
-        // Only Platform Admin can manage dealers
-        if (!currentUser.getRole().getName().equals("PLATFORM_ADMIN")) {
-            throw new AccessDeniedException("Only Platform Admin can manage dealers");
-        }
+    public boolean isCurrentUser(Long userId) {
+        User currentUser = getCurrentUser();
+        return currentUser.getId().equals(userId);
     }
 } 

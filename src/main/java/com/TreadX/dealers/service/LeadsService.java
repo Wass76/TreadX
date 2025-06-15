@@ -14,6 +14,8 @@ import com.TreadX.utils.exception.ResourceNotFoundException;
 import com.TreadX.utils.exception.InvalidStatusTransitionException;
 import com.TreadX.address.service.AddressService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -116,10 +118,9 @@ public class LeadsService {
         return leadsMapper.toResponse(leads);
     }
 
-    public List<LeadsResponseDTO> getAllLeads() {
-        return leadsRepository.findAll().stream()
-                .map(leadsMapper::toResponse)
-                .collect(Collectors.toList());
+    public Page<LeadsResponseDTO> getAllLeads(Pageable pageable) {
+        return leadsRepository.findAll(pageable)
+                .map(leadsMapper::toResponse);
     }
 
     public List<LeadsResponseDTO> getLeadsByDealer(Long dealerId) {

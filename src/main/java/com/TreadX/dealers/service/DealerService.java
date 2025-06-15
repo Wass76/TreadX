@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,10 +68,9 @@ public class DealerService {
         return dealerMapper.toResponse(savedDealer);
     }
 
-    public List<DealerResponseDTO> getAllDealers() {
-        return dealerRepository.findAll().stream()
-                .map(dealerMapper::toResponse)
-                .collect(Collectors.toList());
+    public Page<DealerResponseDTO> getAllDealers(Pageable pageable) {
+        return dealerRepository.findAll(pageable)
+                .map(dealerMapper::toResponse);
     }
 
     public DealerResponseDTO getDealerById(Long id) {
@@ -117,5 +118,10 @@ public class DealerService {
             throw new ResourceNotFoundException("Dealer not found with id: " + id);
         }
         dealerRepository.deleteById(id);
+    }
+
+    public Page<DealerResponseDTO> searchDealers(String query, Pageable pageable) {
+        return dealerRepository.searchDealers(query, pageable)
+                .map(dealerMapper::toResponse);
     }
 } 

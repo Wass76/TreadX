@@ -3,10 +3,8 @@ package com.TreadX.dealers.service;
 import com.TreadX.address.entity.Address;
 import com.TreadX.dealers.dto.DealerContactRequestDTO;
 import com.TreadX.dealers.dto.DealerContactResponseDTO;
-import com.TreadX.dealers.entity.Dealer;
 import com.TreadX.dealers.entity.DealerContact;
 import com.TreadX.dealers.entity.Leads;
-import com.TreadX.dealers.enums.ContactStatus;
 import com.TreadX.dealers.mapper.DealerContactMapper;
 import com.TreadX.dealers.repository.DealerContactRepository;
 import com.TreadX.dealers.repository.DealerRepository;
@@ -17,6 +15,8 @@ import com.TreadX.utils.exception.ResourceNotFoundException;
 import com.TreadX.address.service.AddressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +38,7 @@ public class DealerContactService {
     private LeadsRepository leadsRepository;
 
     @Transactional
-    public DealerContactResponseDTO createDealerContact(DealerContactRequestDTO request) {
+    public DealerContactResponseDTO createContact(DealerContactRequestDTO request) {
 
         // Create address if provided
         Address address = null;
@@ -74,7 +74,7 @@ public class DealerContactService {
     }
 
     @Transactional
-    public DealerContactResponseDTO updateDealerContact(Long id, DealerContactRequestDTO request) {
+    public DealerContactResponseDTO updateContact(Long id, DealerContactRequestDTO request) {
         DealerContact dealerContact = dealerContactRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Dealer Contact not found with id: " + id));
 
@@ -101,29 +101,33 @@ public class DealerContactService {
         return dealerContactMapper.toResponse(dealerContact);
     }
 
-    public DealerContactResponseDTO getDealerContactById(Long id) {
-        DealerContact dealerContact = dealerContactRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Dealer Contact not found with id: " + id));
-        return dealerContactMapper.toResponse(dealerContact);
-    }
-
-    public List<DealerContactResponseDTO> getAllDealerContacts() {
-        return dealerContactRepository.findAll().stream()
-                .map(dealerContactMapper::toResponse)
-                .collect(Collectors.toList());
-    }
-
     public List<DealerContactResponseDTO> getDealerContactsByDealer(Long dealerId) {
         return dealerContactRepository.findByBusinessId(dealerId).stream()
                 .map(dealerContactMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
+    public Page<DealerContactResponseDTO> getAllContacts(Pageable pageable) {
+        return dealerContactRepository.findAll(pageable)
+                .map(dealerContactMapper::toResponse);
+    }
+
+    public DealerContactResponseDTO getContactById(Long id) {
+        DealerContact contact = dealerContactRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Contact not found with id: " + id));
+        return dealerContactMapper.toResponse(contact);
+    }
+
     @Transactional
-    public void deleteDealerContact(Long id) {
+    public void deleteContact(Long id) {
         if (!dealerContactRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Dealer Contact not found with id: " + id);
+            throw new ResourceNotFoundException("Contact not found with id: " + id);
         }
         dealerContactRepository.deleteById(id);
+    }
+
+    public Page<DealerContactResponseDTO> getContactsByDealer(Long dealerId, Pageable pageable) {
+        return dealerContactRepository.findByDealerId(dealerId, pageable)
+                .map(dealerContactMapper::toResponse);
     }
 } 

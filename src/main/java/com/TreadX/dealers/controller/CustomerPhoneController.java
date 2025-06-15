@@ -10,38 +10,38 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/v1/customer-phones")
+//@RestController
+//@RequestMapping("/api/v1/customer-phones")
 @RequiredArgsConstructor
 public class CustomerPhoneController {
 
     private final CustomerPhoneService customerPhoneService;
 
-    @GetMapping
+//    @GetMapping
     public ResponseEntity<List<CustomerPhoneResponseDTO>> getAllCustomerPhones() {
         List<CustomerPhoneResponseDTO> phones = customerPhoneService.getAllCustomerPhones();
         return new ResponseEntity<>(phones, HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
+//    @GetMapping("/{id}")
     public ResponseEntity<CustomerPhoneResponseDTO> getCustomerPhoneById(@PathVariable("id") Long id) {
         CustomerPhoneResponseDTO phone = customerPhoneService.getCustomerPhoneById(id);
         return new ResponseEntity<>(phone, HttpStatus.OK);
     }
 
-    @GetMapping("/customer/{customerId}")
+//    @GetMapping("/customer/{customerId}")
     public ResponseEntity<List<CustomerPhoneResponseDTO>> getCustomerPhonesByCustomer(@PathVariable("customerId") Long customerId) {
         List<CustomerPhoneResponseDTO> phones = customerPhoneService.getCustomerPhonesByCustomer(customerId);
         return new ResponseEntity<>(phones, HttpStatus.OK);
     }
 
-    @PostMapping
+//    @PostMapping
     public ResponseEntity<CustomerPhoneResponseDTO> createCustomerPhone(@RequestBody CustomerPhoneRequestDTO request) {
         CustomerPhoneResponseDTO createdPhone = customerPhoneService.createCustomerPhone(request);
         return new ResponseEntity<>(createdPhone, HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
+//    @PutMapping("/{id}")
     public ResponseEntity<CustomerPhoneResponseDTO> updateCustomerPhone(
             @PathVariable("id") Long id,
             @RequestBody CustomerPhoneRequestDTO request) {
@@ -49,7 +49,7 @@ public class CustomerPhoneController {
         return new ResponseEntity<>(updatedPhone, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{id}")
+//    @DeleteMapping("/{id}")
     public ResponseEntity<HttpStatus> deleteCustomerPhone(@PathVariable("id") Long id) {
         customerPhoneService.deleteCustomerPhone(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

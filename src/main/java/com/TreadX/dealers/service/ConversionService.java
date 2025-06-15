@@ -70,7 +70,7 @@ public class ConversionService {
         request.setOwner(request.getOwner() != null ? request.getOwner() : lead.getCreatedBy());
         request.setConvertedFromLeadId(leadId);
 
-        return dealerContactService.createDealerContact(request);
+        return dealerContactService.createContact(request);
     }
 
     /**

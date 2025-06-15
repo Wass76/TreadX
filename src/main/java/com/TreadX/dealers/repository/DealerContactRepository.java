@@ -2,6 +2,8 @@ package com.TreadX.dealers.repository;
 
 import com.TreadX.address.entity.Address;
 import com.TreadX.dealers.entity.DealerContact;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,4 +19,6 @@ public interface DealerContactRepository extends JpaRepository<DealerContact, Lo
     boolean existsByAddress(Address address);
     @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM DealerContact c WHERE c.id = :contactId AND c.owner.id = :userId")
     boolean isContactOwner(@Param("contactId") Long contactId, @Param("userId") Long userId);
+    Page<DealerContact> findAll(Pageable pageable);
+    Page<DealerContact> findByDealerId(Long dealerId, Pageable pageable);
 } 

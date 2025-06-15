@@ -1,6 +1,6 @@
 package com.TreadX.user.entity;
 
-import com.TreadX.utils.entity.BaseEntity;
+import com.TreadX.utils.entity.AuditedEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Permission extends BaseEntity {
+public class Permission extends AuditedEntity {
     
     @Column(nullable = false, unique = true)
     private String name;
@@ -31,4 +31,12 @@ public class Permission extends BaseEntity {
     
     @Column(nullable = false)
     private boolean isActive;
+
+    @Column(nullable = false)
+    private boolean isSystemGenerated;
+
+    @Override
+    protected String getSequenceName() {
+        return "permissions_id_seq";
+    }
 } 

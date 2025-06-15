@@ -1,9 +1,12 @@
 package com.TreadX.user.service;
 
 import com.TreadX.user.dto.UserCreateRequestDTO;
+import com.TreadX.user.dto.UserRequestDTO;
+import com.TreadX.user.dto.UserResponseDTO;
 import com.TreadX.user.entity.Permission;
 import com.TreadX.user.entity.Role;
 import com.TreadX.user.entity.User;
+import com.TreadX.user.mapper.UserMapper;
 import com.TreadX.user.repository.PermissionRepository;
 import com.TreadX.user.repository.RoleRepository;
 import com.TreadX.user.repository.UserRepository;
@@ -35,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,11 +54,12 @@ public class UserService {
     private final JwtService jwtService;
     private final RateLimiterConfig rateLimiterConfig;
     private final RateLimiterRegistry rateLimiterRegistry;
+    private final UserMapper userMapper;
 
     @Autowired
     private ObjectsValidator<AuthenticationRequest> authenticationRequestValidator;
 
-    public User createUser(UserCreateRequestDTO request) {
+    public UserResponseDTO createUser(UserCreateRequestDTO request) {
         User creator = getCurrentUser();
         Role targetRole = roleRepository.findById(request.getRoleId())
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + request.getRoleId()));
@@ -74,7 +79,7 @@ public class UserService {
             user.setAdditionalPermissions(permissions);
         }
         
-        return userRepository.save(user);
+        return userMapper.toResponse(userRepository.save(user));
     }
     
     private void validateUserCreation(Role targetRole, Role creatorRole) {
@@ -97,25 +102,59 @@ public class UserService {
         throw new AccessDeniedException("Only PLATFORM_ADMIN and SALES_MANAGER can create users");
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserResponseDTO> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(userMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
-    public Optional<User> getUserById(Long id) {
-        return userRepository.findById(id);
+    public UserResponseDTO getUserById(Long id) {
+        return userRepository.findById(id)
+                .map(userMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
     }
 
-    public User updateUser(Long id, User userDetails) {
+    public UserResponseDTO updateUser(Long id, UserRequestDTO userDetails) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        
+        Role targetRole = roleRepository.findById(userDetails.getRoleId())
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + userDetails.getRoleId()));
+        
+        validateUserUpdate(targetRole, user.getRole());
         
         user.setFirstName(userDetails.getFirstName());
         user.setLastName(userDetails.getLastName());
         user.setEmail(userDetails.getEmail());
-        user.setRole(userDetails.getRole());
+        user.setRole(targetRole);
         user.setPosition(userDetails.getPosition());
         
-        return userRepository.save(user);
+        if (userDetails.getPermissionIds() != null) {
+            Set<Permission> permissions = new HashSet<>(permissionRepository.findAllById(userDetails.getPermissionIds()));
+            user.setAdditionalPermissions(permissions);
+        }
+        
+        return userMapper.toResponse(userRepository.save(user));
+    }
+
+    private void validateUserUpdate(Role targetRole, Role currentRole) {
+        // Platform Admin can update any role except another Platform Admin
+        if (currentRole.getName().equals("PLATFORM_ADMIN")) {
+            if (targetRole.getName().equals("PLATFORM_ADMIN")) {
+                throw new AccessDeniedException("Cannot update to Platform Admin role");
+            }
+            return;
+        }
+        
+        // Sales Manager can only update to Sales Agent
+        if (currentRole.getName().equals("SALES_MANAGER")) {
+            if (!targetRole.getName().equals("SALES_AGENT")) {
+                throw new AccessDeniedException("Sales manager can only update to SALES_AGENT role");
+            }
+            return;
+        }
+        
+        throw new AccessDeniedException("Only PLATFORM_ADMIN and SALES_MANAGER can update users");
     }
 
     public void deleteUser(Long id) {
@@ -174,11 +213,11 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
     }
 
-    public User updateUserPermissions(Long userId, Set<Long> permissionIds) {
-        User user = getUserById(userId)
+    public UserResponseDTO updateUserPermissions(Long userId, Set<Long> permissionIds) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         Set<Permission> permissions = new HashSet<>(permissionRepository.findAllById(permissionIds));
         user.setAdditionalPermissions(permissions);
-        return userRepository.save(user);
+        return userMapper.toResponse(userRepository.save(user));
     }
 } 
