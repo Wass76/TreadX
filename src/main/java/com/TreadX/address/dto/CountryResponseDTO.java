@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -12,4 +14,7 @@ import lombok.NoArgsConstructor;
 public class CountryResponseDTO {
     private Long id;
     private String name;
+    private String iso3;
+    private BigDecimal latitude;
+    private BigDecimal longitude;
 }

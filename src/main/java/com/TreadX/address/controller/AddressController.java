@@ -2,6 +2,9 @@ package com.TreadX.address.controller;
 
 import com.TreadX.address.dto.AddressRequestDTO;
 import com.TreadX.address.dto.AddressResponseDTO;
+import com.TreadX.address.dto.CountryResponseDTO;
+import com.TreadX.address.dto.StateResponseDTO;
+import com.TreadX.address.dto.CityResponseDTO;
 import com.TreadX.address.entity.City;
 import com.TreadX.address.entity.Country;
 import com.TreadX.address.entity.State;
@@ -72,11 +75,11 @@ public class AddressController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved all base countries",
             content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = Country.class))),
+            schema = @Schema(implementation = CountryResponseDTO.class))),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<?> getAllBaseCountries() {
-        List<Country> countries = addressService.getAllBaseCountries();
+    public ResponseEntity<List<CountryResponseDTO>> getAllBaseCountries() {
+        List<CountryResponseDTO> countries = addressService.getAllBaseCountries();
         return new ResponseEntity<>(countries, HttpStatus.OK);
     }
 
@@ -88,11 +91,11 @@ public class AddressController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved all base states",
             content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = State.class))),
+            schema = @Schema(implementation = StateResponseDTO.class))),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<?> getAllBaseStates() {
-        List<State> states = addressService.getAllBaseStates();
+    public ResponseEntity<List<StateResponseDTO>> getAllBaseStates() {
+        List<StateResponseDTO> states = addressService.getAllBaseStates();
         return new ResponseEntity<>(states, HttpStatus.OK);
     }
 
@@ -104,11 +107,11 @@ public class AddressController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved all base cities",
             content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = City.class))),
+            schema = @Schema(implementation = CityResponseDTO.class))),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<?> getAllBaseCities() {
-        List<City> cities = addressService.getAllBaseCities();
+    public ResponseEntity<List<CityResponseDTO>> getAllBaseCities() {
+        List<CityResponseDTO> cities = addressService.getAllBaseCities();
         return new ResponseEntity<>(cities, HttpStatus.OK);
     }
 
@@ -120,13 +123,13 @@ public class AddressController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved cities for the province",
             content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = City.class))),
+            schema = @Schema(implementation = CityResponseDTO.class))),
         @ApiResponse(responseCode = "404", description = "Province not found"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<?> getBaseCitiesByProvince(
+    public ResponseEntity<List<CityResponseDTO>> getBaseCitiesByProvince(
             @Parameter(description = "ID of the province/state", required = true) @PathVariable("provinceId") Long provinceId) {
-        List<City> cities = addressService.getBaseCitiesByProvince(provinceId);
+        List<CityResponseDTO> cities = addressService.getBaseCitiesByProvince(provinceId);
         return new ResponseEntity<>(cities, HttpStatus.OK);
     }
 
@@ -138,13 +141,13 @@ public class AddressController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved cities for the country",
             content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = City.class))),
+            schema = @Schema(implementation = CityResponseDTO.class))),
         @ApiResponse(responseCode = "404", description = "Country not found"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<?> getBaseCitiesByCountry(
+    public ResponseEntity<List<CityResponseDTO>> getBaseCitiesByCountry(
             @Parameter(description = "ID of the country", required = true) @PathVariable("countryId") Long countryId) {
-        List<City> cities = addressService.getBaseCitiesByCountry(countryId);
+        List<CityResponseDTO> cities = addressService.getBaseCitiesByCountry(countryId);
         return new ResponseEntity<>(cities, HttpStatus.OK);
     }
 
@@ -156,13 +159,13 @@ public class AddressController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved provinces for the country",
             content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = State.class))),
+            schema = @Schema(implementation = StateResponseDTO.class))),
         @ApiResponse(responseCode = "404", description = "Country not found"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<?> getBaseProvincesByCountry(
+    public ResponseEntity<List<StateResponseDTO>> getBaseProvincesByCountry(
             @Parameter(description = "ID of the country", required = true) @PathVariable("countryId") Long countryId) {
-        List<State> provinces = addressService.getBaseProvincesByCountry(countryId);
+        List<StateResponseDTO> provinces = addressService.getBaseProvincesByCountry(countryId);
         return new ResponseEntity<>(provinces, HttpStatus.OK);
     }
 

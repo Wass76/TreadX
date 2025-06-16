@@ -2,6 +2,9 @@ package com.TreadX.address.service;
 
 import com.TreadX.address.dto.AddressRequestDTO;
 import com.TreadX.address.dto.AddressResponseDTO;
+import com.TreadX.address.dto.CountryResponseDTO;
+import com.TreadX.address.dto.StateResponseDTO;
+import com.TreadX.address.dto.CityResponseDTO;
 import com.TreadX.address.entity.*;
 import com.TreadX.address.mapper.AddressMapper;
 import com.TreadX.address.repository.*;
@@ -57,49 +60,106 @@ public class AddressService {
     /**
      * Get all base countries
      */
-    public List<Country> getAllBaseCountries() {
-        return countryRepository.findAll();
+    public List<CountryResponseDTO> getAllBaseCountries() {
+        return countryRepository.findAll().stream()
+                .map(country -> CountryResponseDTO.builder()
+                        .id(country.getId())
+                        .name(country.getName())
+                        .iso3(country.getIso3())
+                        .latitude(country.getLatitude())
+                        .longitude(country.getLongitude())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     /**
      * Get all base states
      */
-    public List<State> getAllBaseStates() {
-        return stateRepository.findAll();
+    public List<StateResponseDTO> getAllBaseStates() {
+        return stateRepository.findAll().stream()
+                .map(state -> StateResponseDTO.builder()
+                        .id(state.getId())
+                        .name(state.getName())
+                        .type(state.getType())
+                        .countryId(state.getCountry() != null ? state.getCountry().getId() : null)
+                        .countryName(state.getCountry() != null ? state.getCountry().getName() : null)
+                        .build())
+                .collect(Collectors.toList());
     }
 
     /**
      * Get all base cities
      */
-    public List<City> getAllBaseCities() {
-        return cityRepository.findAll();
+    public List<CityResponseDTO> getAllBaseCities() {
+        return cityRepository.findAll().stream()
+                .map(city -> CityResponseDTO.builder()
+                        .id(city.getId())
+                        .name(city.getName())
+                        .latitude(city.getLatitude())
+                        .longitude(city.getLongitude())
+                        .stateId(city.getState() != null ? city.getState().getId() : null)
+                        .stateName(city.getState() != null ? city.getState().getName() : null)
+                        .countryId(city.getCountry() != null ? city.getCountry().getId() : null)
+                        .countryName(city.getCountry() != null ? city.getCountry().getName() : null)
+                        .build())
+                .collect(Collectors.toList());
     }
 
     /**
      * Get all base cities for a specific province/state
      */
-    public List<City> getBaseCitiesByProvince(Long provinceId) {
+    public List<CityResponseDTO> getBaseCitiesByProvince(Long provinceId) {
         State state = stateRepository.findById(provinceId)
                 .orElseThrow(() -> new ResourceNotFoundException("State not found with id: " + provinceId));
-        return cityRepository.findByState(state);
+        return cityRepository.findByState(state).stream()
+                .map(city -> CityResponseDTO.builder()
+                        .id(city.getId())
+                        .name(city.getName())
+                        .latitude(city.getLatitude())
+                        .longitude(city.getLongitude())
+                        .stateId(city.getState() != null ? city.getState().getId() : null)
+                        .stateName(city.getState() != null ? city.getState().getName() : null)
+                        .countryId(city.getCountry() != null ? city.getCountry().getId() : null)
+                        .countryName(city.getCountry() != null ? city.getCountry().getName() : null)
+                        .build())
+                .collect(Collectors.toList());
     }
 
     /**
      * Get all base cities for a specific country
      */
-    public List<City> getBaseCitiesByCountry(Long countryId) {
+    public List<CityResponseDTO> getBaseCitiesByCountry(Long countryId) {
         Country country = countryRepository.findById(countryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Country not found with id: " + countryId));
-        return cityRepository.findByCountry(country);
+        return cityRepository.findByCountry(country).stream()
+                .map(city -> CityResponseDTO.builder()
+                        .id(city.getId())
+                        .name(city.getName())
+                        .latitude(city.getLatitude())
+                        .longitude(city.getLongitude())
+                        .stateId(city.getState() != null ? city.getState().getId() : null)
+                        .stateName(city.getState() != null ? city.getState().getName() : null)
+                        .countryId(city.getCountry() != null ? city.getCountry().getId() : null)
+                        .countryName(city.getCountry() != null ? city.getCountry().getName() : null)
+                        .build())
+                .collect(Collectors.toList());
     }
 
     /**
      * Get all base provinces/states for a specific country
      */
-    public List<State> getBaseProvincesByCountry(Long countryId) {
+    public List<StateResponseDTO> getBaseProvincesByCountry(Long countryId) {
         Country country = countryRepository.findById(countryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Country not found with id: " + countryId));
-        return stateRepository.findByCountry(country);
+        return stateRepository.findByCountry(country).stream()
+                .map(state -> StateResponseDTO.builder()
+                        .id(state.getId())
+                        .name(state.getName())
+                        .type(state.getType())
+                        .countryId(state.getCountry() != null ? state.getCountry().getId() : null)
+                        .countryName(state.getCountry() != null ? state.getCountry().getName() : null)
+                        .build())
+                .collect(Collectors.toList());
     }
 
     /**
