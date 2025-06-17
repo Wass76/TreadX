@@ -79,11 +79,11 @@ public class SystemRolesInitializer implements CommandLineRunner {
 
     private void createSystemRoles(Map<String, Permission> permissions) {
         // Platform Admin role with all permissions
-        createSystemRole("PLATFORM_ADMIN", "Platform Administrator", 
+        createSystemRole(RoleConstants.PLATFORM_ADMIN, "Platform Administrator", 
             new HashSet<>(permissions.values()));
         
         // Sales Manager role with specific permissions
-        createSystemRole("SALES_MANAGER", "Sales Manager",
+        createSystemRole(RoleConstants.SALES_MANAGER, "Sales Manager",
             new HashSet<>(Arrays.asList(
                 permissions.get("USER_CREATE"), // Can create sales agents
                 permissions.get("USER_READ"),
@@ -97,7 +97,7 @@ public class SystemRolesInitializer implements CommandLineRunner {
             )));
         
         // Sales Agent role with specific permissions
-        createSystemRole("SALES_AGENT", "Sales Agent",
+        createSystemRole(RoleConstants.SALES_AGENT, "Sales Agent",
             new HashSet<>(Arrays.asList(
                 permissions.get("LEAD_CREATE"),
                 permissions.get("LEAD_READ"),
@@ -109,7 +109,7 @@ public class SystemRolesInitializer implements CommandLineRunner {
             )));
         
         // Support Agent role with specific permissions
-        createSystemRole("SUPPORT_AGENT", "Support Agent",
+        createSystemRole(RoleConstants.SUPPORT_AGENT, "Support Agent",
             new HashSet<>(Arrays.asList(
                 permissions.get("LEAD_READ"),
                 permissions.get("CONTACT_READ"),
