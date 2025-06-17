@@ -32,4 +32,9 @@ public class UserRequestDTO {
     private String position;
     
     private Set<Long> permissionIds;
+    
+    // Base address fields for sales agents
+    private Long baseCountryId;
+    private Long baseStateId;
+    private Long baseCityId;
 } 

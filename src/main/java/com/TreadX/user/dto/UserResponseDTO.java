@@ -24,4 +24,12 @@ public class UserResponseDTO {
     private LocalDateTime updatedAt;
     private Long createdBy;
     private Long updatedBy;
+    
+    // Base address fields for sales agents
+    private Long baseCountryId;
+    private String baseCountryName;
+    private Long baseStateId;
+    private String baseStateName;
+    private Long baseCityId;
+    private String baseCityName;
 } 

@@ -1,5 +1,12 @@
 package com.TreadX.user.service;
 
+import com.TreadX.address.entity.SystemCity;
+import com.TreadX.address.entity.SystemCountry;
+import com.TreadX.address.entity.SystemProvince;
+import com.TreadX.address.repository.SystemCityRepository;
+import com.TreadX.address.repository.SystemCountryRepository;
+import com.TreadX.address.repository.SystemProvinceRepository;
+import com.TreadX.user.controller.UserController;
 import com.TreadX.user.dto.UserCreateRequestDTO;
 import com.TreadX.user.dto.UserRequestDTO;
 import com.TreadX.user.dto.UserResponseDTO;
@@ -10,14 +17,14 @@ import com.TreadX.user.mapper.UserMapper;
 import com.TreadX.user.repository.PermissionRepository;
 import com.TreadX.user.repository.RoleRepository;
 import com.TreadX.user.repository.UserRepository;
-import com.TreadX.config.JwtService;
-import com.TreadX.config.RateLimiterConfig;
-import com.TreadX.utils.exception.RequestNotValidException;
-import com.TreadX.utils.exception.ResourceNotFoundException;
-import com.TreadX.utils.exception.TooManyRequestException;
 import com.TreadX.user.request.AuthenticationRequest;
 import com.TreadX.user.response.UserAuthenticationResponse;
+import com.TreadX.utils.exception.ResourceNotFoundException;
+import com.TreadX.utils.exception.TooManyRequestException;
+import com.TreadX.utils.exception.RequestNotValidException;
 import com.TreadX.utils.Validator.ObjectsValidator;
+import com.TreadX.config.JwtService;
+import com.TreadX.config.RateLimiterConfig;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,6 +62,11 @@ public class UserService {
     private final RateLimiterConfig rateLimiterConfig;
     private final RateLimiterRegistry rateLimiterRegistry;
     private final UserMapper userMapper;
+    
+    // Address repositories for base address handling
+    private final SystemCountryRepository systemCountryRepository;
+    private final SystemProvinceRepository systemProvinceRepository;
+    private final SystemCityRepository systemCityRepository;
 
     @Autowired
     private ObjectsValidator<AuthenticationRequest> authenticationRequestValidator;
@@ -78,6 +90,9 @@ public class UserService {
             Set<Permission> permissions = new HashSet<>(permissionRepository.findAllById(request.getPermissionIds()));
             user.setAdditionalPermissions(permissions);
         }
+        
+        // Set base address fields if provided
+        setBaseAddressFields(user, request.getBaseCountryId(), request.getBaseStateId(), request.getBaseCityId());
         
         return userMapper.toResponse(userRepository.save(user));
     }
@@ -134,6 +149,9 @@ public class UserService {
             user.setAdditionalPermissions(permissions);
         }
         
+        // Update base address fields if provided
+        setBaseAddressFields(user, userDetails.getBaseCountryId(), userDetails.getBaseStateId(), userDetails.getBaseCityId());
+        
         return userMapper.toResponse(userRepository.save(user));
     }
 
@@ -155,6 +173,33 @@ public class UserService {
         }
         
         throw new AccessDeniedException("Only PLATFORM_ADMIN and SALES_MANAGER can update users");
+    }
+
+    /**
+     * Sets the base address fields for a user
+     * @param user The user to set base address for
+     * @param countryId The country ID
+     * @param stateId The state/province ID
+     * @param cityId The city ID
+     */
+    private void setBaseAddressFields(User user, Long countryId, Long stateId, Long cityId) {
+        if (countryId != null) {
+            SystemCountry country = systemCountryRepository.findById(countryId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Country not found with id: " + countryId));
+            user.setBaseCountry(country);
+        }
+        
+        if (stateId != null) {
+            SystemProvince state = systemProvinceRepository.findById(stateId)
+                    .orElseThrow(() -> new ResourceNotFoundException("State/Province not found with id: " + stateId));
+            user.setBaseState(state);
+        }
+        
+        if (cityId != null) {
+            SystemCity city = systemCityRepository.findById(cityId)
+                    .orElseThrow(() -> new ResourceNotFoundException("City not found with id: " + cityId));
+            user.setBaseCity(city);
+        }
     }
 
     public void deleteUser(Long id) {
@@ -218,6 +263,22 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
         Set<Permission> permissions = new HashSet<>(permissionRepository.findAllById(permissionIds));
         user.setAdditionalPermissions(permissions);
+        return userMapper.toResponse(userRepository.save(user));
+    }
+
+    /**
+     * Updates the base address information for a user
+     * @param userId ID of the user to update
+     * @param request Base address update request containing country, state, and city IDs
+     * @return Updated user response
+     */
+    public UserResponseDTO updateUserBaseAddress(Long userId, UserController.BaseAddressUpdateRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        
+        // Set base address fields
+        setBaseAddressFields(user, request.getBaseCountryId(), request.getBaseStateId(), request.getBaseCityId());
+        
         return userMapper.toResponse(userRepository.save(user));
     }
 } 

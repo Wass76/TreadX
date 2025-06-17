@@ -7,6 +7,8 @@ import com.TreadX.dealers.dto.DealerResponseDTO;
 import com.TreadX.dealers.entity.Dealer;
 import com.TreadX.dealers.mapper.DealerMapper;
 import com.TreadX.dealers.repository.DealerRepository;
+import com.TreadX.user.entity.User;
+import com.TreadX.user.service.UserService;
 import com.TreadX.utils.exception.ConflictException;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import com.TreadX.address.service.AddressService;
@@ -33,6 +35,10 @@ public class DealerService {
     private DealerMapper dealerMapper;
     @Autowired
     private AddressService addressService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private AddressAutoPopulationService addressAutoPopulationService;
 
     @Transactional
     public DealerResponseDTO createDealer(DealerRequestDTO request , Address address) {
@@ -43,15 +49,24 @@ public class DealerService {
             throw new ConflictException("Phone number already exists");
         }
 
+        // Get current user to check if they are a sales agent
+        User currentUser = userService.getCurrentUser();
+
         // Create dealer with address
         Dealer dealer = dealerMapper.toEntity(request);
         
-        // Handle address
+        // Handle address with automatic population from user's base address if they are a sales agent
         if (address != null) {
             dealer.setAddress(address);
         }
         else {
             log.info("Adding new address to new dealer");
+            if (request.getAddress() != null) {
+                // If user is a sales agent and has base address, populate missing fields
+                if (addressAutoPopulationService.shouldApplyAutoPopulation(currentUser)) {
+                    addressAutoPopulationService.populateAddressFromUserBaseAddress(request.getAddress(), currentUser);
+                }
+            }
             dealer.setAddress(addressService.createOrReturnAddress(request.getAddress()));
         }
 

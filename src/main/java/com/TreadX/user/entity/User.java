@@ -1,5 +1,8 @@
 package com.TreadX.user.entity;
 
+import com.TreadX.address.entity.SystemCity;
+import com.TreadX.address.entity.SystemCountry;
+import com.TreadX.address.entity.SystemProvince;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 @SuperBuilder(builderMethodName = "builder")
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "users")
 public class User extends BaseUser {
 
     private String position;
@@ -33,6 +37,19 @@ public class User extends BaseUser {
         inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
     private Set<Permission> additionalPermissions = new HashSet<>();
+
+    // Base address fields for sales agents
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "base_country_id")
+    private SystemCountry baseCountry;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "base_state_id")
+    private SystemProvince baseState;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "base_city_id")
+    private SystemCity baseCity;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

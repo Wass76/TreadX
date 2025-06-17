@@ -133,6 +133,28 @@ public class UserController {
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
 
+    @PutMapping("/{id}/base-address")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or @authorizationService.isCurrentUser(#id)")
+    @Operation(
+        summary = "Update user base address",
+        description = "Updates the base address information for a user (country, state, city). This address will be used to automatically populate address fields when creating leads or dealers. Requires PLATFORM_ADMIN role or ownership."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Base address updated successfully",
+            content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation = UserResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+        @ApiResponse(responseCode = "404", description = "User not found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<UserResponseDTO> updateUserBaseAddress(
+            @Parameter(description = "ID of the user to update base address for") @PathVariable Long id,
+            @RequestBody BaseAddressUpdateRequest request) {
+        UserResponseDTO updatedUser = userService.updateUserBaseAddress(id, request);
+        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('PLATFORM_ADMIN')")
     @Operation(
@@ -175,5 +197,24 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<User> getCurrentUser() {
         return ResponseEntity.ok(userService.getCurrentUser());
+    }
+
+    /**
+     * Request DTO for updating user base address
+     */
+    public static class BaseAddressUpdateRequest {
+        private Long baseCountryId;
+        private Long baseStateId;
+        private Long baseCityId;
+
+        // Getters and setters
+        public Long getBaseCountryId() { return baseCountryId; }
+        public void setBaseCountryId(Long baseCountryId) { this.baseCountryId = baseCountryId; }
+        
+        public Long getBaseStateId() { return baseStateId; }
+        public void setBaseStateId(Long baseStateId) { this.baseStateId = baseStateId; }
+        
+        public Long getBaseCityId() { return baseCityId; }
+        public void setBaseCityId(Long baseCityId) { this.baseCityId = baseCityId; }
     }
 } 

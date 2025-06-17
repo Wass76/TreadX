@@ -1,6 +1,9 @@
 package com.TreadX.dealers.service;
 
 import com.TreadX.address.entity.Address;
+import com.TreadX.address.entity.SystemCity;
+import com.TreadX.address.entity.SystemCountry;
+import com.TreadX.address.entity.SystemProvince;
 import com.TreadX.dealers.dto.LeadsRequestDTO;
 import com.TreadX.dealers.dto.LeadsResponseDTO;
 import com.TreadX.dealers.entity.Dealer;
@@ -9,6 +12,8 @@ import com.TreadX.dealers.enums.LeadStatus;
 import com.TreadX.dealers.mapper.LeadsMapper;
 import com.TreadX.dealers.repository.DealerRepository;
 import com.TreadX.dealers.repository.LeadsRepository;
+import com.TreadX.user.entity.User;
+import com.TreadX.user.service.UserService;
 import com.TreadX.utils.exception.ConflictException;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import com.TreadX.utils.exception.InvalidStatusTransitionException;
@@ -36,6 +41,10 @@ public class LeadsService {
     private LeadsMapper leadsMapper;
     @Autowired
     private AddressService addressService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private AddressAutoPopulationService addressAutoPopulationService;
 
     // Define valid status transitions
     private final Map<LeadStatus, Set<LeadStatus>> validTransitions = Map.of(
@@ -70,9 +79,17 @@ public class LeadsService {
         if (leadsRepository.existsByBusinessEmail(request.getBusinessEmail())){
             throw new ConflictException("Business email already exists");
         }
-        // Create address if provided
+        
+        // Get current user to check if they are a sales agent
+        User currentUser = userService.getCurrentUser();
+        
+        // Create address with automatic population from user's base address if they are a sales agent
         Address address = null;
         if (request.getAddress() != null) {
+            // If user is a sales agent and has base address, populate missing fields
+            if (addressAutoPopulationService.shouldApplyAutoPopulation(currentUser)) {
+                addressAutoPopulationService.populateAddressFromUserBaseAddress(request.getAddress(), currentUser);
+            }
             address = addressService.createOrReturnAddress(request.getAddress());
         }
 

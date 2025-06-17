@@ -32,6 +32,13 @@ public class UserMapper {
                 .additionalPermissions(user.getAdditionalPermissions().stream()
                         .map(permissionMapper::toResponse)
                         .collect(Collectors.toSet()))
+                // Base address fields
+                .baseCountryId(user.getBaseCountry() != null ? user.getBaseCountry().getId() : null)
+                .baseCountryName(user.getBaseCountry() != null ? user.getBaseCountry().getCountry() : null)
+                .baseStateId(user.getBaseState() != null ? user.getBaseState().getId() : null)
+                .baseStateName(user.getBaseState() != null ? user.getBaseState().getProvince() : null)
+                .baseCityId(user.getBaseCity() != null ? user.getBaseCity().getId() : null)
+                .baseCityName(user.getBaseCity() != null ? user.getBaseCity().getCity() : null)
                 .build();
     }
 } 
