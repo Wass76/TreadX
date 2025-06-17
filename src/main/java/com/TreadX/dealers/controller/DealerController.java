@@ -33,10 +33,10 @@ public class DealerController {
     private final AuthorizationService authorizationService;
 
     @GetMapping
-    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
     @Operation(
         summary = "Get all dealers",
-        description = "Retrieves a paginated list of all dealers in the system. Requires SALES_MANAGER or SALES_AGENT role."
+        description = "Retrieves a paginated list of all dealers in the system. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved dealers",
@@ -57,10 +57,10 @@ public class DealerController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SALES_MANAGER') or @authz.isDealerOwner(#id)")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or @authz.isDealerOwner(#id)")
     @Operation(
         summary = "Get dealer by ID",
-        description = "Retrieves a specific dealer by its ID. Requires SALES_MANAGER role or ownership of the dealer."
+        description = "Retrieves a specific dealer by its ID. Requires PLATFORM_ADMIN, SALES_MANAGER role or ownership of the dealer."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved the dealer",
@@ -80,10 +80,10 @@ public class DealerController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SALES_MANAGER')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER')")
     @Operation(
         summary = "Create new dealer",
-        description = "Creates a new dealer in the system. Requires SALES_MANAGER role."
+        description = "Creates a new dealer in the system. Requires PLATFORM_ADMIN or SALES_MANAGER role."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Successfully created the dealer",
@@ -100,10 +100,10 @@ public class DealerController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SALES_MANAGER') or @authz.isDealerOwner(#id)")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or @authz.isDealerOwner(#id)")
     @Operation(
         summary = "Update dealer",
-        description = "Updates an existing dealer. Requires SALES_MANAGER role or ownership of the dealer."
+        description = "Updates an existing dealer. Requires PLATFORM_ADMIN, SALES_MANAGER role or ownership of the dealer."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully updated the dealer",
@@ -125,10 +125,10 @@ public class DealerController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SALES_MANAGER') or @authz.isDealerOwner(#id)")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or @authz.isDealerOwner(#id)")
     @Operation(
         summary = "Delete dealer",
-        description = "Deletes a dealer from the system. Requires SALES_MANAGER role or ownership of the dealer."
+        description = "Deletes a dealer from the system. Requires PLATFORM_ADMIN, SALES_MANAGER role or ownership of the dealer."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Successfully deleted the dealer"),
@@ -146,10 +146,10 @@ public class DealerController {
     }
 
     @GetMapping("/search")
-    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
     @Operation(
         summary = "Search dealers",
-        description = "Searches for dealers based on a query string. Requires SALES_MANAGER or SALES_AGENT role."
+        description = "Searches for dealers based on a query string. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved matching dealers",

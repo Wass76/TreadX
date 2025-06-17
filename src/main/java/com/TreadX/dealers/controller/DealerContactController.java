@@ -36,10 +36,10 @@ public class DealerContactController {
     private final AuthorizationService authorizationService;
 
     @GetMapping
-    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
     @Operation(
         summary = "Get all contacts",
-        description = "Retrieves a paginated list of all contacts in the system. Requires SALES_MANAGER or SALES_AGENT role."
+        description = "Retrieves a paginated list of all contacts in the system. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved contacts",
@@ -60,10 +60,10 @@ public class DealerContactController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SALES_MANAGER') or @authz.isContactOwner(#id)")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or @authz.isContactOwner(#id)")
     @Operation(
         summary = "Get contact by ID",
-        description = "Retrieves a specific contact by its ID. Requires SALES_MANAGER role or ownership of the contact."
+        description = "Retrieves a specific contact by its ID. Requires PLATFORM_ADMIN, SALES_MANAGER role or ownership of the contact."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved the contact",
@@ -83,10 +83,10 @@ public class DealerContactController {
     }
 
     @GetMapping("/dealer/{dealerId}")
-    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
     @Operation(
         summary = "Get contacts by dealer",
-        description = "Retrieves a paginated list of contacts for a specific dealer. Requires SALES_MANAGER or SALES_AGENT role."
+        description = "Retrieves a paginated list of contacts for a specific dealer. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved contacts for the dealer",
@@ -109,10 +109,10 @@ public class DealerContactController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
     @Operation(
         summary = "Create new contact",
-        description = "Creates a new contact in the system. Requires SALES_MANAGER or SALES_AGENT role."
+        description = "Creates a new contact in the system. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Successfully created the contact",
@@ -129,10 +129,10 @@ public class DealerContactController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SALES_MANAGER') or @authz.isContactOwner(#id)")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or @authz.isContactOwner(#id)")
     @Operation(
         summary = "Update contact",
-        description = "Updates an existing contact. Requires SALES_MANAGER role or ownership of the contact."
+        description = "Updates an existing contact. Requires PLATFORM_ADMIN, SALES_MANAGER role or ownership of the contact."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully updated the contact",
@@ -154,10 +154,10 @@ public class DealerContactController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SALES_MANAGER') or @authz.isContactOwner(#id)")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or @authz.isContactOwner(#id)")
     @Operation(
         summary = "Delete contact",
-        description = "Deletes a contact from the system. Requires SALES_MANAGER role or ownership of the contact."
+        description = "Deletes a contact from the system. Requires PLATFORM_ADMIN, SALES_MANAGER role or ownership of the contact."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Successfully deleted the contact"),
@@ -175,7 +175,7 @@ public class DealerContactController {
     }
 
     @PostMapping("/{id}/convert-to-dealer")
-    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
     public ResponseEntity<Void> convertToDealer(
             @PathVariable Long id,
             @RequestBody DealerRequestDTO request) {

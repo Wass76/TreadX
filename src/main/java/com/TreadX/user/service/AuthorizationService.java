@@ -125,7 +125,7 @@ public class AuthorizationService extends BaseSecurityService {
      */
     public boolean hasContactConversionAccess() {
         User currentUser = getCurrentUser();
-        return hasRole("SALES_MANAGER") || hasRole("SALES_AGENT");
+        return hasRole("PLATFORM_ADMIN") || hasRole("SALES_MANAGER") || hasRole("SALES_AGENT");
     }
 
     /**
@@ -134,7 +134,7 @@ public class AuthorizationService extends BaseSecurityService {
      */
     public boolean hasDealerConversionAccess() {
         User currentUser = getCurrentUser();
-        return hasRole("SALES_MANAGER") || hasRole("SALES_AGENT");
+        return hasRole("PLATFORM_ADMIN") || hasRole("SALES_MANAGER") || hasRole("SALES_AGENT");
     }
 
     /**

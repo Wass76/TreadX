@@ -37,10 +37,10 @@ public class LeadsController {
     private final AuthorizationService authorizationService;
 
     @GetMapping
-    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
     @Operation(
         summary = "Get all leads",
-        description = "Retrieves a paginated list of all leads in the system. Requires SALES_MANAGER or SALES_AGENT role."
+        description = "Retrieves a paginated list of all leads in the system. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved leads",
@@ -61,10 +61,10 @@ public class LeadsController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('SALES_MANAGER') or @authz.isLeadOwner(#id)")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or @authz.isLeadOwner(#id)")
     @Operation(
         summary = "Get lead by ID",
-        description = "Retrieves a specific lead by its ID. Requires SALES_MANAGER role or ownership of the lead."
+        description = "Retrieves a specific lead by its ID. Requires PLATFORM_ADMIN, SALES_MANAGER role or ownership of the lead."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved the lead",
@@ -84,10 +84,10 @@ public class LeadsController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
     @Operation(
         summary = "Create new lead",
-        description = "Creates a new lead in the system. Requires SALES_MANAGER or SALES_AGENT role."
+        description = "Creates a new lead in the system. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Successfully created the lead",
@@ -104,10 +104,10 @@ public class LeadsController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('SALES_MANAGER') or @authz.isLeadOwner(#id)")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or @authz.isLeadOwner(#id)")
     @Operation(
         summary = "Update lead",
-        description = "Updates an existing lead. Requires SALES_MANAGER role or ownership of the lead."
+        description = "Updates an existing lead. Requires PLATFORM_ADMIN, SALES_MANAGER role or ownership of the lead."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully updated the lead",
@@ -129,10 +129,10 @@ public class LeadsController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('SALES_MANAGER') or @authz.isLeadOwner(#id)")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or @authz.isLeadOwner(#id)")
     @Operation(
         summary = "Delete lead",
-        description = "Deletes a lead from the system. Requires SALES_MANAGER role or ownership of the lead."
+        description = "Deletes a lead from the system. Requires PLATFORM_ADMIN, SALES_MANAGER role or ownership of the lead."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Successfully deleted the lead"),
@@ -150,10 +150,10 @@ public class LeadsController {
     }
 
     @PostMapping("/{id}/convert-to-contact")
-    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
     @Operation(
         summary = "Convert lead to contact",
-        description = "Converts a lead to a contact. Requires SALES_MANAGER or SALES_AGENT role."
+        description = "Converts a lead to a contact. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Successfully converted lead to contact",
