@@ -20,10 +20,6 @@ public class PermissionMapper {
                 .action(permission.getAction())
                 .isActive(permission.isActive())
                 .isSystemGenerated(permission.isSystemGenerated())
-                .createdAt(permission.getCreatedAt())
-                .updatedAt(permission.getUpdatedAt())
-                .createdBy(permission.getCreatedBy())
-                .updatedBy(permission.getLastModifiedBy())
                 .build();
     }
 } 

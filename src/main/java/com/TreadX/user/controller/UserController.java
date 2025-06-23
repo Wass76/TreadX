@@ -1,8 +1,6 @@
 package com.TreadX.user.controller;
 
-import com.TreadX.user.dto.UserCreateRequestDTO;
-import com.TreadX.user.dto.UserRequestDTO;
-import com.TreadX.user.dto.UserResponseDTO;
+import com.TreadX.user.dto.*;
 import com.TreadX.user.entity.User;
 import com.TreadX.user.service.UserService;
 import com.TreadX.user.request.AuthenticationRequest;
@@ -173,7 +171,18 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<User> getCurrentUser() {
-        return ResponseEntity.ok(userService.getCurrentUser());
+    public ResponseEntity<?> getCurrentUser() {
+        return ResponseEntity.ok(userService.getCurrentUserDto());
+    }
+
+    /**
+     * Create user with territory assignments
+     */
+    @PostMapping("/with-territories")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public ResponseEntity<?> createUserWithTerritories(
+            @RequestBody UserCreateWithTerritoryRequestDTO request) {
+        UserCreateWithTerritoryResponseDTO response = userService.createUserWithTerritories(request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 } 

@@ -27,14 +27,6 @@ public class RoleMapper {
                 .isActive(role.isActive())
                 .isSystem(role.isSystem())
                 .isSystemGenerated(role.isSystemGenerated())
-                .permissions(role.getPermissions() != null ? 
-                    role.getPermissions().stream()
-                        .map(permissionMapper::toResponse)
-                        .collect(Collectors.toSet()) : null)
-                .createdAt(role.getCreatedAt())
-                .updatedAt(role.getUpdatedAt())
-                .createdBy(role.getCreatedBy())
-                .updatedBy(role.getLastModifiedBy())
                 .build();
     }
 } 

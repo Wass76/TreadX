@@ -17,7 +17,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
                         email = "wasee.tenbakji@gmail.com"
                 ),
                 description = "open api documentation for TreadX tires management system.",
-                title = "Tires management system",
+                title = "TreadX",
                 version = "1.0",
                 license = @License(
                         name = "All Copyrights reserved to Wassem Tenbakji",

@@ -1,10 +1,15 @@
 package com.TreadX.user.service;
 
 import com.TreadX.user.dto.UserCreateRequestDTO;
+import com.TreadX.user.dto.UserCreateWithTerritoryRequestDTO;
+import com.TreadX.user.dto.UserCreateWithTerritoryResponseDTO;
 import com.TreadX.user.dto.UserRequestDTO;
 import com.TreadX.user.dto.UserResponseDTO;
+import com.TreadX.user.dto.UserTerritoryResponseDTO;
+import com.TreadX.user.dto.UserTerritoryRequestDTO;
 import com.TreadX.user.entity.Permission;
 import com.TreadX.user.entity.Role;
+import com.TreadX.user.entity.TerritoryLevel;
 import com.TreadX.user.entity.User;
 import com.TreadX.user.mapper.UserMapper;
 import com.TreadX.user.repository.PermissionRepository;
@@ -34,6 +39,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -55,9 +61,57 @@ public class UserService {
     private final RateLimiterConfig rateLimiterConfig;
     private final RateLimiterRegistry rateLimiterRegistry;
     private final UserMapper userMapper;
+    private final UserTerritoryService userTerritoryService;
 
     @Autowired
     private ObjectsValidator<AuthenticationRequest> authenticationRequestValidator;
+
+    /**
+     * Create a new user with territory assignments using BASE entity IDs
+     */
+    @Transactional
+    public UserCreateWithTerritoryResponseDTO createUserWithTerritories(UserCreateWithTerritoryRequestDTO request) {
+        log.info("Creating user with territories: {}", request.getEmail());
+        
+        // Create the user first
+        UserCreateRequestDTO userRequest = UserCreateRequestDTO.builder()
+                .email(request.getEmail())
+                .password(request.getPassword())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .roleId(1L) // Default role, should be handled properly
+                .build();
+        
+        UserResponseDTO userResponse = createUser(userRequest);
+        
+        // Assign territories using base entity IDs
+        List<UserTerritoryResponseDTO> territories = new ArrayList<>();
+        if (request.getTerritories() != null && !request.getTerritories().isEmpty()) {
+            List<UserTerritoryRequestDTO> territoryRequests = new ArrayList<>();
+            for (UserCreateWithTerritoryRequestDTO.TerritoryAssignmentDTO territoryRequest : request.getTerritories()) {
+                UserTerritoryRequestDTO dto = new UserTerritoryRequestDTO();
+                dto.setUserId(userResponse.getId());
+                dto.setTerritoryLevel(territoryRequest.getLevel());
+                dto.setBaseCountryId(territoryRequest.getCountryId());
+                dto.setBaseProvinceId(territoryRequest.getProvinceId());
+                dto.setBaseCityId(territoryRequest.getCityId());
+                territoryRequests.add(dto);
+            }
+            // Call the batch assignment method
+            List<com.TreadX.user.entity.UserTerritory> createdTerritories = userTerritoryService.assignTerritoriesToUser(userResponse.getId(), territoryRequests);
+            for (com.TreadX.user.entity.UserTerritory ut : createdTerritories) {
+                territories.add(userTerritoryService.getUserTerritories(userResponse.getId()).stream()
+                    .filter(t -> t.getId().equals(ut.getId()))
+                    .findFirst().orElse(null));
+            }
+        }
+        
+        return new UserCreateWithTerritoryResponseDTO(
+                userResponse,
+                territories,
+                "User created successfully with territory assignments"
+        );
+    }
 
     public UserResponseDTO createUser(UserCreateRequestDTO request) {
         User creator = getCurrentUser();
@@ -211,6 +265,10 @@ public class UserService {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+    }
+    public UserResponseDTO getCurrentUserDto() {
+        User user = getCurrentUser();
+        return userMapper.toResponse(user);
     }
 
     public UserResponseDTO updateUserPermissions(Long userId, Set<Long> permissionIds) {

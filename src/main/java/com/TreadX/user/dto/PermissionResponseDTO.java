@@ -19,8 +19,4 @@ public class PermissionResponseDTO {
     private String action;
     private boolean isActive;
     private boolean isSystemGenerated;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private Long createdBy;
-    private Long updatedBy;
 } 

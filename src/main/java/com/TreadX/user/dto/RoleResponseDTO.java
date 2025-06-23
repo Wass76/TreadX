@@ -19,9 +19,4 @@ public class RoleResponseDTO {
     private boolean isActive;
     private boolean isSystem;
     private boolean isSystemGenerated;
-    private Set<PermissionResponseDTO> permissions;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private Long createdBy;
-    private Long updatedBy;
 } 
