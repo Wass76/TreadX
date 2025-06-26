@@ -12,6 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Component
 @RequiredArgsConstructor
 @Order(2) // Run after SystemRolesInitializer
@@ -22,7 +24,7 @@ public class SystemUserInitializer implements CommandLineRunner {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
-    private static final String DEFAULT_ADMIN_PASSWORD = "Wassem7676.tn";
+    private static final String DEFAULT_ADMIN_PASSWORD = "Password!1";
 
     @Override
     @Transactional
@@ -38,32 +40,58 @@ public class SystemUserInitializer implements CommandLineRunner {
     }
 
     private void createSystemUsers() {
-        // Create Super Admin user
+        // Create System User (ID 1)
+        createSystemUser();
+        // Create Super Admin user (ID 2)
         createSuperAdmin();
-        
         // Create Platform Admin user
         createPlatformAdmin();
     }
 
+    private void createSystemUser() {
+        if (userRepository.existsById(1L)) {
+            log.info("System user already exists");
+            return;
+        }
+        var adminRole = roleRepository.findByName(RoleConstants.PLATFORM_ADMIN)
+                .orElseThrow(() -> new RuntimeException("PLATFORM_ADMIN role not found"));
+        User systemUser = User.builder()
+                .id(1L)
+                .firstName("System")
+                .lastName("User")
+                .email("system@treadx.com")
+                .password("") // No password, cannot log in
+                .role(adminRole)
+                .isSystem(true)
+                .isActive(false)
+                .createdAt(LocalDateTime.now())
+                .createdBy(1L)
+                .build();
+        userRepository.save(systemUser);
+        log.info("System user created with ID 1");
+    }
+
     private void createSuperAdmin() {
-        if (userRepository.findByEmail("wasee.tenbakji@gmail.com").isPresent()) {
+        if (userRepository.existsById(2L)) {
             log.info("Super admin user already exists");
             return;
         }
-
         var superAdminRole = roleRepository.findByName(RoleConstants.PLATFORM_ADMIN)
                 .orElseThrow(() -> new RuntimeException("PLATFORM_ADMIN role not found"));
-
         User superAdmin = User.builder()
+                .id(2L)
                 .firstName("Wassem")
                 .lastName("Tenbakji")
-                .email("wasee.tenbakji@gmail.com")
+                .email("super.admim@treadx.com")
                 .password(passwordEncoder.encode(DEFAULT_ADMIN_PASSWORD))
                 .role(superAdminRole)
+                .isSystem(false)
+                .isActive(true)
+                .createdAt(LocalDateTime.now())
+                .createdBy(1L)
                 .build();
-
         userRepository.save(superAdmin);
-        log.info("Super admin user created:");
+        log.info("Super admin user created with ID 2");
         log.info("Email: {}", superAdmin.getEmail());
         log.info("Password: {}", DEFAULT_ADMIN_PASSWORD);
     }
@@ -80,9 +108,13 @@ public class SystemUserInitializer implements CommandLineRunner {
         User platformAdmin = User.builder()
                 .firstName("platform")
                 .lastName("admin")
-                .email("admin@gmail.com")
+                .email("admin@treadx.com")
                 .password(passwordEncoder.encode(DEFAULT_ADMIN_PASSWORD))
                 .role(platformAdminRole)
+                .createdAt(LocalDateTime.now())
+                .createdBy(1L)
+                .isActive(true)
+                .isSystem(false)
                 .build();
 
         userRepository.save(platformAdmin);

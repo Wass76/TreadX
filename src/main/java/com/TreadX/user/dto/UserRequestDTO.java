@@ -32,4 +32,9 @@ public class UserRequestDTO {
     private String position;
     
     private Set<Long> permissionIds;
+    
+    /**
+     * True if this user is active (can log in, not deactivated)
+     */
+    private boolean isActive = true;
 } 

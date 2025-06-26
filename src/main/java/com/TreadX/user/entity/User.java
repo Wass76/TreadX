@@ -34,6 +34,17 @@ public class User extends BaseUser {
     )
     private Set<Permission> additionalPermissions = new HashSet<>();
 
+    /**
+     * True if this user is a system-only user (cannot log in, used for system actions)
+     */
+    @Column(nullable = false)
+    private boolean isSystem = false;
+
+    /**
+     * True if this user is active (can log in, not deactivated)
+     */
+    @Column(nullable = false)
+    private boolean isActive = true;
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<GrantedAuthority> authorities = new HashSet<>();

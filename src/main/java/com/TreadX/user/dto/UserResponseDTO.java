@@ -24,4 +24,9 @@ public class UserResponseDTO {
     private LocalDateTime updatedAt;
     private Long createdBy;
     private Long updatedBy;
+    /**
+     * True if this user is active (can log in, not deactivated)
+     */
+    private boolean isActive;
+    private boolean isSystem;
 } 

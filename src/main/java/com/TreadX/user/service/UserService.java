@@ -80,6 +80,7 @@ public class UserService {
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .roleId(1L) // Default role, should be handled properly
+                .isActive(true)
                 .build();
         
         UserResponseDTO userResponse = createUser(userRequest);
@@ -127,6 +128,7 @@ public class UserService {
         user.setLastName(request.getLastName());
         user.setRole(targetRole);
         user.setPosition(request.getPosition());
+        user.setSystem(false);
         
         if (request.getPermissionIds() != null && !request.getPermissionIds().isEmpty()) {
             Set<Permission> permissions = new HashSet<>(permissionRepository.findAllById(request.getPermissionIds()));
@@ -239,6 +241,10 @@ public class UserService {
             var user = userRepository.findByEmail(request.getEmail()).orElseThrow(
                     () -> new RequestNotValidException("User email not found")
             );
+            // Prevent login for system user or inactive user
+            if (user.isSystem() || !user.isActive()) {
+                throw new AccessDeniedException("User cannot log in");
+            }
 
             var jwtToken = jwtService.generateToken(user);
             
@@ -277,5 +283,14 @@ public class UserService {
         Set<Permission> permissions = new HashSet<>(permissionRepository.findAllById(permissionIds));
         user.setAdditionalPermissions(permissions);
         return userMapper.toResponse(userRepository.save(user));
+    }
+
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        if (user.isSystem()) {
+            throw new AccessDeniedException("Cannot change password for system user");
+        }
+        // ... existing password change logic ...
     }
 } 

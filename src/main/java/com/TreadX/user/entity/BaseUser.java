@@ -1,5 +1,6 @@
 package com.TreadX.user.entity;
 
+import com.TreadX.utils.entity.AuditedEntity;
 import com.TreadX.utils.entity.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -18,7 +19,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @MappedSuperclass
-public class BaseUser extends BaseEntity implements UserDetails {
+public class BaseUser extends AuditedEntity implements UserDetails {
 
     @Column(nullable = false)
     protected String firstName;

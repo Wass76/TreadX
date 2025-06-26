@@ -331,4 +331,11 @@ POST /api/user-territories/users/42/territories?level=CITY&cityId=123
 ```
 - Assigns city 123 to user 42 (if allowed by role and access).
 
-See also: `ARCHITECTURAL_IMPROVEMENTS_DISCUSSION.md`, `UNIFIED_GEOGRAPHICAL_SERVICE_IMPLEMENTATION.md`. 
+See also: `ARCHITECTURAL_IMPROVEMENTS_DISCUSSION.md`, `UNIFIED_GEOGRAPHICAL_SERVICE_IMPLEMENTATION.md`.
+
+## System User and SuperAdmin
+
+- **System User (ID 1):** Reserved for system-initiated actions (e.g., seeding, background jobs). Cannot log in. Used for audit fields.
+- **SuperAdmin (ID 2):** First real user, with full admin privileges.
+- All system actions (createdBy/modifiedBy) should use ID 1.
+- Login is disabled for the system user.

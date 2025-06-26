@@ -32,6 +32,12 @@ public class UserMapper {
                 .additionalPermissions(user.getAdditionalPermissions().stream()
                         .map(permissionMapper::toResponse)
                         .collect(Collectors.toSet()))
+                .isActive(user.isActive())
+                .isSystem(user.isSystem())
+                .createdAt(user.getCreatedAt())
+                .createdBy(user.getCreatedBy())
+                .updatedAt(user.getUpdatedAt())
+                .updatedBy(user.getCreatedBy())
                 .build();
     }
 } 

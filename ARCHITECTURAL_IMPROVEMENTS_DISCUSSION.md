@@ -308,3 +308,24 @@ The current approach with `getCurrentUserId()` is a good immediate solution, but
 - **Check Assignments:** Admins can check any user; managers can check if the user is in their managed area; others can only check their own.
 
 See also: `USER_TERRITORY_CREATION_GUIDE.md`, `UNIFIED_GEOGRAPHICAL_SERVICE_IMPLEMENTATION.md`. 
+
+## System User Pattern (2024)
+
+### Purpose
+- The System User (ID 1) represents system-initiated actions (e.g., seeding, background jobs).
+- It is not a real user and cannot log in.
+- Used for audit fields (createdBy/modifiedBy) when the system performs an action.
+
+### Implementation
+- Seeded with ID 1, email system@treadx.com, isSystem=true, isActive=false.
+- Login is disabled for this user in authentication logic.
+- SuperAdmin is seeded as user #2 (ID 2), with full admin privileges.
+
+### Why?
+- Ensures a clear audit trail and prevents confusion between system and human actions.
+- Only one system user exists; all system actions are attributed to it.
+
+### Usage
+- Use ID 1 for createdBy/modifiedBy when the system performs an action.
+- Never assign a password or allow login for this user.
+- Documented in onboarding and architecture docs. 

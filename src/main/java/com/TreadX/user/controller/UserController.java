@@ -1,5 +1,7 @@
 package com.TreadX.user.controller;
 
+import com.TreadX.user.dto.UserCreateRequestDTO;
+import com.TreadX.user.dto.UserResponseDTO;
 import com.TreadX.user.dto.*;
 import com.TreadX.user.entity.User;
 import com.TreadX.user.service.UserService;
@@ -8,6 +10,7 @@ import com.TreadX.user.response.UserAuthenticationResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,7 +33,8 @@ import java.util.Set;
 @CrossOrigin("*")
 public class UserController {
 
-    private final UserService userService;
+    @Autowired
+    private UserService userService;
 
     @PostMapping("/login")
     @Operation(

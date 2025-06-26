@@ -35,4 +35,6 @@ public class UserCreateRequestDTO {
     private String position;
     
     private Set<Long> permissionIds;
+
+    private boolean isActive = true;
 } 
