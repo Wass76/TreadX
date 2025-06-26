@@ -34,7 +34,6 @@ public class SecurityConfiguration {
 
 
     private static final String[] WHITE_LIST_URL = {
-            "/api/v1/librarianAuth/**",
             "/v2/api-docs",
             "/v3/api-docs",
             "/v3/api-docs/**",
@@ -76,6 +75,7 @@ public class SecurityConfiguration {
                                 .requestMatchers("/api/v1/dealer-contacts/**").authenticated()
                                 .requestMatchers("api/v1/dealers/**").authenticated()
                                 .requestMatchers("api/v1/customers/**").authenticated()
+                                .requestMatchers("api/v1/users/with-territories/**").authenticated()
                                 .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))

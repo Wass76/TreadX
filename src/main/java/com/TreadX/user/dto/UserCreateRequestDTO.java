@@ -15,26 +15,26 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserCreateRequestDTO {
-    
+
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
     private String email;
-    
+
     @NotBlank(message = "Password is required")
     private String password;
-    
+
     @NotBlank(message = "First name is required")
     private String firstName;
-    
+
     @NotBlank(message = "Last name is required")
     private String lastName;
-    
+
     @NotNull(message = "Role ID is required")
     private Long roleId;
-    
+
     private String position;
-    
+
     private Set<Long> permissionIds;
 
     private boolean isActive = true;
-} 
+}

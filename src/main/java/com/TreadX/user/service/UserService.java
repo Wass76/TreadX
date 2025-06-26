@@ -1,15 +1,8 @@
 package com.TreadX.user.service;
 
-import com.TreadX.user.dto.UserCreateRequestDTO;
-import com.TreadX.user.dto.UserCreateWithTerritoryRequestDTO;
-import com.TreadX.user.dto.UserCreateWithTerritoryResponseDTO;
-import com.TreadX.user.dto.UserRequestDTO;
-import com.TreadX.user.dto.UserResponseDTO;
-import com.TreadX.user.dto.UserTerritoryResponseDTO;
-import com.TreadX.user.dto.UserTerritoryRequestDTO;
+import com.TreadX.user.dto.*;
 import com.TreadX.user.entity.Permission;
 import com.TreadX.user.entity.Role;
-import com.TreadX.user.entity.TerritoryLevel;
 import com.TreadX.user.entity.User;
 import com.TreadX.user.mapper.UserMapper;
 import com.TreadX.user.repository.PermissionRepository;
@@ -17,6 +10,7 @@ import com.TreadX.user.repository.RoleRepository;
 import com.TreadX.user.repository.UserRepository;
 import com.TreadX.config.JwtService;
 import com.TreadX.config.RateLimiterConfig;
+import com.TreadX.utils.exception.ConflictException;
 import com.TreadX.utils.exception.RequestNotValidException;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import com.TreadX.utils.exception.TooManyRequestException;
@@ -42,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -120,7 +113,10 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + request.getRoleId()));
         
         validateUserCreation(targetRole, creator.getRole());
-        
+
+        if(userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new ConflictException("User already exists with email: " + request.getEmail());
+        }
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));

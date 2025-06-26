@@ -184,7 +184,7 @@ public class GeographicalEntityService {
     /**
      * Find and validate base country
      */
-    private Country findAndValidateCountry(Long countryId) {
+    public Country findAndValidateCountry(Long countryId) {
         return countryRepository.findById(countryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Country not found with id: " + countryId));
     }
@@ -192,7 +192,7 @@ public class GeographicalEntityService {
     /**
      * Find and validate base state/province
      */
-    private State findAndValidateState(Long stateId) {
+    public State findAndValidateState(Long stateId) {
         return stateRepository.findById(stateId)
                 .orElseThrow(() -> new ResourceNotFoundException("State not found with id: " + stateId));
     }
@@ -200,7 +200,7 @@ public class GeographicalEntityService {
     /**
      * Find and validate base city
      */
-    private City findAndValidateCity(Long cityId) {
+    public City findAndValidateCity(Long cityId) {
         return cityRepository.findById(cityId)
                 .orElseThrow(() -> new ResourceNotFoundException("City not found with id: " + cityId));
     }

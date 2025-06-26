@@ -1,5 +1,8 @@
 package com.TreadX.user.service;
 
+import com.TreadX.address.entity.City;
+import com.TreadX.address.entity.Country;
+import com.TreadX.address.entity.State;
 import com.TreadX.address.service.GeographicalEntityService;
 import com.TreadX.user.dto.UserTerritoryRequestDTO;
 import com.TreadX.user.dto.UserTerritoryResponseDTO;
@@ -57,8 +60,67 @@ public class UserTerritoryService {
 
         for (UserTerritoryRequestDTO request : territoryRequests) {
             try {
-                // Check access to the requested territory if not admin or sales manager
-                if (!isAdmin && !isSalesManager) {
+                // Strict base entity containment check (before mapping to system entities)
+                if (request.getBaseCityId() != null && request.getBaseProvinceId() != null) {
+                    City city = geographicalEntityService.findAndValidateCity(request.getBaseCityId());
+                    State province = geographicalEntityService.findAndValidateState(request.getBaseProvinceId());
+                    if (!city.getState().getId().equals(province.getId())) {
+                        throw new UnAuthorizedException("City does not belong to the specified province");
+                    }
+                }
+                if (request.getBaseProvinceId() != null && request.getBaseCountryId() != null) {
+                    State province = geographicalEntityService.findAndValidateState(request.getBaseProvinceId());
+                    Country country = geographicalEntityService.findAndValidateCountry(request.getBaseCountryId());
+                    if (!province.getCountry().getId().equals(country.getId())) {
+                        throw new UnAuthorizedException("Province does not belong to the specified country");
+                    }
+                }
+                // Strict containment check for managers
+                if (!isAdmin && isSalesManager) {
+                    // Get manager's accessible IDs
+                    List<Long> managerCityIds = geographicalAuthService.getAccessibleCityIds();
+                    List<Long> managerProvinceIds = geographicalAuthService.getAccessibleProvinceIds();
+                    List<Long> managerCountryIds = geographicalAuthService.getAccessibleCountryIds();
+
+                    // Use GeographicalEntityService to resolve system entities (find-only)
+                    GeographicalEntityService.SystemEntitiesResult systemEntities = geographicalEntityService.findSystemEntities(
+                        request.getBaseCountryId(), request.getBaseProvinceId(), request.getBaseCityId()
+                    );
+                    Long reqCityId = systemEntities.getSystemCity() != null ? systemEntities.getSystemCity().getId() : null;
+                    Long reqProvinceId = systemEntities.getSystemProvince() != null ? systemEntities.getSystemProvince().getId() : null;
+                    Long reqCountryId = systemEntities.getSystemCountry() != null ? systemEntities.getSystemCountry().getId() : null;
+
+                    boolean canAssign = canManagerAssignToTerritory(
+                        request.getTerritoryLevel(), reqCityId, reqProvinceId, reqCountryId,
+                        managerCityIds, managerProvinceIds, managerCountryIds
+                    );
+                    if (!canAssign) {
+                        throw new UnAuthorizedException("You do not have access to assign this territory");
+                    }
+
+                    // Containment check: city must be in province/country, province must be in country
+                    if (systemEntities.getSystemCity() != null ) {
+                        log.info("Request base city id is : {}", request.getBaseCityId());
+                        log.info("Request system city id is : {}", systemEntities.getSystemCity().getId());
+                        if (request.getBaseProvinceId() != null && !systemEntities.getSystemCity().getSystemProvince().getId().equals(reqProvinceId)) {
+                            log.info("Request base province id is: {}", request.getBaseProvinceId());
+                            log.info("Request system province from city level is id is: {}", systemEntities.getSystemCity().getSystemProvince().getId());
+                            log.info("Request system province from province level is id is: {}", systemEntities.getSystemProvince().getId());
+                            throw new UnAuthorizedException("City is not in the specified province");
+                        }
+                        if (request.getBaseCountryId() != null && !systemEntities.getSystemCity().getSystemCountry().getId().equals(reqCountryId)) {
+                            log.info("Request base country id is: {}", request.getBaseCountryId());
+                            log.info("Request system country id from city level is: {}", systemEntities.getSystemCity().getSystemCountry().getId());
+                            log.info("Request system country from country level is id is: {}", systemEntities.getSystemCountry().getId());
+                            throw new UnAuthorizedException("City is not in the specified country");
+                        }
+                    }
+                    if (systemEntities.getSystemProvince() != null && request.getBaseCountryId() != null) {
+                        if (!systemEntities.getSystemProvince().getSystemCountry().getId().equals(reqCountryId)) {
+                            throw new UnAuthorizedException("Province is not in the specified country");
+                        }
+                    }
+                } else if (!isAdmin && !isSalesManager) {
                     boolean hasAccess = checkLocationAccess(request.getBaseCityId(), request.getBaseProvinceId(), request.getBaseCountryId());
                     if (!hasAccess) {
                         throw new UnAuthorizedException("You do not have access to the requested territory");
@@ -80,6 +142,24 @@ public class UserTerritoryService {
                          systemEntities.getSystemCountry() != null ? systemEntities.getSystemCountry().getId() : null,
                          systemEntities.getSystemProvince() != null ? systemEntities.getSystemProvince().getId() : null,
                          systemEntities.getSystemCity() != null ? systemEntities.getSystemCity().getId() : null);
+                if (systemEntities.getSystemCity() != null) {
+                    log.info("System city: baseId={}, systemId={}",
+                        systemEntities.getSystemCity().getCityEntity() != null ? systemEntities.getSystemCity().getCityEntity().getId() : null,
+                        systemEntities.getSystemCity().getId()
+                    );
+                }
+                if (systemEntities.getSystemProvince() != null) {
+                    log.info("System province: baseId={}, systemId={}",
+                        systemEntities.getSystemProvince().getProvinceEntity() != null ? systemEntities.getSystemProvince().getProvinceEntity().getId() : null,
+                        systemEntities.getSystemProvince().getId()
+                    );
+                }
+                if (systemEntities.getSystemCountry() != null) {
+                    log.info("System country: baseId={}, systemId={}",
+                        systemEntities.getSystemCountry().getCountryEntity() != null ? systemEntities.getSystemCountry().getCountryEntity().getId() : null,
+                        systemEntities.getSystemCountry().getId()
+                    );
+                }
             } catch (Exception e) {
                 log.error("Failed to assign territory to user {}: {}", userId, e.getMessage(), e);
                 throw new RuntimeException("Failed to assign territory: " + e.getMessage(), e);
@@ -244,5 +324,24 @@ public class UserTerritoryService {
         return territories.stream()
                 .map(userTerritoryMapper::toResponseDTO)
                 .collect(Collectors.toList());
+    }
+    
+    /**
+     * Check if a manager can assign a user to the requested territory (city/province/country).
+     * Allows province/country managers to assign to all child cities/provinces.
+     */
+    private boolean canManagerAssignToTerritory(TerritoryLevel level, Long reqCityId, Long reqProvinceId, Long reqCountryId,
+                                                List<Long> managerCityIds, List<Long> managerProvinceIds, List<Long> managerCountryIds) {
+        if (level == TerritoryLevel.CITY) {
+            return (reqCityId != null && managerCityIds.contains(reqCityId))
+                || (reqProvinceId != null && managerProvinceIds.contains(reqProvinceId))
+                || (reqCountryId != null && managerCountryIds.contains(reqCountryId));
+        } else if (level == TerritoryLevel.PROVINCE) {
+            return (reqProvinceId != null && managerProvinceIds.contains(reqProvinceId))
+                || (reqCountryId != null && managerCountryIds.contains(reqCountryId));
+        } else if (level == TerritoryLevel.COUNTRY) {
+            return reqCountryId != null && managerCountryIds.contains(reqCountryId);
+        }
+        return false;
     }
 } 

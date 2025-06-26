@@ -82,7 +82,7 @@ public class SystemUserInitializer implements CommandLineRunner {
                 .id(2L)
                 .firstName("Wassem")
                 .lastName("Tenbakji")
-                .email("super.admim@treadx.com")
+                .email("super.admin@treadx.com")
                 .password(passwordEncoder.encode(DEFAULT_ADMIN_PASSWORD))
                 .role(superAdminRole)
                 .isSystem(false)
