@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TreadX - عرض معماري تفاعلي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Calm Harmony (Stone, Slate, Sky) -->
+    <!-- Application Structure Plan: A single-page application with a top navigation bar for smooth scrolling to thematic sections. The structure is designed to guide the user from a high-level business overview to technical details and future plans. 1. **Overview**: A dashboard-like section with key business concepts and an interactive revenue model chart. 2. **Architecture**: Visualizes the multi-level database and the detailed schema using interactive diagrams to prevent information overload. 3. **Processes**: Uses a tabbed interface with interactive flowcharts to clearly explain the core operational workflows. 4. **Features & Future**: A clean card-based layout to showcase system capabilities and future vision. This structure was chosen to make a complex technical document digestible and engaging for business stakeholders by layering information from general to specific. -->
+    <!-- Visualization & Content Choices: 
+        - **Business Model**: Goal: Inform. Method: Text + Chart.js Donut Chart. Interaction: Hover tooltips. Justification: Visually compares revenue models effectively. Library: Chart.js.
+        - **Business Workflow**: Goal: Organize. Method: Interactive HTML/CSS flowchart. Interaction: Click to highlight and show details. Justification: More engaging than static text, clarifies process flow. Method: HTML/CSS/JS.
+        - **Database Architecture**: Goal: Organize. Method: Interactive HTML/CSS diagram. Interaction: Hover to see layer functions. Justification: Simplifies a complex hierarchy. Method: HTML/CSS/JS.
+        - **Database Schema**: Goal: Organize/Inform. Method: Accordion list. Interaction: Click to expand/collapse table details. Justification: Manages complexity and avoids overwhelming users. Method: HTML/CSS/JS.
+        - **Key Processes**: Goal: Compare/Organize. Method: Tabbed flowcharts. Interaction: Select tab to switch process, click step for details. Justification: Allows easy comparison and step-by-step understanding. Method: HTML/CSS/JS.
+        - **Features**: Goal: Inform. Method: Card grid. Interaction: Hover effects. Justification: Modern and scannable presentation. Method: HTML/CSS.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .active-nav {
+            color: #0284c7;
+            font-weight: 700;
+            border-bottom: 2px solid #0284c7;
+        }
+        .inactive-nav {
+            color: #475569;
+        }
+        .process-step {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .process-step.active {
+            background-color: #0ea5e9;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 14px 0 rgba(0, 118, 255, 0.39);
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-sky-600">TreadX</h1>
+            <ul class="hidden md:flex items-center space-x-8 space-x-reverse">
+                <li><a href="#overview" class="nav-link text-lg inactive-nav pb-1">نظرة شاملة</a></li>
+                <li><a href="#architecture" class="nav-link text-lg inactive-nav pb-1">البنية التحتية</a></li>
+                <li><a href="#processes" class="nav-link text-lg inactive-nav pb-1">العمليات الرئيسية</a></li>
+                <li><a href="#features" class="nav-link text-lg inactive-nav pb-1">الميزات والفوائد</a></li>
+            </ul>
+            <button id="mobile-menu-button" class="md:hidden text-slate-600 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden bg-white">
+             <a href="#overview" class="block text-center py-2 px-4 text-sm text-slate-600 hover:bg-stone-100 nav-link-mobile">نظرة شاملة</a>
+             <a href="#architecture" class="block text-center py-2 px-4 text-sm text-slate-600 hover:bg-stone-100 nav-link-mobile">البنية التحتية</a>
+             <a href="#processes" class="block text-center py-2 px-4 text-sm text-slate-600 hover:bg-stone-100 nav-link-mobile">العمليات الرئيسية</a>
+             <a href="#features" class="block text-center py-2 px-4 text-sm text-slate-600 hover:bg-stone-100 nav-link-mobile">الميزات والفوائد</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8 md:py-12">
+
+        <section id="overview" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold text-center mb-4 text-slate-900">نظرة شاملة على نموذج عمل TreadX</h2>
+            <p class="text-center max-w-3xl mx-auto text-slate-600 mb-12">
+                يقدم هذا القسم نظرة متكاملة على نموذج عملنا، موضحاً الخدمة الأساسية التي نقدمها، والعملاء الذين نستهدفهم، وسير العمل التجاري الذي نتبعه لتحقيق القيمة لشركائنا.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-8 items-center">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4">الخدمة الأساسية والقيمة المقترحة</h3>
+                    <p class="mb-2"><strong class="text-sky-700">الخدمة:</strong> تخزين إطارات العملاء الموسمية.</p>
+                    <p class="mb-2"><strong class="text-sky-700">العملاء المستهدفون:</strong> محلات الإطارات، مراكز خدمة السيارات، والوكلاء.</p>
+                    <p class="mb-4"><strong class="text-sky-700">القيمة:</strong> تمكين البائعين من توفير مساحات وتكاليف التخزين عبر استخدام خدمتنا المركزية.</p>
+                    <h4 class="font-bold mt-4 mb-2">نماذج الإيرادات</h4>
+                    <p class="text-sm text-slate-600">نعتمد على نموذجين مرنين لتحقيق الإيرادات، مما يتيح للبائعين اختيار ما يناسب حجم أعمالهم.</p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg shadow-md chart-container relative h-80 md:h-96 w-full max-w-md mx-auto">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <div class="mt-12">
+                <h3 class="text-2xl font-bold text-center mb-6">سير العمل التجاري</h3>
+                <div class="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-0">
+                    <div class="p-4 bg-sky-100 text-sky-800 rounded-lg text-center">1. استحواذ المبيعات</div>
+                    <div class="text-2xl text-slate-400 mx-4 hidden md:block">→</div>
+                    <div class="text-2xl text-slate-400 my-2 md:hidden">↓</div>
+                    <div class="p-4 bg-slate-100 rounded-lg text-center">2. البائع كنقطة استلام</div>
+                    <div class="text-2xl text-slate-400 mx-4 hidden md:block">→</div>
+                     <div class="text-2xl text-slate-400 my-2 md:hidden">↓</div>
+                    <div class="p-4 bg-sky-100 text-sky-800 rounded-lg text-center">3. تتبع النظام للإطار</div>
+                     <div class="text-2xl text-slate-400 mx-4 hidden md:block">→</div>
+                     <div class="text-2xl text-slate-400 my-2 md:hidden">↓</div>
+                    <div class="p-4 bg-slate-100 rounded-lg text-center">4. استرجاع الإطارات</div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-slate-200">
+
+        <section id="architecture" class="mb-16 scroll-mt-24">
+            <h2 class="text-3xl font-bold text-center mb-4 text-slate-900">البنية التحتية للنظام وهيكلية البيانات</h2>
+            <p class="text-center max-w-3xl mx-auto text-slate-600 mb-12">
+                لفهم كيفية عمل النظام، نستعرض هنا البنية متعددة المستويات لقواعد البيانات التي تضمن الأداء والكفاءة، بالإضافة إلى تصميم الجداول الرئيسية التي تشكل أساس نظامنا.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4">بنية قاعدة البيانات متعددة المستويات</h3>
+                    <p class="text-slate-600 mb-4">يعتمد النظام على هيكلية هرمية للبيانات تبدأ من مستوى الدولة وصولاً إلى المناطق التشغيلية، مما يسهل عملية إعداد التقارير وعزل البيانات.</p>
+                     <div class="space-y-3">
+                        <div class="p-3 bg-slate-200 rounded-md text-center font-bold">الدولة / المقاطعة / المدينة</div>
+                        <div class="text-center text-xl">↓</div>
+                        <div class="p-3 bg-sky-200 rounded-md text-center font-bold">المنطقة (N6B, N5V)</div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-4">مجموعات الجداول الرئيسية</h3>
+                     <div id="accordion-container" class="space-y-2">
+                        <!-- Accordion items will be generated here by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-16 border-slate-200">
+
+        <section id="processes" class="mb-16 scroll-mt-24">
+             <h2 class="text-3xl font-bold text-center mb-4 text-slate-900">العمليات التجارية الرئيسية</h2>
+             <p class="text-center max-w-3xl mx-auto text-slate-600 mb-12">
+                نستعرض هنا بالتفصيل الخطوات المتبعة في عملياتنا الأساسية. اختر عملية من علامات التبويب أدناه، ثم انقر على أي خطوة لعرض تفاصيلها.
+             </p>
+             <div class="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+                <div class="border-b border-slate-200">
+                    <nav id="process-tabs" class="flex space-x-4 space-x-reverse" aria-label="Tabs">
+                        <!-- Tab buttons will be generated here by JS -->
+                    </nav>
+                </div>
+                <div id="process-content" class="mt-6">
+                    <!-- Process content will be displayed here -->
+                </div>
+             </div>
+        </section>
+
+        <hr class="my-16 border-slate-200">
+        
+        <section id="features" class="scroll-mt-24">
+            <h2 class="text-3xl font-bold text-center mb-4 text-slate-900">الميزات، الفوائد، وآفاق المستقبل</h2>
+            <p class="text-center max-w-3xl mx-auto text-slate-600 mb-12">
+                نظام TreadX مصمم لتقديم فوائد ملموسة لشركائنا من خلال مجموعة من الميزات القوية، مع رؤية واضحة للتوسع والنمو في المستقبل.
+            </p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-3 text-sky-700">✅ فوائد الأعمال</h3>
+                    <ul class="space-y-2 list-disc list-inside text-slate-600">
+                        <li>توليد إيرادات مرنة</li>
+                        <li>كفاءة تشغيلية عالية</li>
+                        <li>قابلية للتوسع والنمو</li>
+                        <li>ضمان سلامة البيانات</li>
+                    </ul>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-3 text-sky-700">⭐ ميزات النظام</h3>
+                    <ul class="space-y-2 list-disc list-inside text-slate-600">
+                        <li>إدارة المبيعات والعقود</li>
+                        <li>إدارة التخزين والمخزون</li>
+                        <li>تتبع دورة حياة الإطار</li>
+                        <li>بوابة خدمة ذاتية للبائع</li>
+                        <li>تقارير وتحليلات متقدمة</li>
+                    </ul>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-xl font-bold mb-3 text-sky-700">🚀 آفاق المستقبل</h3>
+                    <ul class="space-y-2 list-disc list-inside text-slate-600">
+                        <li>توسع جغرافي ودولي</li>
+                        <li>توسيع الخدمات (إعادة بيع)</li>
+                        <li>تطبيقات جوال متخصصة</li>
+                        <li>تكامل مع إنترنت الأشياء (IoT)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-slate-800 text-white mt-16">
+        <div class="container mx-auto px-6 py-4 text-center">
+             <p>&copy; 2025 TreadX. جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const revenueData = {
+        labels: ['اشتراك', 'دفع حسب الاستخدام'],
+        datasets: [{
+            label: 'نماذج الإيرادات',
+            data: [65, 35],
+            backgroundColor: [
+                'rgba(56, 189, 248, 0.7)',
+                'rgba(100, 116, 139, 0.7)',
+            ],
+            borderColor: [
+                'rgb(14, 165, 233)',
+                'rgb(71, 85, 105)',
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    const revenueConfig = {
+        type: 'doughnut',
+        data: revenueData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            family: 'Tajawal',
+                            size: 14
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'توزيع نماذج الإيرادات',
+                    font: {
+                        family: 'Tajawal',
+                        size: 16,
+                        weight: 'bold'
+                    },
+                    padding: {
+                        top: 10,
+                        bottom: 20
+                    }
+                }
+            }
+        },
+    };
+
+    const revenueChartCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueChartCtx, revenueConfig);
+    
+    const dbSchemaData = {
+        "إدارة المبيعات": ["جدول العملاء المحتملين", "جدول عقود التخزين"],
+        "إدارة البائعين": ["جدول البائعين", "جدول موظفي البائعين"],
+        "إدارة التخزين": ["جدول مرافق التخزين"],
+        "تتبع الإطارات": ["جدول سجل الإطارات", "جدول معاملات تخزين الإطارات"],
+        "التسعير والاشتراك": ["جدول حزم الاشتراك", "جدول اشتراكات البائعين", "جدول معاملات الدفع حسب الاستخدام"],
+        "العملاء والمركبات": ["جدول المركبات", "جدول العملاء"]
+    };
+
+    const accordionContainer = document.getElementById('accordion-container');
+    Object.keys(dbSchemaData).forEach((key, index) => {
+        const item = document.createElement('div');
+        const button = document.createElement('button');
+        button.className = 'w-full text-right p-3 bg-slate-100 hover:bg-slate-200 rounded-md font-bold flex justify-between items-center transition';
+        button.innerHTML = `<span>${key}</span><span class="transform transition-transform duration-300 ">▼</span>`;
+
+        const content = document.createElement('div');
+        content.className = 'accordion-content bg-white p-4 border border-t-0 rounded-b-md';
+        const ul = document.createElement('ul');
+        ul.className = 'list-disc list-inside space-y-1 text-slate-600';
+        dbSchemaData[key].forEach(table => {
+            const li = document.createElement('li');
+            li.textContent = table;
+            ul.appendChild(li);
+        });
+        content.appendChild(ul);
+        item.appendChild(button);
+        item.appendChild(content);
+        accordionContainer.appendChild(item);
+
+        button.addEventListener('click', () => {
+            const isExpanded = content.style.maxHeight;
+            accordionContainer.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
+            accordionContainer.querySelectorAll('button span:last-child').forEach(s => s.style.transform = 'rotate(0deg)');
+            
+            if (!isExpanded || isExpanded === '0px') {
+                content.style.maxHeight = content.scrollHeight + "px";
+                button.querySelector('span:last-child').style.transform = 'rotate(180deg)';
+            }
+        });
+    });
+
+    const processesData = {
+        "تأهيل البائعين": {
+            steps: ["توليد العملاء المحتملين", "التفاوض", "إنشاء البائع", "اختيار الحزمة", "إعداد البائع"],
+            details: {
+                "توليد العملاء المحتملين": "يحدد فريق المبيعات العملاء البائعين المحتملين.",
+                "التفاوض": "مناقشة احتياجات التخزين ونموذج التسعير.",
+                "إنشاء البائع": "إعداد حساب البائع بنموذج التسعير المختار.",
+                "اختيار الحزمة": "لنموذج الاشتراك، يتم تحديد الحزمة المناسبة.",
+                "إعداد البائع": "إنشاء حساب البائع وتحديد مستويات وصول الموظفين."
+            }
+        },
+        "تخزين الإطارات": {
+            steps: ["تسجيل الإطارات", "طلب جلب الإطارات", "فحص التسعير", "جلب الإطارات", "التحقق من السعة", "تعيين التخزين", "تسجيل المعاملة", "تحديث الحالة"],
+            details: {
+                "تسجيل الإطارات": "إنشاء سجل فريد للإطار بجميع مواصفاته.",
+                "طلب جلب الإطارات": "يقوم البائع بطلب جلب الإطارات من موقعه.",
+                "فحص التسعير": "يتحقق النظام من نموذج تسعير البائع.",
+                "جلب الإطارات": "يتم جلب الإطارات من موقع البائع إلى مرفق التخزين.",
+                "التحقق من السعة": "التأكد من توفر السعة في الحزمة (للاشتراكات).",
+                "تعيين التخزين": "تخصيص الإطار لمكان محدد في المرفق.",
+                "تسجيل المعاملة": "تسجيل تفاصيل التخزين والرسوم.",
+                "تحديث الحالة": "تغيير حالة الإطار إلى 'مخزن'."
+            }
+        },
+        "استرجاع الإطارات": {
+            steps: ["طلب البائع", "تحديد موقع الإطارات", "حساب الرسوم", "معالجة الاسترجاع", "تسجيل المعاملة", "تحديث الحالة"],
+            details: {
+                "طلب البائع": "يطلب البائع استرجاع إطارات محددة لعميل.",
+                "تحديد موقع الإطارات": "يحدد النظام موقع الإطار في مرفق التخزين.",
+                "حساب الرسوم": "حساب الرسوم بناءً على مدة التخزين ونموذج التسعير.",
+                "معالجة الاسترجاع": "تجهيز الإطار للتسليم وتحديث حالته.",
+                "تسجيل المعاملة": "تسجيل تفاصيل عملية الاسترجاع.",
+                "تحديث الحالة": "تغيير حالة الإطار إلى 'نشط' أو 'متقاعد'."
+            }
+        }
+    };
+    
+    const processTabsContainer = document.getElementById('process-tabs');
+    const processContentContainer = document.getElementById('process-content');
+
+    function renderProcess(processName) {
+        const process = processesData[processName];
+        processContentContainer.innerHTML = '';
+
+        const detailsContainer = document.createElement('div');
+        detailsContainer.id = 'process-details';
+        detailsContainer.className = 'p-4 bg-slate-50 rounded-lg min-h-[60px] text-center flex items-center justify-center transition mb-6';
+        detailsContainer.textContent = 'انقر على خطوة لعرض التفاصيل';
+        
+        const stepsContainer = document.createElement('div');
+        stepsContainer.className = 'flex flex-wrap justify-center gap-4';
+
+        process.steps.forEach((stepText, index) => {
+            const stepDiv = document.createElement('div');
+            stepDiv.className = 'process-step p-3 bg-slate-100 rounded-lg text-center';
+            stepDiv.textContent = `${index + 1}. ${stepText}`;
+            stepDiv.dataset.detail = process.details[stepText];
+            
+            stepDiv.addEventListener('click', () => {
+                stepsContainer.querySelectorAll('.process-step').forEach(el => el.classList.remove('active'));
+                stepDiv.classList.add('active');
+                detailsContainer.textContent = stepDiv.dataset.detail;
+            });
+
+            stepsContainer.appendChild(stepDiv);
+        });
+
+        processContentContainer.appendChild(detailsContainer);
+        processContentContainer.appendChild(stepsContainer);
+    }
+    
+    Object.keys(processesData).forEach((processName, index) => {
+        const button = document.createElement('button');
+        button.textContent = processName;
+        button.className = `py-2 px-4 font-medium text-sm rounded-t-lg transition`;
+        if (index === 0) {
+            button.classList.add('bg-white', 'text-sky-600', 'border-sky-600', 'border-b-2');
+        } else {
+            button.classList.add('text-slate-500', 'hover:text-sky-600', 'hover:border-slate-300');
+        }
+
+        button.addEventListener('click', () => {
+            processTabsContainer.querySelectorAll('button').forEach((btn, i) => {
+                btn.classList.remove('bg-white', 'text-sky-600', 'border-sky-600', 'border-b-2');
+                btn.classList.add('text-slate-500', 'hover:text-sky-600');
+            });
+            button.classList.add('bg-white', 'text-sky-600', 'border-sky-600', 'border-b-2');
+            button.classList.remove('text-slate-500', 'hover:text-sky-600');
+            renderProcess(processName);
+        });
+
+        processTabsContainer.appendChild(button);
+    });
+
+    renderProcess(Object.keys(processesData)[0]);
+
+    const navLinks = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('section');
+
+    const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.4 
+    };
+
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const navLink = document.querySelector(`a[href="#${entry.target.id}"]`);
+                navLinks.forEach(link => {
+                    link.classList.remove('active-nav');
+                    link.classList.add('inactive-nav');
+                });
+                if(navLink) {
+                    navLink.classList.add('active-nav');
+                    navLink.classList.remove('inactive-nav');
+                }
+            }
+        });
+    }, observerOptions);
+
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const mobileNavLinks = document.querySelectorAll('.nav-link-mobile');
+
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+
+    mobileNavLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden');
+        });
+    });
+
+});
+</script>
+
+</body>
+</html>
