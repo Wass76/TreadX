@@ -21,7 +21,6 @@ public abstract class BaseIdEntity implements Serializable {
         allocationSize = 1
     )
     private Long id;
-
     /**
      * This method must be implemented by each entity to provide its own sequence name
      * @return The sequence name for this entity

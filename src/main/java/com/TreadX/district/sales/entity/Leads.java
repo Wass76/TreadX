@@ -1,6 +1,5 @@
-package com.TreadX.dealers.entity;
+package com.TreadX.district.sales.entity;
 
-import com.TreadX.address.entity.Address;
 import com.TreadX.dealers.enums.LeadSource;
 import com.TreadX.dealers.enums.LeadStatus;
 import com.TreadX.utils.entity.AuditedEntity;
@@ -10,7 +9,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import com.TreadX.dealers.entity.Dealer;
 
 @Entity
 @Table(name = "leads")
@@ -22,16 +21,21 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 //@EntityListeners(AuditingEntityListener.class)
 public class Leads extends AuditedEntity {
     private String businessName;
-    @Column(unique = true)
     private String businessEmail;
-    @Column(unique = true)
     private String phoneNumber;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    private Address address;
+    // Flattened address fields
+    private String streetNumber;
+    private String streetName;
+    private String aptUnitBldg;
+    private String postalCode;
 
+    // New lead source fields
     @Enumerated(EnumType.STRING)
-    private LeadSource source;
+    private LeadSource source; // GOVERNMENT OR ADS
+    private String sourceUrl; // For GOV_URL or Ads
+    private String uploadedFile; // File path or reference for uploaded photo/file
+
     @Enumerated(EnumType.STRING)
     private LeadStatus status;
     private String notes;

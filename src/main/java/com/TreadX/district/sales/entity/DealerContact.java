@@ -1,6 +1,7 @@
-package com.TreadX.dealers.entity;
+package com.TreadX.district.sales.entity;
 
 import com.TreadX.address.entity.Address;
+import com.TreadX.dealers.entity.Dealer;
 import com.TreadX.dealers.enums.Channel;
 import com.TreadX.dealers.enums.ContactStatus;
 import com.TreadX.dealers.enums.LeadSource;

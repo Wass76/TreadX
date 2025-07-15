@@ -70,7 +70,9 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN') or @authorizationService.isCurrentUser(#id)")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') "
+//            "or @authorizationService.isCurrentUser(#id)"
+    )
     @Operation(
         summary = "Get user by ID",
         description = "Retrieves a specific user by their ID. Requires PLATFORM_ADMIN role or ownership."
@@ -110,7 +112,9 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN') or @authorizationService.isCurrentUser(#id)")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')"
+//            " or @authorizationService.isCurrentUser(#id)"
+    )
     @Operation(
         summary = "Update user",
         description = "Updates an existing user's information. Requires PLATFORM_ADMIN role or ownership."

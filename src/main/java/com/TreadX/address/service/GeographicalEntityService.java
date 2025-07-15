@@ -2,7 +2,6 @@ package com.TreadX.address.service;
 
 import com.TreadX.address.entity.*;
 import com.TreadX.address.repository.*;
-import com.TreadX.address.service.UniqueIdUtils;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

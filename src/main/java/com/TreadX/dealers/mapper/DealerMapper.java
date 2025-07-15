@@ -27,7 +27,7 @@ public class DealerMapper {
 
     public DealerResponseDTO toResponse(Dealer dealer) {
         DealerResponseDTO response = DealerResponseDTO.builder()
-                .id(dealer.getId())
+//                .id(dealer.getId())
                 .name(dealer.getName())
                 .email(dealer.getEmail())
                 .phone(dealer.getPhone())

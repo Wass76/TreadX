@@ -1,14 +1,12 @@
 package com.TreadX.user.service;
 
-import com.TreadX.dealers.repository.DealerContactRepository;
+
 import com.TreadX.dealers.repository.DealerRepository;
-import com.TreadX.dealers.repository.LeadsRepository;
+import com.TreadX.district.sales.repository.DealerContactRepository;
+import com.TreadX.district.sales.repository.LeadsRepository;
 import com.TreadX.user.entity.User;
 import com.TreadX.user.repository.UserRepository;
-import com.TreadX.utils.exception.ResourceNotFoundException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -52,11 +50,11 @@ public class AuthorizationService extends BaseSecurityService {
         }
         
         // Sales agent can only access their own leads
-        if (hasRole("SALES_AGENT")) {
-            return leadsRepository.findById(leadId)
-                    .map(lead -> lead.getCreatedBy().equals(currentUser.getId()))
-                    .orElse(false);
-        }
+//        if (hasRole("SALES_AGENT")) {
+//            return leadsRepository.findById(leadId)
+//                    .map(lead -> lead.getCreatedBy().equals(currentUser.getId()))
+//                    .orElse(false);
+//        }
         
         return false;
     }
@@ -81,11 +79,11 @@ public class AuthorizationService extends BaseSecurityService {
         }
         
         // Sales agent can only access contacts they created
-        if (hasRole("SALES_AGENT")) {
-            return dealerContactRepository.findById(contactId)
-                    .map(contact -> contact.getCreatedBy().equals(currentUser.getId()))
-                    .orElse(false);
-        }
+//        if (hasRole("SALES_AGENT")) {
+//            return dealerContactRepository.findById(contactId)
+//                    .map(contact -> contact.getCreatedBy().equals(currentUser.getId()))
+//                    .orElse(false);
+//        }
         
         return false;
     }
@@ -109,12 +107,12 @@ public class AuthorizationService extends BaseSecurityService {
             return true;
         }
         
-        // Sales agent can only access dealers they created
-        if (hasRole("SALES_AGENT")) {
-            return dealerRepository.findById(dealerId)
-                    .map(dealer -> dealer.getCreatedBy().equals(currentUser.getId()))
-                    .orElse(false);
-        }
+//        // Sales agent can only access dealers they created
+//        if (hasRole("SALES_AGENT")) {
+//            return dealerRepository.findById(dealerId)
+//                    .map(dealer -> dealer.getCreatedBy().equals(currentUser.getId()))
+//                    .orElse(false);
+//        }
         
         return false;
     }
@@ -142,8 +140,5 @@ public class AuthorizationService extends BaseSecurityService {
      * @param userId ID of the user to check against
      * @return true if the current user is the same as the requested user
      */
-    public boolean isCurrentUser(Long userId) {
-        User currentUser = getCurrentUser();
-        return currentUser.getId().equals(userId);
-    }
+//    public boolean isCurrentUser
 } 

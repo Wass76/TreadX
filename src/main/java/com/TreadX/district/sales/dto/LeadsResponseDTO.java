@@ -1,13 +1,11 @@
-package com.TreadX.dealers.dto;
+package com.TreadX.district.sales.dto;
 
-import com.TreadX.address.dto.AddressResponseDTO;
 import com.TreadX.dealers.enums.LeadSource;
 import com.TreadX.dealers.enums.LeadStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
 @Data
@@ -19,9 +17,16 @@ public class LeadsResponseDTO {
     private String businessName;
     private String businessEmail;
     private String phoneNumber;
+    // Flattened address fields
+    private String streetNumber;
+    private String streetName;
+    private String aptUnitBldg;
+    private String postalCode;
+    // New lead source fields
     private LeadSource source;
+    private String sourceUrl;
+    private String uploadedFile;
     private LeadStatus status;
-    private AddressResponseDTO address;
     private String notes;
     private Long dealerId;
     private String dealerUniqueId;

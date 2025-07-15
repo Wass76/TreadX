@@ -8,6 +8,7 @@ import com.TreadX.address.dto.CityResponseDTO;
 import com.TreadX.address.entity.*;
 import com.TreadX.address.mapper.AddressMapper;
 import com.TreadX.address.repository.*;
+import com.TreadX.utils.exception.RequestNotValidException;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -63,7 +64,7 @@ public class AddressService {
     public List<CountryResponseDTO> getAllBaseCountries() {
         return countryRepository.findAll().stream()
                 .map(country -> CountryResponseDTO.builder()
-                        .id(country.getId())
+//                        .id(country.getId())
                         .name(country.getName())
                         .iso3(country.getIso3())
                         .latitude(country.getLatitude())
@@ -110,7 +111,7 @@ public class AddressService {
      */
     public List<CityResponseDTO> getBaseCitiesByProvince(Long provinceId) {
         State state = stateRepository.findById(provinceId)
-                .orElseThrow(() -> new ResourceNotFoundException("State not found with id: " + provinceId));
+                .orElseThrow(() -> new RequestNotValidException("State not found with id: " + provinceId));
         return cityRepository.findByState(state).stream()
                 .map(city -> CityResponseDTO.builder()
                         .id(city.getId())

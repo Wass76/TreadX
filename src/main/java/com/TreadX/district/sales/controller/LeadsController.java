@@ -1,11 +1,11 @@
-package com.TreadX.dealers.controller;
+package com.TreadX.district.sales.controller;
 
-import com.TreadX.dealers.dto.DealerContactRequestDTO;
 import com.TreadX.dealers.dto.DealerContactResponseDTO;
-import com.TreadX.dealers.dto.LeadsRequestDTO;
-import com.TreadX.dealers.dto.LeadsResponseDTO;
-import com.TreadX.dealers.service.ConversionService;
-import com.TreadX.dealers.service.LeadsService;
+//import com.TreadX.dealers.service.ConversionService;
+import com.TreadX.district.sales.dto.DealerContactRequestDTO;
+import com.TreadX.district.sales.dto.LeadsRequestDTO;
+import com.TreadX.district.sales.dto.LeadsResponseDTO;
+import com.TreadX.district.sales.service.LeadsService;
 import com.TreadX.user.service.AuthorizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/leads")
@@ -33,7 +34,7 @@ import org.springframework.web.bind.annotation.*;
 public class LeadsController {
 
     private final LeadsService leadsService;
-    private final ConversionService conversionService;
+//    private final ConversionService conversionService;
     private final AuthorizationService authorizationService;
 
     @GetMapping
@@ -83,7 +84,7 @@ public class LeadsController {
         return new ResponseEntity<>(lead, HttpStatus.OK);
     }
 
-    @PostMapping
+    @PostMapping(consumes = {"multipart/form-data"})
     @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
     @Operation(
         summary = "Create new lead",
@@ -98,12 +99,13 @@ public class LeadsController {
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<LeadsResponseDTO> createLead(
-            @Parameter(description = "Lead data", required = true) @RequestBody LeadsRequestDTO lead) {
-        LeadsResponseDTO createdLead = leadsService.createLead(lead);
+            @Parameter(description = "Lead data", required = true) @RequestPart("lead") LeadsRequestDTO lead,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        LeadsResponseDTO createdLead = leadsService.createLead(lead, file);
         return new ResponseEntity<>(createdLead, HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
     @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or @authz.isLeadOwner(#id)")
     @Operation(
         summary = "Update lead",
@@ -120,11 +122,12 @@ public class LeadsController {
     })
     public ResponseEntity<LeadsResponseDTO> updateLead(
             @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long id,
-            @Parameter(description = "Updated lead data", required = true) @RequestBody LeadsRequestDTO leadDetails) {
+            @Parameter(description = "Updated lead data", required = true) @RequestPart("lead") LeadsRequestDTO leadDetails,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
         if (!authorizationService.hasAccessToLead(id, "UPDATE")) {
             throw new AccessDeniedException("You don't have permission to update this lead");
         }
-        LeadsResponseDTO updatedLead = leadsService.updateLead(id, leadDetails);
+        LeadsResponseDTO updatedLead = leadsService.updateLead(id, leadDetails, file);
         return new ResponseEntity<>(updatedLead, HttpStatus.OK);
     }
 
@@ -149,30 +152,30 @@ public class LeadsController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @PostMapping("/{id}/convert-to-contact")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
-    @Operation(
-        summary = "Convert lead to contact",
-        description = "Converts a lead to a contact. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Successfully converted lead to contact",
-            content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = DealerContactResponseDTO.class))),
-        @ApiResponse(responseCode = "404", description = "Lead not found"),
-        @ApiResponse(responseCode = "400", description = "Invalid conversion data"),
-        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public ResponseEntity<DealerContactResponseDTO> convertToContact(
-            @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long id,
-            @Parameter(description = "Contact data", required = true) @RequestBody DealerContactRequestDTO request) {
-        if (!authorizationService.hasContactConversionAccess()) {
-            throw new AccessDeniedException("You don't have permission to convert leads to contacts");
-        }
-        DealerContactResponseDTO contact = conversionService.convertLeadToContact(id, request);
-        return new ResponseEntity<>(contact, HttpStatus.CREATED);
-    }
+//    @PostMapping("/{id}/convert-to-contact")
+//    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+//    @Operation(
+//        summary = "Convert lead to contact",
+//        description = "Converts a lead to a contact. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
+//    )
+//    @ApiResponses(value = {
+//        @ApiResponse(responseCode = "201", description = "Successfully converted lead to contact",
+//            content = @Content(mediaType = "application/json",
+//            schema = @Schema(implementation = DealerContactResponseDTO.class))),
+//        @ApiResponse(responseCode = "404", description = "Lead not found"),
+//        @ApiResponse(responseCode = "400", description = "Invalid conversion data"),
+//        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+//        @ApiResponse(responseCode = "500", description = "Internal server error")
+//    })
+//    public ResponseEntity<DealerContactResponseDTO> convertToContact(
+//            @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long id,
+//            @Parameter(description = "Contact data", required = true) @RequestBody DealerContactRequestDTO request) {
+//        if (!authorizationService.hasContactConversionAccess()) {
+//            throw new AccessDeniedException("You don't have permission to convert leads to contacts");
+//        }
+//        DealerContactResponseDTO contact = conversionService.convertLeadToContact(id, request);
+//        return new ResponseEntity<>(contact, HttpStatus.CREATED);
+//    }
 
 //    @PostMapping("/{id}/convert-to-dealer")
 //    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")

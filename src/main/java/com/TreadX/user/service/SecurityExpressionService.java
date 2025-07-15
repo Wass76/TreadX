@@ -1,15 +1,13 @@
 package com.TreadX.user.service;
 
-import com.TreadX.dealers.repository.DealerContactRepository;
+
 import com.TreadX.dealers.repository.DealerRepository;
-import com.TreadX.dealers.repository.LeadsRepository;
+import com.TreadX.district.sales.repository.DealerContactRepository;
+import com.TreadX.district.sales.repository.LeadsRepository;
 import com.TreadX.user.entity.User;
 import com.TreadX.user.repository.UserRepository;
 import com.TreadX.utils.exception.ResourceNotFoundException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service("authz")

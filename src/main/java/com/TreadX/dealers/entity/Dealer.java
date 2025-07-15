@@ -2,6 +2,8 @@ package com.TreadX.dealers.entity;
 
 import com.TreadX.address.entity.Address;
 import com.TreadX.dealers.enums.DealerStatus;
+import com.TreadX.district.sales.entity.DealerContact;
+import com.TreadX.district.sales.entity.Leads;
 import com.TreadX.utils.entity.AuditedEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,8 +43,8 @@ public class Dealer extends AuditedEntity {
     @OneToMany(mappedBy = "business", cascade = CascadeType.ALL)
     private List<DealerContact> contacts;
 
-    @OneToMany(mappedBy = "dealer", cascade = CascadeType.ALL)
-    private List<DealerEmployee> employees;
+//    @OneToMany(mappedBy = "dealer", cascade = CascadeType.ALL)
+//    private List<DealerEmployee> employees;
 
     @OneToMany(mappedBy = "dealer", cascade = CascadeType.ALL)
     private List<Leads> leads;

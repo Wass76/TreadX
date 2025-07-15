@@ -1,7 +1,7 @@
-package com.TreadX.dealers.repository;
+package com.TreadX.district.sales.repository;
 
 import com.TreadX.address.entity.Address;
-import com.TreadX.dealers.entity.DealerContact;
+import com.TreadX.district.sales.entity.DealerContact;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
