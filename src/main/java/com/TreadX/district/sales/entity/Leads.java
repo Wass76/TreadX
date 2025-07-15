@@ -44,6 +44,12 @@ public class Leads extends AuditedEntity {
     @JoinColumn(name = "dealer_id")
     private Dealer dealer;
 
+    @ManyToOne
+    @JoinColumn(name = "validated_by_id")
+    private com.TreadX.user.entity.User validatedBy;
+
+    private java.time.LocalDateTime validatedAt;
+
     @Override
     protected String getSequenceName() {
         return "leads_id_seq";

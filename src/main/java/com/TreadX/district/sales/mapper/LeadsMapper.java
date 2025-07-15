@@ -5,12 +5,15 @@ import com.TreadX.district.sales.dto.LeadsResponseDTO;
 import com.TreadX.district.sales.entity.Leads;
 import com.TreadX.dealers.enums.LeadSource;
 import com.TreadX.dealers.enums.LeadStatus;
+import com.TreadX.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class LeadsMapper {
+    private final UserMapper userMapper;
+
     public Leads toEntity(LeadsRequestDTO request) {
         return Leads.builder()
                 .businessName(request.getBusinessName())
@@ -23,7 +26,7 @@ public class LeadsMapper {
                 .source(request.getSource())
                 .sourceUrl(request.getSourceUrl())
                 .uploadedFile(request.getUploadedFile())
-                .status(request.getStatus() == null ? LeadStatus.NEW : request.getStatus())
+                .status(request.getStatus() == null ? LeadStatus.PENDING : request.getStatus())
                 .notes(request.getNotes())
                 .build();
     }
@@ -49,6 +52,8 @@ public class LeadsMapper {
                 .updatedAt(leads.getUpdatedAt())
                 .addedBy(leads.getCreatedBy())
                 .lastModifiedBy(leads.getLastModifiedBy())
+                .validatedBy(userMapper.toResponse(leads.getValidatedBy()))
+                .validatedAt(leads.getValidatedAt())
                 .build();
     }
 

@@ -1,12 +1,11 @@
 package com.TreadX.district.sales.controller;
 
-import com.TreadX.dealers.dto.DealerContactResponseDTO;
-//import com.TreadX.dealers.service.ConversionService;
-import com.TreadX.district.sales.dto.DealerContactRequestDTO;
 import com.TreadX.district.sales.dto.LeadsRequestDTO;
 import com.TreadX.district.sales.dto.LeadsResponseDTO;
+import com.TreadX.district.sales.dto.LeadValidationRequest;
 import com.TreadX.district.sales.service.LeadsService;
 import com.TreadX.user.service.AuthorizationService;
+import com.TreadX.dealers.enums.LeadStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -25,6 +24,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/leads")
@@ -84,6 +85,32 @@ public class LeadsController {
         return new ResponseEntity<>(lead, HttpStatus.OK);
     }
 
+    @GetMapping("/status")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @Operation(
+        summary = "Get leads by status (paginated)",
+        description = "Retrieves a paginated list of leads filtered by status. Requires PLATFORM_ADMIN, SALES_MANAGER, or SALES_AGENT role."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved leads by status",
+            content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation = Page.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid status value"),
+        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<Page<LeadsResponseDTO>> getLeadsByStatus(
+            @RequestParam LeadStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
+        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Page<LeadsResponseDTO> leads = leadsService.getLeadsByStatus(status, pageable);
+        return ResponseEntity.ok(leads);
+    }
+
     @PostMapping(consumes = {"multipart/form-data"})
     @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
     @Operation(
@@ -129,6 +156,32 @@ public class LeadsController {
         }
         LeadsResponseDTO updatedLead = leadsService.updateLead(id, leadDetails, file);
         return new ResponseEntity<>(updatedLead, HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}/validate")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER')")
+    @Operation(
+        summary = "Validate (approve/deny) a lead",
+        description = "Validates a lead by approving or denying it. Requires PLATFORM_ADMIN or SALES_MANAGER role."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully validated the lead",
+            content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation = LeadsResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Lead not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<LeadsResponseDTO> validateLead(
+            @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long id,
+            @RequestBody LeadValidationRequest request,
+            Principal principal) {
+        if (!authorizationService.hasAccessToLead(id, "UPDATE")) {
+            throw new AccessDeniedException("You don't have permission to validate this lead");
+        }
+        LeadsResponseDTO response = leadsService.validateLead(id, request, principal);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

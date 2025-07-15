@@ -21,7 +21,7 @@ public abstract class BaseSecurityService {
      * @return The current user
      * @throws ResourceNotFoundException if the user is not found
      */
-    protected User getCurrentUser() {
+    public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new ResourceNotFoundException("User not authenticated");

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+import com.TreadX.user.dto.UserResponseDTO;
 
 @Data
 @Builder
@@ -34,4 +35,6 @@ public class LeadsResponseDTO {
     private LocalDateTime updatedAt;
     private Long addedBy;
     private Long lastModifiedBy;
+    private com.TreadX.user.dto.UserResponseDTO validatedBy;
+    private java.time.LocalDateTime validatedAt;
 } 

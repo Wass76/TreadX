@@ -15,4 +15,8 @@ AND role_id = (SELECT id FROM roles WHERE name = 'SALES_AGENT' LIMIT 1);
 UPDATE "user" 
 SET role_id = (SELECT id FROM roles WHERE name = 'PLATFORM_ADMIN' LIMIT 1)
 WHERE email = 'wasee.tenbakji@gmail.com' 
-AND role_id != (SELECT id FROM roles WHERE name = 'PLATFORM_ADMIN' LIMIT 1); 
+AND role_id != (SELECT id FROM roles WHERE name = 'PLATFORM_ADMIN' LIMIT 1);
+
+ALTER TABLE leads
+DROP CONSTRAINT leads_source_check,
+    ADD CONSTRAINT leads_source_check CHECK (source IN ('GOVERNMENT', 'ADS'));

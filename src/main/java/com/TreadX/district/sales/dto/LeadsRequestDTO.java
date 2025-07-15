@@ -43,4 +43,4 @@ public class LeadsRequestDTO {
     private LeadStatus status;
     private String notes;
     private Long dealerId;
-} 
+}
