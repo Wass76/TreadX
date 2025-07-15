@@ -72,48 +72,43 @@ This approach uses a **single application** with **multiple databases** and **cl
 
 ### **Package Organization:**
 
+> **Note:** For real-world domains where a module (like District) contains multiple complex subdomains (e.g., Sales Management, Vendor Management, Tire Management), it's best practice to further subdivide the module into sub-packages for each subdomain. This improves maintainability, scalability, and aligns with Domain-Driven Design (DDD) principles.
+
+**Recommended Structure:**
+
 ```
 com.treadx/
-├── district/                    # District Module
-│   ├── controller/
-│   ├── service/
-│   ├── repository/
-│   ├── entity/
+├── district/                    # District Module (aggregate root)
+│   ├── sales/                   # Sales Management Submodule
+│   │   ├── controller/
+│   │   ├── service/
+│   │   ├── repository/
+│   │   └── entity/
+│   ├── vendor/                  # Vendor Management Submodule
+│   │   ├── controller/
+│   │   ├── service/
+│   │   ├── repository/
+│   │   ├── entity/
+│   │   ├── customer/            # Customer Management (sub-submodule)
+│   │   │   ├── controller/
+│   │   │   ├── service/
+│   │   │   ├── repository/
+│   │   │   └── entity/
+│   │   └── vehicle/             # Vehicle Management (sub-submodule)
+│   │       ├── controller/
+│   │       ├── service/
+│   │       ├── repository/
+│   │       └── entity/
+│   ├── tire/                    # Tire Management Submodule
+│   │   ├── controller/
+│   │   ├── service/
+│   │   ├── repository/
+│   │   └── entity/
 │   └── config/
 │       └── DistrictDataSourceConfig.java
-├── storage/                     # Storage Module
-│   ├── controller/
-│   ├── service/
-│   ├── repository/
-│   ├── entity/
-│   └── config/
-│       └── StorageDataSourceConfig.java
-├── management/                  # Management Module
-│   ├── controller/
-│   ├── service/
-│   ├── repository/
-│   ├── entity/
-│   └── config/
-│       └── ManagementDataSourceConfig.java
-├── user/                       # User Management Module
-│   ├── controller/
-│   ├── service/
-│   ├── repository/
-│   ├── entity/
-│   └── config/
-│       └── UserDataSourceConfig.java
-├── security/                   # Security & Auth Module
-│   ├── config/
-│   ├── filter/
-│   ├── jwt/
-│   └── rate/
-│       └── SecurityConfig.java
-└── sync/                       # Data Sync Module
-    ├── service/
-    ├── scheduler/
-    └── config/
-        └── SyncConfig.java
 ```
+
+This structure allows each subdomain within the district to evolve independently, supports team autonomy, and makes future migration to microservices much easier. For smaller domains, a flatter structure may suffice, but for complex business logic, this subdivision is highly recommended.
 
 ---
 
