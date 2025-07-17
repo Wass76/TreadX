@@ -1,12 +1,13 @@
 package com.TreadX.district.sales.service;
 
+import com.TreadX.district.vendors.entity.Vendor;
+import com.TreadX.district.vendors.repository.VendorRepository;
 import com.TreadX.district.sales.dto.LeadsRequestDTO;
 import com.TreadX.district.sales.dto.LeadsResponseDTO;
 import com.TreadX.district.sales.entity.Leads;
 import com.TreadX.district.sales.mapper.LeadsMapper;
 import com.TreadX.district.sales.repository.LeadsRepository;
-import com.TreadX.dealers.entity.Dealer;
-import com.TreadX.dealers.enums.LeadStatus;
+import com.TreadX.district.vendors.enums.LeadStatus;
 import com.TreadX.user.service.AuthorizationService;
 import com.TreadX.utils.exception.ConflictException;
 import com.TreadX.utils.exception.ResourceNotFoundException;
@@ -22,11 +23,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.TreadX.dealers.enums.LeadStatus.PENDING;
+import static com.TreadX.district.vendors.enums.LeadStatus.PENDING;
 import com.TreadX.district.sales.dto.LeadValidationRequest;
 import com.TreadX.user.entity.User;
 import com.TreadX.user.repository.UserRepository;
-import java.security.Principal;
+import com.TreadX.district.vendors.dto.InitiateContactRequestDTO;
 
 @Service
 public class LeadsService {
@@ -35,7 +36,7 @@ public class LeadsService {
     @Autowired
     private LeadsMapper leadsMapper;
     @Autowired
-    private com.TreadX.dealers.repository.DealerRepository dealerRepository;
+    private VendorRepository vendorRepository;
     @Autowired
     private AuthorizationService authorizationService;
     @Autowired
@@ -53,9 +54,9 @@ public class LeadsService {
             leads.setUploadedFile(filePath);
         }
         if (request.getDealerId() != null) {
-            Dealer dealer = dealerRepository.findById(request.getDealerId())
+            Vendor vendor = vendorRepository.findById(request.getDealerId())
                     .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + request.getDealerId()));
-            leads.setDealer(dealer);
+            leads.setVendor(vendor);
         }
         leads.setStatus(PENDING);
         leads = leadsRepository.save(leads);
@@ -83,9 +84,9 @@ public class LeadsService {
             leads.setUploadedFile(filePath);
         }
         if (request.getDealerId() != null) {
-            Dealer dealer = dealerRepository.findById(request.getDealerId())
+            Vendor vendor = vendorRepository.findById(request.getDealerId())
                     .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + request.getDealerId()));
-            leads.setDealer(dealer);
+            leads.setVendor(vendor);
         }
         leads = leadsRepository.save(leads);
         return leadsMapper.toResponse(leads);
@@ -104,7 +105,7 @@ public class LeadsService {
 
     public List<LeadsResponseDTO> getLeadsByDealer(Long dealerId) {
         return leadsRepository.findAll().stream()
-                .filter(lead -> lead.getDealer() != null && lead.getDealer().getId().equals(dealerId))
+                .filter(lead -> lead.getVendor() != null && lead.getVendor().getId().equals(dealerId))
                 .map(leadsMapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -123,19 +124,35 @@ public class LeadsService {
     }
 
     @Transactional
-    public LeadsResponseDTO validateLead(Long id, LeadValidationRequest request, Principal principal) {
+    public LeadsResponseDTO validateLead(Long id, LeadValidationRequest request) {
         Leads leads = leadsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
         validateStatusTransition(leads.getStatus(), request.getStatus());
         leads.setStatus(request.getStatus());
         leads.setNotes(request.getNotes());
-        if (principal != null) {
-            User user = userRepository.findByEmail(principal.getName()).orElse(null);
+        User user = authorizationService.getCurrentUser();
+        if (user != null) {
             leads.setValidatedBy(user);
         }
         leads.setValidatedAt(java.time.LocalDateTime.now());
         leads = leadsRepository.save(leads);
         return leadsMapper.toResponse(leads);
+    }
+
+    @Transactional
+    public LeadsResponseDTO initiateContact(Long id, InitiateContactRequestDTO request) {
+        Leads lead = leadsRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
+        if (lead.getStatus() != LeadStatus.APPROVED) {
+            throw new ConflictException("Lead must be in APPROVED status to initiate contact.");
+        }
+        validateStatusTransition(lead.getStatus(), LeadStatus.CONTACTED);
+        lead.setStatus(LeadStatus.CONTACTED);
+        // Store contact method and details
+        lead.setContactMethod(request.getContactMethod());
+        lead.setContactMethodDetails(request.getOtherDetails());
+        lead = leadsRepository.save(lead);
+        return leadsMapper.toResponse(lead);
     }
 
     private String saveLeadFile(MultipartFile file) {
@@ -153,7 +170,10 @@ public class LeadsService {
     }
 
     private void validateStatusTransition(LeadStatus currentStatus, LeadStatus newStatus) {
-        if (currentStatus == LeadStatus.PENDING && (newStatus == LeadStatus.APPROVED || newStatus == LeadStatus.DENIED)) return;
+        if (currentStatus == LeadStatus.PENDING && (newStatus == LeadStatus.APPROVED || newStatus == LeadStatus.DENIED || newStatus == LeadStatus.CONTACTED)) return;
+        if (currentStatus == LeadStatus.APPROVED && newStatus == LeadStatus.CONTACTED) return;
+        if (currentStatus == LeadStatus.CONTACTED && (newStatus == LeadStatus.ONBOARDED || newStatus == LeadStatus.DONE)) return;
+        if (currentStatus == LeadStatus.ONBOARDED && newStatus == LeadStatus.DONE) return;
         if (currentStatus == LeadStatus.DENIED && newStatus == LeadStatus.PENDING) return; // allow re-validation
         throw new ConflictException("Invalid status transition from " + currentStatus + " to " + newStatus);
     }

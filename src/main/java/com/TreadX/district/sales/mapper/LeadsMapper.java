@@ -3,21 +3,21 @@ package com.TreadX.district.sales.mapper;
 import com.TreadX.district.sales.dto.LeadsRequestDTO;
 import com.TreadX.district.sales.dto.LeadsResponseDTO;
 import com.TreadX.district.sales.entity.Leads;
-import com.TreadX.dealers.enums.LeadSource;
-import com.TreadX.dealers.enums.LeadStatus;
+import com.TreadX.district.vendors.enums.LeadStatus;
 import com.TreadX.user.mapper.UserMapper;
+import com.TreadX.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class LeadsMapper {
+    private final UserRepository userRepository;
     private final UserMapper userMapper;
 
     public Leads toEntity(LeadsRequestDTO request) {
         return Leads.builder()
                 .businessName(request.getBusinessName())
-                .businessEmail(request.getBusinessEmail())
                 .phoneNumber(request.getPhoneNumber())
                 .streetNumber(request.getStreetNumber())
                 .streetName(request.getStreetName())
@@ -35,7 +35,6 @@ public class LeadsMapper {
         return LeadsResponseDTO.builder()
                 .id(leads.getId())
                 .businessName(leads.getBusinessName())
-                .businessEmail(leads.getBusinessEmail())
                 .phoneNumber(leads.getPhoneNumber())
                 .streetNumber(leads.getStreetNumber())
                 .streetName(leads.getStreetName())
@@ -46,23 +45,27 @@ public class LeadsMapper {
                 .uploadedFile(leads.getUploadedFile())
                 .status(leads.getStatus())
                 .notes(leads.getNotes())
-                .dealerId(leads.getDealer() != null ? leads.getDealer().getId() : null)
-                .dealerUniqueId(leads.getDealer() != null ? leads.getDealer().getDealerUniqueId() : null)
+                .vendorId(leads.getVendor() != null ? leads.getVendor().getId() : null)
+                .vendorUniqueId(leads.getVendor() != null ? leads.getVendorUniqueId() : null)
                 .createdAt(leads.getCreatedAt())
                 .updatedAt(leads.getUpdatedAt())
                 .addedBy(leads.getCreatedBy())
                 .lastModifiedBy(leads.getLastModifiedBy())
-                .validatedBy(userMapper.toResponse(leads.getValidatedBy()))
+                .validatedBy(leads.getValidatedBy().getId())
+                .validatedByFirstName(leads.getValidatedBy().getFirstName())
+                .validatedByLastName(leads.getValidatedBy().getLastName())
                 .validatedAt(leads.getValidatedAt())
+                .contactMethod(leads.getContactMethod())
+                .contactMethodDetails(leads.getContactMethodDetails())
+                .extensionNumber(leads.getExtensionNumber())
+                .contactName(leads.getContactName())
+                .position(leads.getPosition())
                 .build();
     }
 
     public void updateEntityFromRequest(Leads leads, LeadsRequestDTO request) {
         if (request.getBusinessName() != null) {
             leads.setBusinessName(request.getBusinessName());
-        }
-        if (request.getBusinessEmail() != null) {
-            leads.setBusinessEmail(request.getBusinessEmail());
         }
         if (request.getPhoneNumber() != null) {
             leads.setPhoneNumber(request.getPhoneNumber());

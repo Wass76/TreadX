@@ -1,7 +1,8 @@
 package com.TreadX.district.sales.entity;
 
-import com.TreadX.dealers.enums.LeadSource;
-import com.TreadX.dealers.enums.LeadStatus;
+import com.TreadX.district.vendors.enums.LeadSource;
+import com.TreadX.district.vendors.enums.LeadStatus;
+import com.TreadX.user.entity.User;
 import com.TreadX.utils.entity.AuditedEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,7 +10,10 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import com.TreadX.dealers.entity.Dealer;
+import com.TreadX.district.vendors.entity.Vendor;
+import com.TreadX.district.vendors.enums.ContactMethod;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "leads")
@@ -21,10 +25,8 @@ import com.TreadX.dealers.entity.Dealer;
 //@EntityListeners(AuditingEntityListener.class)
 public class Leads extends AuditedEntity {
     private String businessName;
-    private String businessEmail;
     private String phoneNumber;
 
-    // Flattened address fields
     private String streetNumber;
     private String streetName;
     private String aptUnitBldg;
@@ -40,15 +42,24 @@ public class Leads extends AuditedEntity {
     private LeadStatus status;
     private String notes;
 
+    @Enumerated(EnumType.STRING)
+    private ContactMethod contactMethod;
+    private String contactMethodDetails;
+
+    private String extensionNumber;
+    private String contactName;
+    private String position;
+
     @ManyToOne
     @JoinColumn(name = "dealer_id")
-    private Dealer dealer;
+    private Vendor vendor;
+    private String vendorUniqueId;
 
     @ManyToOne
     @JoinColumn(name = "validated_by_id")
-    private com.TreadX.user.entity.User validatedBy;
+    private User validatedBy;
 
-    private java.time.LocalDateTime validatedAt;
+    private LocalDateTime validatedAt;
 
     @Override
     protected String getSequenceName() {

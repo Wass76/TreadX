@@ -1,7 +1,7 @@
 package com.TreadX.user.service;
 
 
-import com.TreadX.dealers.repository.DealerRepository;
+import com.TreadX.district.vendors.repository.VendorRepository;
 import com.TreadX.district.sales.repository.DealerContactRepository;
 import com.TreadX.district.sales.repository.LeadsRepository;
 import com.TreadX.user.entity.User;
@@ -17,17 +17,17 @@ public class AuthorizationService extends BaseSecurityService {
     @Autowired
     private DealerContactRepository dealerContactRepository;
     @Autowired
-    private DealerRepository dealerRepository;
+    private VendorRepository vendorRepository;
 
     public AuthorizationService(
             UserRepository userRepository,
             LeadsRepository leadsRepository,
             DealerContactRepository dealerContactRepository,
-            DealerRepository dealerRepository) {
+            VendorRepository vendorRepository) {
         super(userRepository);
         this.leadsRepository = leadsRepository;
         this.dealerContactRepository = dealerContactRepository;
-        this.dealerRepository = dealerRepository;
+        this.vendorRepository = vendorRepository;
     }
 
     /**

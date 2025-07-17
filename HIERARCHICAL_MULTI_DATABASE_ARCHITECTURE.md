@@ -195,7 +195,7 @@ public class SalesManagerAccessControl {
 ```
 1. Sales Agent creates lead in N6B database
 2. Sales Agent contacts lead
-3. Lead becomes vendor (dealer) in N6B database
+3. Lead becomes vendor (vendor) in N6B database
 4. Vendor gets customers in N6B database
 5. Customers get vehicles in N6B database
 6. Vehicles get tires in N6B database

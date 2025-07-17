@@ -1,7 +1,7 @@
 package com.TreadX.district.sales.repository;
 
 import com.TreadX.district.sales.entity.Leads;
-import com.TreadX.dealers.enums.LeadStatus;
+import com.TreadX.district.vendors.enums.LeadStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

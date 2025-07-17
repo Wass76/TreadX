@@ -1,6 +1,6 @@
 package com.TreadX.tire.entity;
 
-import com.TreadX.dealers.entity.Dealer;
+import com.TreadX.district.vendors.entity.Vendor;
 import com.TreadX.utils.entity.AuditedEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -19,7 +19,7 @@ import lombok.experimental.SuperBuilder;
 public class DealerPackages extends AuditedEntity {
     @ManyToOne
     @JoinColumn(name = "dealer_id")
-    private Dealer dealer;
+    private Vendor vendor;
 
     @ManyToOne
     @JoinColumn(name = "package_id")

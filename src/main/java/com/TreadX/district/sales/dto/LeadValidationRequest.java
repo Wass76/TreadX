@@ -1,6 +1,6 @@
 package com.TreadX.district.sales.dto;
 
-import com.TreadX.dealers.enums.LeadStatus;
+import com.TreadX.district.vendors.enums.LeadStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

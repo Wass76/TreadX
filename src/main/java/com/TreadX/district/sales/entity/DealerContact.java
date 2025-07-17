@@ -1,10 +1,10 @@
 package com.TreadX.district.sales.entity;
 
 import com.TreadX.address.entity.Address;
-import com.TreadX.dealers.entity.Dealer;
-import com.TreadX.dealers.enums.Channel;
-import com.TreadX.dealers.enums.ContactStatus;
-import com.TreadX.dealers.enums.LeadSource;
+import com.TreadX.district.vendors.entity.Vendor;
+import com.TreadX.district.vendors.enums.Channel;
+import com.TreadX.district.vendors.enums.ContactStatus;
+import com.TreadX.district.vendors.enums.LeadSource;
 import com.TreadX.user.entity.User;
 import com.TreadX.utils.entity.AuditedEntity;
 import jakarta.persistence.*;
@@ -54,7 +54,7 @@ public class DealerContact extends AuditedEntity {
 
     @ManyToOne
     @JoinColumn(name = "dealer_id")
-    private Dealer business;
+    private Vendor business;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "converted_from_lead_id")

@@ -1,7 +1,7 @@
 package com.TreadX.district.sales.dto;
 
-import com.TreadX.dealers.enums.LeadSource;
-import com.TreadX.dealers.enums.LeadStatus;
+import com.TreadX.district.vendors.enums.LeadSource;
+import com.TreadX.district.vendors.enums.LeadStatus;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -16,10 +16,6 @@ import lombok.NoArgsConstructor;
 public class LeadsRequestDTO {
     @NotBlank(message = "business name is required")
     private String businessName;
-
-    @NotBlank(message = "Business email is required")
-    @Email(message = "Invalid email format")
-    private String businessEmail;
 
     @NotBlank(message = "Phone number is required")
     private String phoneNumber;

@@ -37,7 +37,7 @@ public class DealerPackagesService {
         DealerPackages dealerPackage = dealerPackagesRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dealer Package not found with id: " + id));
         
-        dealerPackage.setDealer(dealerPackageDetails.getDealer());
+        dealerPackage.setVendor(dealerPackageDetails.getVendor());
         dealerPackage.setAPackage(dealerPackageDetails.getAPackage());
         dealerPackage.setPrice(dealerPackageDetails.getPrice());
         

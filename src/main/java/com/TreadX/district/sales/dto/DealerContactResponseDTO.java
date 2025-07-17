@@ -1,11 +1,9 @@
-package com.TreadX.dealers.dto;
+package com.TreadX.vendors.dto;
 
 import com.TreadX.address.dto.AddressResponseDTO;
-import com.TreadX.dealers.entity.Dealer;
-import com.TreadX.dealers.enums.Channel;
-import com.TreadX.dealers.enums.ContactStatus;
-import com.TreadX.dealers.enums.LeadSource;
-import com.TreadX.user.entity.User;
+import com.TreadX.district.vendors.enums.Channel;
+import com.TreadX.district.vendors.enums.ContactStatus;
+import com.TreadX.district.vendors.enums.LeadSource;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -29,7 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_user_territories_country ON user_territories (cou
 
 -- Create composite indexes for geographical queries
 CREATE INDEX IF NOT EXISTS idx_leads_geographical ON leads (city_id, province_id, country_id);
-CREATE INDEX IF NOT EXISTS idx_dealer_geographical ON dealer (city_id, province_id, country_id);
+CREATE INDEX IF NOT EXISTS idx_dealer_geographical ON vendor (city_id, province_id, country_id);
 
 -- Add comments for documentation
 COMMENT ON TABLE user_territories IS 'Stores geographical territory assignments for users';

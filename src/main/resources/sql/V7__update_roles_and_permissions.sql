@@ -18,19 +18,19 @@ WHERE name IN (
 
 -- Add new permissions if they don't exist
 INSERT INTO permissions (name, description, resource, action, is_active, is_system_generated)
-SELECT 'DEALER_CONTACT_CREATE', 'Create dealer contacts', 'DEALER_CONTACT', 'CREATE', true, true
+SELECT 'DEALER_CONTACT_CREATE', 'Create vendor contacts', 'DEALER_CONTACT', 'CREATE', true, true
 WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'DEALER_CONTACT_CREATE');
 
 INSERT INTO permissions (name, description, resource, action, is_active, is_system_generated)
-SELECT 'DEALER_CONTACT_READ', 'View dealer contacts', 'DEALER_CONTACT', 'READ', true, true
+SELECT 'DEALER_CONTACT_READ', 'View vendor contacts', 'DEALER_CONTACT', 'READ', true, true
 WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'DEALER_CONTACT_READ');
 
 INSERT INTO permissions (name, description, resource, action, is_active, is_system_generated)
-SELECT 'DEALER_CONTACT_UPDATE', 'Update dealer contacts', 'DEALER_CONTACT', 'UPDATE', true, true
+SELECT 'DEALER_CONTACT_UPDATE', 'Update vendor contacts', 'DEALER_CONTACT', 'UPDATE', true, true
 WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'DEALER_CONTACT_UPDATE');
 
 INSERT INTO permissions (name, description, resource, action, is_active, is_system_generated)
-SELECT 'DEALER_CONTACT_DELETE', 'Delete dealer contacts', 'DEALER_CONTACT', 'DELETE', true, true
+SELECT 'DEALER_CONTACT_DELETE', 'Delete vendor contacts', 'DEALER_CONTACT', 'DELETE', true, true
 WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = 'DEALER_CONTACT_DELETE');
 
 -- Update role permissions

@@ -5,7 +5,8 @@ import com.TreadX.district.sales.dto.LeadsResponseDTO;
 import com.TreadX.district.sales.dto.LeadValidationRequest;
 import com.TreadX.district.sales.service.LeadsService;
 import com.TreadX.user.service.AuthorizationService;
-import com.TreadX.dealers.enums.LeadStatus;
+import com.TreadX.district.vendors.enums.LeadStatus;
+import com.TreadX.district.vendors.dto.InitiateContactRequestDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -24,8 +25,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/leads")
@@ -175,12 +174,24 @@ public class LeadsController {
     })
     public ResponseEntity<LeadsResponseDTO> validateLead(
             @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long id,
-            @RequestBody LeadValidationRequest request,
-            Principal principal) {
+            @RequestBody LeadValidationRequest request) {
         if (!authorizationService.hasAccessToLead(id, "UPDATE")) {
             throw new AccessDeniedException("You don't have permission to validate this lead");
         }
-        LeadsResponseDTO response = leadsService.validateLead(id, request, principal);
+        LeadsResponseDTO response = leadsService.validateLead(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/initiate-contact")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @Operation(
+        summary = "Initiate contact for a lead",
+        description = "Initiates contact for a lead and updates its status to CONTACTED."
+    )
+    public ResponseEntity<LeadsResponseDTO> initiateContact(
+            @PathVariable Long id,
+            @RequestBody InitiateContactRequestDTO request) {
+        LeadsResponseDTO response = leadsService.initiateContact(id, request);
         return ResponseEntity.ok(response);
     }
 

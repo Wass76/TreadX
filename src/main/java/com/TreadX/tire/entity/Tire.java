@@ -1,6 +1,6 @@
 package com.TreadX.tire.entity;
 
-import com.TreadX.dealers.entity.Customer;
+import com.TreadX.district.vendors.entity.Customer;
 import com.TreadX.utils.entity.AuditedEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
