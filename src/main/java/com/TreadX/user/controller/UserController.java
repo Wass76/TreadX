@@ -8,6 +8,7 @@ import com.TreadX.user.response.UserAuthenticationResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,7 +31,8 @@ import java.util.Set;
 @CrossOrigin("*")
 public class UserController {
 
-    private final UserService userService;
+    @Autowired
+    private UserService userService;
 
     @PostMapping("/login")
     @Operation(
@@ -132,6 +134,30 @@ public class UserController {
             @Parameter(description = "ID of the user to update") @PathVariable Long id,
             @Valid @RequestBody UserRequestDTO userDetails) {
         UserResponseDTO updatedUser = userService.updateUser(id, userDetails);
+        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')"
+//            " or @authorizationService.isCurrentUser(#id)"
+    )
+    @Operation(
+        summary = "Partially update user",
+        description = "Partially updates an existing user's information. Only fields that are present in the request will be updated. Requires PLATFORM_ADMIN role or ownership."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "User partially updated successfully",
+            content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation = UserResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+        @ApiResponse(responseCode = "404", description = "User not found"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<UserResponseDTO> updateUserPartial(
+            @Parameter(description = "ID of the user to update") @PathVariable Long id,
+            @Valid @RequestBody UserRequestDTO userDetails) {
+        UserResponseDTO updatedUser = userService.updateUserPartial(id, userDetails);
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
 

@@ -7,21 +7,25 @@ import com.TreadX.address.entity.SystemCity;
 import com.TreadX.address.entity.SystemCountry;
 import com.TreadX.address.entity.SystemProvince;
 import com.TreadX.user.dto.UserTerritoryResponseDTO;
-import com.TreadX.user.entity.TerritoryLevel;
+import com.TreadX.user.Enum.TerritoryLevel;
+import com.TreadX.user.entity.Territory;
 import com.TreadX.user.entity.User;
 import com.TreadX.user.entity.UserTerritory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserTerritoryMapper {
-    
-    public UserTerritory toEntity(Long userId, TerritoryLevel level, Long cityId, Long provinceId, Long countryId, boolean isActive, User user) {
+
+    @Autowired
+    private TerritoryMapper territoryMapper;
+
+
+
+    public UserTerritory toEntity(Territory territory, boolean isActive, User user) {
         return UserTerritory.builder()
                 .user(user)
-                .level(level)
-                .city(cityId != null ? SystemCity.builder().id(cityId).build() : null)
-                .province(provinceId != null ? SystemProvince.builder().id(provinceId).build() : null)
-                .country(countryId != null ? SystemCountry.builder().id(countryId).build() : null)
+                .territory(territory)
                 .isActive(isActive)
                 .build();
     }
@@ -30,33 +34,11 @@ public class UserTerritoryMapper {
         UserTerritoryResponseDTO dto = new UserTerritoryResponseDTO();
         dto.setId(entity.getId());
         dto.setUserId(entity.getUser().getId());
-        dto.setLevel(entity.getLevel());
+        dto.setLevel(entity.getTerritory() != null ? entity.getTerritory().getLevel() : null);
         dto.setActive(entity.getIsActive());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
-        
-        // Map geographical entities
-        if (entity.getCity() != null) {
-            dto.setCity(CityResponseDTO.builder()
-                    .id(entity.getCity().getId())
-                    .name(entity.getCity().getCity())
-                    .build());
-        }
-        
-        if (entity.getProvince() != null) {
-            dto.setProvince(StateResponseDTO.builder()
-                    .id(entity.getProvince().getId())
-                    .name(entity.getProvince().getProvince())
-                    .build());
-        }
-        
-        if (entity.getCountry() != null) {
-            dto.setCountry(CountryResponseDTO.builder()
-                    .id(entity.getCountry().getId())
-                    .name(entity.getCountry().getCountry())
-                    .build());
-        }
-        
+        dto.setTerritory(territoryMapper.toResponseDTO(entity.getTerritory()));
         return dto;
     }
 } 

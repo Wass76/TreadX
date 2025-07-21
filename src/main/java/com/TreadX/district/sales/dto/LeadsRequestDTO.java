@@ -2,7 +2,6 @@ package com.TreadX.district.sales.dto;
 
 import com.TreadX.district.vendors.enums.LeadSource;
 import com.TreadX.district.vendors.enums.LeadStatus;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,5 +37,5 @@ public class LeadsRequestDTO {
 //    @ValidEnum(enumClass = LeadStatus.class)
     private LeadStatus status;
     private String notes;
-    private Long dealerId;
+    private Long vendorId;
 }

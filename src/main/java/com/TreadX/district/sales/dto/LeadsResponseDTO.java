@@ -25,7 +25,8 @@ public class LeadsResponseDTO {
     // New lead source fields
     private LeadSource source;
     private String sourceUrl;
-    private String uploadedFile;
+    private String uploadedFile; // URL to download the file: /api/v1/leads/{id}/file
+    private String previewUrl; // URL to preview the file: /api/v1/leads/{id}/preview
     private LeadStatus status;
     private String notes;
     private Long vendorId;

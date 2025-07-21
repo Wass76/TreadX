@@ -6,5 +6,8 @@ import lombok.Data;
 @Data
 public class InitiateContactRequestDTO {
     private ContactMethod contactMethod;
-    private String otherDetails; // Optional, for 'OTHER'
-} 
+    private String contactMethodDetails;
+    private String extensionNumber;
+    private String contactName;
+    private String position;
+}

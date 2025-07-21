@@ -1,8 +1,6 @@
 package com.TreadX.user.dto;
 
-import com.TreadX.user.entity.User;
-import com.TreadX.user.entity.UserTerritory;
-import com.TreadX.user.entity.TerritoryLevel;
+import com.TreadX.user.Enum.TerritoryLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

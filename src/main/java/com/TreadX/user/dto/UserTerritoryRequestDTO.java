@@ -1,6 +1,5 @@
 package com.TreadX.user.dto;
 
-import com.TreadX.user.entity.TerritoryLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,10 +9,17 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserTerritoryRequestDTO {
     private Long userId;
-    private TerritoryLevel territoryLevel; // Enum: COUNTRY, PROVINCE, CITY, etc.
-    private Long territoryId; // ID of the country, province, or city
-    // New fields for base entity assignment (for scalable geographical access control)
-    private Long baseCountryId; // Optional: Base Country ID
-    private Long baseProvinceId; // Optional: Base Province/State ID
-    private Long baseCityId; // Optional: Base City ID
+    private Long territoryId; // The ID of the territory to assign
+
+    /**
+     * Deprecated: Address-based assignment fields (for review/migration only)
+     */
+    @Deprecated
+    private Long baseCountryId;
+    @Deprecated
+    private Long baseProvinceId;
+    @Deprecated
+    private Long baseCityId;
+    @Deprecated
+    private com.TreadX.user.Enum.TerritoryLevel territoryLevel;
 } 

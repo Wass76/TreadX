@@ -26,6 +26,7 @@ public class Vendor extends AuditedEntity {
     private String postalCode;
     private String email;
     private String phoneNumber;
+    private VendorStatus vendorStatus;
     private String vendorUniqueId;
 
     protected String getSequenceName() {

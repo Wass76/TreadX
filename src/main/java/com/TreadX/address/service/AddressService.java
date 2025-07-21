@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AddressService {
     private static final Logger log = LoggerFactory.getLogger(AddressService.class);
-    
+
     // Constants for ID generation
     private static final int COUNTRY_ID_LENGTH = 3;
     private static final int PROVINCE_ID_LENGTH = 2;
@@ -201,7 +201,7 @@ public class AddressService {
     @Transactional
     public Address createOrReturnAddress(AddressRequestDTO addressRequestDTO) {
         log.info("Creating new address for request: {}", addressRequestDTO);
-        
+
         // Find and validate required entities
         Country country = findAndValidateCountry(addressRequestDTO.getCountryId());
         State state = findAndValidateState(addressRequestDTO.getStateId());
@@ -223,12 +223,12 @@ public class AddressService {
             SystemProvince systemProvince,
             SystemCity systemCity,
             AddressRequestDTO addressRequestDTO) {
-        
+
         // Try to find existing address with these system entities
         Optional<List<Address>> existingAddresses = addressRepository.findByCountryAndProvinceAndCityAndPostalCodeAndStreetNameAndStreetNumberAndUnitNumber(
             systemCountry, systemProvince, systemCity, addressRequestDTO.getPostalCode(),
             addressRequestDTO.getStreetName(), addressRequestDTO.getStreetNumber(), addressRequestDTO.getUnitNumber());
-            
+
         if (existingAddresses.isPresent() && !existingAddresses.get().isEmpty()) {
             Address existingAddress = existingAddresses.get().get(0);
             log.info("Found existing address with ID: {}", existingAddress.getId());
@@ -246,7 +246,7 @@ public class AddressService {
      */
     private Map<String, Object> processAddressForSystemEntries(Country country, State state, City city) {
         Map<String, Object> map = new HashMap<>();
-        
+
         SystemCountry systemCountry = processSystemCountry(country);
         map.put("systemCountry", systemCountry);
 
@@ -277,7 +277,7 @@ public class AddressService {
         newSystemCountry.setCountry(country.getName());
         newSystemCountry.setCountryUniqueId(nextId);
         newSystemCountry.setCountryEntity(country);
-        
+
         return systemCountryRepository.save(newSystemCountry);
     }
 
@@ -290,7 +290,7 @@ public class AddressService {
         Optional<SystemProvince> topProvince = systemProvinceRepository.findTopBySystemCountryOrderByProvinceUniqueIdDesc(systemCountry);
         String countryId = systemCountry.getCountryUniqueId();
         String nextProvinceId = UniqueIdUtils.generateNextUniqueId(
-            topProvince.map(sp -> sp.getProvinceUniqueId().substring(COUNTRY_ID_LENGTH)).orElse(null), 
+            topProvince.map(sp -> sp.getProvinceUniqueId().substring(COUNTRY_ID_LENGTH)).orElse(null),
             PROVINCE_ID_LENGTH
         );
 
@@ -302,7 +302,7 @@ public class AddressService {
         newSystemProvince.setProvinceUniqueId(provinceUniqueId);
         newSystemProvince.setSystemCountry(systemCountry);
         newSystemProvince.setProvinceEntity(state);
-        
+
         return systemProvinceRepository.save(newSystemProvince);
     }
 
@@ -315,7 +315,7 @@ public class AddressService {
         Optional<SystemCity> topCity = systemCityRepository.findTopBySystemProvinceOrderByCityUniqueIdDesc(systemProvince);
         String provinceId = systemProvince.getProvinceUniqueId();
         String nextCityId = UniqueIdUtils.generateNextUniqueId(
-            topCity.map(sc -> sc.getCityUniqueId().substring(COUNTRY_ID_LENGTH + PROVINCE_ID_LENGTH)).orElse(null), 
+            topCity.map(sc -> sc.getCityUniqueId().substring(COUNTRY_ID_LENGTH + PROVINCE_ID_LENGTH)).orElse(null),
             CITY_ID_LENGTH
         );
 
@@ -328,7 +328,7 @@ public class AddressService {
         newSystemCity.setCityUniqueId(cityUniqueId);
         newSystemCity.setSystemProvince(systemProvince);
         newSystemCity.setSystemCountry(systemCountry);
-        
+
         return systemCityRepository.save(newSystemCity);
     }
 

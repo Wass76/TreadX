@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,7 +23,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService ;
 
-    private final UserDetailsService userDetailsService; // final
+//    private final UserDetailsService userDetailsService; // final
+private final ObjectProvider<UserDetailsService> userDetailsServiceProvider;
+
     @Override
     protected void doFilterInternal(
            @NonNull HttpServletRequest request,
@@ -39,7 +42,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         jwt = authHeader.substring(7);
         userEmail = jwtService.extractUsername(jwt); //todo extract the userEmail from JWT token
         if(userEmail != null && SecurityContextHolder.getContext().getAuthentication()==null){
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+            UserDetailsService userDetailsService = userDetailsServiceProvider.getIfAvailable();
+//            assert userDetailsService != null;
+            UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
             if(jwtService.isTokenValid(jwt,userDetails)){
                 UsernamePasswordAuthenticationToken authToken =  new UsernamePasswordAuthenticationToken(
                         userDetails,

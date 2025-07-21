@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -189,6 +190,27 @@ public class UserService {
         return userMapper.toResponse(userRepository.save(user));
     }
 
+    /**
+     * Partially updates a user with only the fields that are present in the request.
+     * Fields that are null in the request will not be updated.
+     */
+    public UserResponseDTO updateUserPartial(Long id, UserRequestDTO userDetails) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        
+        // Validate role update if roleId is provided
+        if (userDetails.getRoleId() != null) {
+            Role targetRole = roleRepository.findById(userDetails.getRoleId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Role not found with id: " + userDetails.getRoleId()));
+            validateUserUpdate(targetRole, user.getRole());
+        }
+        
+        // Use partial update mapper
+        userMapper.updateEntityFromRequestPartial(user, userDetails);
+        
+        return userMapper.toResponse(userRepository.save(user));
+    }
+
     private void validateUserUpdate(Role targetRole, Role currentRole) {
         // Platform Admin can update any role except another Platform Admin
         if (currentRole.getName().equals("PLATFORM_ADMIN")) {
@@ -269,8 +291,14 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
     }
     public UserResponseDTO getCurrentUserDto() {
-        User user = getCurrentUser();
-        return userMapper.toResponse(user);
+        return userMapper.toResponse(getCurrentUser());
+    }
+
+    /**
+     * Find user by email (for authentication)
+     */
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 
     public UserResponseDTO updateUserPermissions(Long userId, Set<Long> permissionIds) {

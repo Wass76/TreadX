@@ -2,7 +2,7 @@ package com.TreadX.user.controller;
 
 import com.TreadX.user.dto.UserTerritoryRequestDTO;
 import com.TreadX.user.dto.UserTerritoryResponseDTO;
-import com.TreadX.user.entity.TerritoryLevel;
+import com.TreadX.user.Enum.TerritoryLevel;
 import com.TreadX.user.service.UserTerritoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -18,6 +17,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import java.util.Collections;
 import java.util.List;
+import com.TreadX.user.entity.Territory;
+import com.TreadX.user.mapper.TerritoryMapper;
+import com.TreadX.user.dto.TerritoryResponseDTO;
 
 @RestController
 @RequestMapping("/api/v1/user-territories")
@@ -25,15 +27,16 @@ import java.util.List;
 public class UserTerritoryController {
     
     private final UserTerritoryService userTerritoryService;
+    private final TerritoryMapper territoryMapper;
     
     /**
-     * Assign territories to a user
+     * Assign territory to a user (territory-centric)
      */
-    @PostMapping("/users/{userId}/territories")
+    @PostMapping("/users/{userId}/territories/territory-centric")
     @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER')")
     @Operation(
-        summary = "Assign territory to user",
-        description = "Assigns a territory (city, province, or country) to a user. Requires PLATFORM_ADMIN or SALES_MANAGER role."
+        summary = "Assign territory to user (territory-centric)",
+        description = "Assigns a territory to a user by territoryId. Requires PLATFORM_ADMIN or SALES_MANAGER role."
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Territory assigned successfully",
@@ -41,22 +44,14 @@ public class UserTerritoryController {
         @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
         @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
-    public ResponseEntity<UserTerritoryResponseDTO> assignTerritory(
+    public ResponseEntity<UserTerritoryResponseDTO> assignTerritoryTerritoryCentric(
             @PathVariable Long userId,
-            @RequestParam TerritoryLevel level,
-            @RequestParam(required = false) Long cityId,
-            @RequestParam(required = false) Long provinceId,
-            @RequestParam(required = false) Long countryId) {
-        // Build the request DTO using the new base fields
+            @RequestParam Long territoryId) {
         UserTerritoryRequestDTO dto = new UserTerritoryRequestDTO();
         dto.setUserId(userId);
-        dto.setTerritoryLevel(level);
-        dto.setBaseCountryId(countryId);
-        dto.setBaseProvinceId(provinceId);
-        dto.setBaseCityId(cityId);
+        dto.setTerritoryId(territoryId);
         List<UserTerritoryRequestDTO> requestList = Collections.singletonList(dto);
         userTerritoryService.assignTerritoriesToUser(userId, requestList);
-        // Fetch the latest territories and return the most recent one
         List<UserTerritoryResponseDTO> territories = userTerritoryService.getUserTerritories(userId);
         UserTerritoryResponseDTO territory = territories.isEmpty() ? null : territories.get(territories.size() - 1);
         return new ResponseEntity<>(territory, HttpStatus.CREATED);
@@ -97,7 +92,7 @@ public class UserTerritoryController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserTerritoryResponseDTO.class)))
     })
     public ResponseEntity<List<UserTerritoryResponseDTO>> getMyTerritories() {
-        List<UserTerritoryResponseDTO> territories = userTerritoryService.getCurrentUserTerritories();
+        List<UserTerritoryResponseDTO> territories = userTerritoryService.getUserTerritories(null);
         
         return new ResponseEntity<>(territories, HttpStatus.OK);
     }
@@ -125,19 +120,19 @@ public class UserTerritoryController {
     /**
      * Get accessible city IDs for current user
      */
-    @GetMapping("/accessible-cities")
-    @Operation(
-        summary = "Get accessible city IDs for current user",
-        description = "Retrieves a list of city IDs that the current user has access to."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved accessible city IDs",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Long.class)))
-    })
-    public ResponseEntity<List<Long>> getAccessibleCities() {
-        List<Long> cityIds = userTerritoryService.getAccessibleCities();
-        return new ResponseEntity<>(cityIds, HttpStatus.OK);
-    }
+//    @GetMapping("/accessible-cities")
+//    @Operation(
+//        summary = "Get accessible city IDs for current user",
+//        description = "Retrieves a list of city IDs that the current user has access to."
+//    )
+//    @ApiResponses(value = {
+//        @ApiResponse(responseCode = "200", description = "Successfully retrieved accessible city IDs",
+//            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Long.class)))
+//    })
+//    public ResponseEntity<List<Long>> getAccessibleCities() {
+//        List<Long> cityIds = userTerritoryService.getUserTerritories(null);
+//        return new ResponseEntity<>(cityIds, HttpStatus.OK);
+//    }
     
     /**
      * Check if user has access to a specific location
@@ -152,11 +147,9 @@ public class UserTerritoryController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = Boolean.class)))
     })
     public ResponseEntity<Boolean> checkLocationAccess(
-            @RequestParam(required = false) Long cityId,
-            @RequestParam(required = false) Long provinceId,
-            @RequestParam(required = false) Long countryId) {
+            @RequestParam(required = false) Long territoryId) {
         
-        boolean hasAccess = userTerritoryService.checkLocationAccess(cityId, provinceId, countryId);
+        boolean hasAccess = userTerritoryService.hasAccessToTerritory(null,territoryId);
         
         return new ResponseEntity<>(hasAccess, HttpStatus.OK);
     }
@@ -202,5 +195,21 @@ public class UserTerritoryController {
         boolean hasTerritories = userTerritoryService.hasTerritoryAssignments(userId);
         
         return new ResponseEntity<>(hasTerritories, HttpStatus.OK);
+    }
+
+    /**
+     * Get all accessible territories for a user (or current user if userId is null)
+     */
+    @GetMapping("/users/{userId}/accessible-territories")
+    @Operation(
+        summary = "Get all accessible territories for a user",
+        description = "Returns all territories the user can access, including descendants of assigned territories. If userId is omitted, uses the current authenticated user."
+    )
+    public ResponseEntity<List<TerritoryResponseDTO>> getAccessibleTerritories(@PathVariable(required = false) Long userId) {
+        List<Territory> territories = userTerritoryService.getAllAccessibleTerritories(userId);
+        List<TerritoryResponseDTO> dtos = territories.stream()
+            .map(territoryMapper::toResponseDTO)
+            .collect(java.util.stream.Collectors.toList());
+        return new ResponseEntity<>(dtos, HttpStatus.OK);
     }
 } 
