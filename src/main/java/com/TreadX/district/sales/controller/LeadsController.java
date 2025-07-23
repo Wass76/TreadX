@@ -3,7 +3,6 @@ package com.TreadX.district.sales.controller;
 import com.TreadX.district.sales.dto.LeadsRequestDTO;
 import com.TreadX.district.sales.dto.LeadsResponseDTO;
 import com.TreadX.district.sales.dto.LeadValidationRequest;
-import com.TreadX.district.sales.entity.Leads;
 import com.TreadX.district.sales.service.LeadsService;
 import com.TreadX.user.service.AuthorizationService;
 import com.TreadX.district.vendors.enums.LeadStatus;
@@ -30,15 +29,17 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.util.MimeTypeUtils;
 
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import com.TreadX.district.sales.service.FileService;
 import java.util.List;
 import org.springframework.data.domain.PageImpl;
+import com.TreadX.user.service.TerritoryService;
+import com.TreadX.config.TerritoryContextHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.TreadX.utils.exception.ConflictException;
+import com.TreadX.user.entity.Territory;
+import com.TreadX.user.service.UserTerritoryService;
 
 @RestController
 @RequestMapping("/api/v1/leads")
@@ -47,10 +48,13 @@ import org.springframework.data.domain.PageImpl;
 @CrossOrigin("*")
 public class LeadsController {
 
+    private static final Logger log = LoggerFactory.getLogger(LeadsController.class);
     private final LeadsService leadsService;
 //    private final ConversionService conversionService;
     private final AuthorizationService authorizationService;
     private final FileService fileService;
+    private final TerritoryService territoryService;
+    private final UserTerritoryService userTerritoryService;
 
     @GetMapping
     @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
@@ -76,99 +80,101 @@ public class LeadsController {
         return new ResponseEntity<>(leads, HttpStatus.OK);
     }
 
-    @GetMapping("/my-leads")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
-    @Operation(
-        summary = "Get my leads (automatic territory resolution)",
-        description = "Retrieves leads from current user's accessible territories. System automatically determines user's territory access. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved user's leads",
-            content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = List.class))),
-        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public ResponseEntity<List<LeadsResponseDTO>> getMyLeads() {
-        List<LeadsResponseDTO> leads = leadsService.getMyLeads();
-        return new ResponseEntity<>(leads, HttpStatus.OK);
-    }
+//    @GetMapping("/my-leads")
+//    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+//    @Operation(
+//        summary = "Get my leads (automatic territory resolution)",
+//        description = "Retrieves leads from current user's accessible territories. System automatically determines user's territory access. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
+//    )
+//    @ApiResponses(value = {
+//        @ApiResponse(responseCode = "200", description = "Successfully retrieved user's leads",
+//            content = @Content(mediaType = "application/json",
+//            schema = @Schema(implementation = List.class))),
+//        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+//        @ApiResponse(responseCode = "500", description = "Internal server error")
+//    })
+//    public ResponseEntity<List<LeadsResponseDTO>> getMyLeads() {
+//        Long userId = authorizationService.getCurrentUser().getId();
+//        List<LeadsResponseDTO> leads = leadsService.getMyLeads(userId);
+//        return new ResponseEntity<>(leads, HttpStatus.OK);
+//    }
 
-    @GetMapping("/territories/{territoryCode}")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
-    @Operation(
-        summary = "Get leads by territory (explicit territory access)",
-        description = "Retrieves leads from a specific territory. User must have access to the specified territory. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved leads from territory",
-            content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = Page.class))),
-        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
-        @ApiResponse(responseCode = "404", description = "Territory not found"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public ResponseEntity<Page<LeadsResponseDTO>> getLeadsByTerritory(
-            @Parameter(description = "Territory code (e.g., N6B, N5V)", required = true) @PathVariable String territoryCode,
-            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "Sort field") @RequestParam(defaultValue = "createdAt") String sortBy,
-            @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "desc") String direction) {
-        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        Page<LeadsResponseDTO> leads = leadsService.getLeadsByTerritory(territoryCode, pageable);
-        return new ResponseEntity<>(leads, HttpStatus.OK);
-    }
+//    @GetMapping("/territories/{territoryCode}")
+//    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+//    @Operation(
+//        summary = "Get leads by territory (explicit territory access)",
+//        description = "Retrieves leads from a specific territory. User must have access to the specified territory. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
+//    )
+//    @ApiResponses(value = {
+//        @ApiResponse(responseCode = "200", description = "Successfully retrieved leads from territory",
+//            content = @Content(mediaType = "application/json",
+//            schema = @Schema(implementation = Page.class))),
+//        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+//        @ApiResponse(responseCode = "404", description = "Territory not found"),
+//        @ApiResponse(responseCode = "500", description = "Internal server error")
+//    })
+//    public ResponseEntity<Page<LeadsResponseDTO>> getLeadsByTerritory(
+//            @Parameter(description = "Territory code (e.g., N6B, N5V)", required = true) @PathVariable String territoryCode,
+//            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+//            @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") int size,
+//            @Parameter(description = "Sort field") @RequestParam(defaultValue = "createdAt") String sortBy,
+//            @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "desc") String direction) {
+//        Long territoryId = territoryService.getTerritoryResponseByCode(territoryCode).getId();
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(direction.toUpperCase()), sortBy));
+//        Page<LeadsResponseDTO> leads = leadsService.getLeadsByTerritory(territoryId, pageable);
+//        return new ResponseEntity<>(leads, HttpStatus.OK);
+//    }
 
-    @GetMapping("/my-leads/status")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
-    @Operation(
-        summary = "Get my leads by status (automatic territory resolution)",
-        description = "Retrieves leads by status from current user's accessible territories. System automatically determines user's territory access. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved user's leads by status",
-            content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = List.class))),
-        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public ResponseEntity<List<LeadsResponseDTO>> getMyLeadsByStatus(
-            @Parameter(description = "Lead status to filter by", required = true) @RequestParam LeadStatus status) {
-        List<LeadsResponseDTO> leads = leadsService.getMyLeadsByStatus(status);
-        return new ResponseEntity<>(leads, HttpStatus.OK);
-    }
+//    @GetMapping("/my-leads/status")
+//    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+//    @Operation(
+//        summary = "Get my leads by status (automatic territory resolution)",
+//        description = "Retrieves leads by status from current user's accessible territories. System automatically determines user's territory access. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
+//    )
+//    @ApiResponses(value = {
+//        @ApiResponse(responseCode = "200", description = "Successfully retrieved user's leads by status",
+//            content = @Content(mediaType = "application/json",
+//            schema = @Schema(implementation = List.class))),
+//        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+//        @ApiResponse(responseCode = "500", description = "Internal server error")
+//    })
+//    public ResponseEntity<List<LeadsResponseDTO>> getMyLeadsByStatus(
+//            @Parameter(description = "Lead status to filter by", required = true) @RequestParam LeadStatus status) {
+//        Long userId = authorizationService.getCurrentUser().getId();
+//        List<LeadsResponseDTO> leads = leadsService.getMyLeadsByStatus(userId, status);
+//        return new ResponseEntity<>(leads, HttpStatus.OK);
+//    }
 
-    @GetMapping("/territories/{territoryCode}/status")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
-    @Operation(
-        summary = "Get leads by territory and status (explicit territory access)",
-        description = "Retrieves leads by status from a specific territory. User must have access to the specified territory. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved leads from territory by status",
-            content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = Page.class))),
-        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
-        @ApiResponse(responseCode = "404", description = "Territory not found"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public ResponseEntity<Page<LeadsResponseDTO>> getLeadsByTerritoryAndStatus(
-            @Parameter(description = "Territory code (e.g., N6B, N5V)", required = true) @PathVariable String territoryCode,
-            @Parameter(description = "Lead status to filter by", required = true) @RequestParam LeadStatus status,
-            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "Sort field") @RequestParam(defaultValue = "createdAt") String sortBy,
-            @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "desc") String direction) {
-        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        List<LeadsResponseDTO> leads = leadsService.getLeadsByTerritoryAndStatus(territoryCode, status);
-        // Convert to page manually for now
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), leads.size());
-        Page<LeadsResponseDTO> pageResult = new PageImpl<>(leads.subList(start, end), pageable, leads.size());
-        return new ResponseEntity<>(pageResult, HttpStatus.OK);
-    }
+//    @GetMapping("/territories/{territoryCode}/status")
+//    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+//    @Operation(
+//        summary = "Get leads by territory and status (explicit territory access)",
+//        description = "Retrieves leads by status from a specific territory. User must have access to the specified territory. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
+//    )
+//    @ApiResponses(value = {
+//        @ApiResponse(responseCode = "200", description = "Successfully retrieved leads from territory by status",
+//            content = @Content(mediaType = "application/json",
+//            schema = @Schema(implementation = Page.class))),
+//        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+//        @ApiResponse(responseCode = "404", description = "Territory not found"),
+//        @ApiResponse(responseCode = "500", description = "Internal server error")
+//    })
+//    public ResponseEntity<Page<LeadsResponseDTO>> getLeadsByTerritoryAndStatus(
+//            @Parameter(description = "Territory code (e.g., N6B, N5V)", required = true) @PathVariable String territoryCode,
+//            @Parameter(description = "Lead status to filter by", required = true) @RequestParam LeadStatus status,
+//            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+//            @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") int size,
+//            @Parameter(description = "Sort field") @RequestParam(defaultValue = "createdAt") String sortBy,
+//            @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "desc") String direction) {
+//        Long territoryId = territoryService.getTerritoryResponseByCode(territoryCode).getId();
+//        List<LeadsResponseDTO> leads = leadsService.getLeadsByTerritoryAndStatus(territoryId, status);
+//        // For consistency, wrap in a Page object
+//        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(direction.toUpperCase()), sortBy));
+//        int start = (int) pageable.getOffset();
+//        int end = Math.min((start + pageable.getPageSize()), leads.size());
+//        Page<LeadsResponseDTO> pageResult = new PageImpl<>(leads.subList(start, end), pageable, leads.size());
+//        return new ResponseEntity<>(pageResult, HttpStatus.OK);
+//    }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or @authz.isLeadOwner(#id)")
@@ -235,7 +241,8 @@ public class LeadsController {
     })
     public ResponseEntity<LeadsResponseDTO> createLead(
             @Parameter(description = "Lead data", required = true) @RequestPart("lead") LeadsRequestDTO lead,
-            @RequestPart(value = "file", required = false) MultipartFile file) {
+            @RequestPart(value = "file", required = false) MultipartFile file,
+            @RequestHeader(value = "X-Territory-Code", required = false) String territoryCode) {
         LeadsResponseDTO createdLead = leadsService.createLead(lead, file);
         return new ResponseEntity<>(createdLead, HttpStatus.CREATED);
     }
@@ -323,6 +330,14 @@ public class LeadsController {
         summary = "Initiate contact for a lead",
         description = "Initiates contact for a lead and updates its status to CONTACTED."
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully initiated contact for the lead",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = LeadsResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Lead not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     public ResponseEntity<LeadsResponseDTO> initiateContact(
             @PathVariable Long id,
             @RequestBody InitiateContactRequestDTO request) {
@@ -395,49 +410,4 @@ public class LeadsController {
                 .body(resource);
     }
 
-//    @PostMapping("/{id}/convert-to-contact")
-//    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
-//    @Operation(
-//        summary = "Convert lead to contact",
-//        description = "Converts a lead to a contact. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
-//    )
-//    @ApiResponses(value = {
-//        @ApiResponse(responseCode = "201", description = "Successfully converted lead to contact",
-//            content = @Content(mediaType = "application/json",
-//            schema = @Schema(implementation = DealerContactResponseDTO.class))),
-//        @ApiResponse(responseCode = "404", description = "Lead not found"),
-//        @ApiResponse(responseCode = "400", description = "Invalid conversion data"),
-//        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
-//        @ApiResponse(responseCode = "500", description = "Internal server error")
-//    })
-//    public ResponseEntity<DealerContactResponseDTO> convertToContact(
-//            @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long id,
-//            @Parameter(description = "Contact data", required = true) @RequestBody DealerContactRequestDTO request) {
-//        if (!authorizationService.hasContactConversionAccess()) {
-//            throw new AccessDeniedException("You don't have permission to convert leads to contacts");
-//        }
-//        DealerContactResponseDTO contact = conversionService.convertLeadToContact(id, request);
-//        return new ResponseEntity<>(contact, HttpStatus.CREATED);
-//    }
-
-//    @PostMapping("/{id}/convert-to-dealer")
-//    @PreAuthorize("hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
-//    @Operation(
-//        summary = "Convert lead to dealer",
-//        description = "Converts a lead to a dealer. Requires SALES_MANAGER or SALES_AGENT role."
-//    )
-//    @ApiResponses(value = {
-//        @ApiResponse(responseCode = "201", description = "Successfully converted lead to dealer"),
-//        @ApiResponse(responseCode = "404", description = "Lead not found"),
-//        @ApiResponse(responseCode = "400", description = "Invalid conversion data"),
-//        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
-//        @ApiResponse(responseCode = "500", description = "Internal server error")
-//    })
-//    public ResponseEntity<?> convertToDealer(
-//            @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long id,
-//            @Parameter(description = "Dealer data", required = true) @RequestBody DealerContactRequestDTO request) {
-//        authorizationService.checkDealerConversionAccess();
-//        // TODO: Implement dealer conversion
-//        return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
-//    }
 } 

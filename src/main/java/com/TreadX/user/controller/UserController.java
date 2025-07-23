@@ -201,6 +201,16 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @Operation(
+        summary = "Get current user",
+        description = "Retrieves the currently authenticated user's information."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved current user",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponseDTO.class))),
+        @ApiResponse(responseCode = "401", description = "Not authenticated"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     public ResponseEntity<?> getCurrentUser() {
         return ResponseEntity.ok(userService.getCurrentUserDto());
     }
@@ -210,6 +220,17 @@ public class UserController {
      */
     @PostMapping("/with-territories")
     @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @Operation(
+        summary = "Create user with territories",
+        description = "Creates a new user and assigns territories. Requires PLATFORM_ADMIN role."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "User with territories created successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserCreateWithTerritoryResponseDTO.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     public ResponseEntity<?> createUserWithTerritories(
             @RequestBody UserCreateWithTerritoryRequestDTO request) {
         UserCreateWithTerritoryResponseDTO response = userService.createUserWithTerritories(request);

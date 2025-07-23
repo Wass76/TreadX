@@ -162,9 +162,17 @@ public class UserTerritoryService {
     }
 
     /**
+     * Get a territory by its ID
+     */
+    public Territory getTerritoryById(Long territoryId) {
+        return territoryRepository.findById(territoryId)
+            .orElseThrow(() -> new ResourceNotFoundException("Territory not found with id: " + territoryId));
+    }
+
+    /**
      * Helper to get current authenticated user's ID
      */
-    private Long getCurrentAuthenticatedUserId() {
+    public Long getCurrentAuthenticatedUserId() {
         // TODO: Implement this using your security context
         // Example for Spring Security:
         // Authentication auth = SecurityContextHolder.getContext().getAuthentication();

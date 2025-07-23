@@ -153,49 +153,6 @@ public class UserTerritoryController {
         
         return new ResponseEntity<>(hasAccess, HttpStatus.OK);
     }
-    
-    /**
-     * Get territories for a user by level
-     */
-    @GetMapping("/users/{userId}/territories/level/{level}")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or #userId == authentication.principal.id")
-    @Operation(
-        summary = "Get user territories by level",
-        description = "Retrieves all territory assignments for a user at a specific level (city, province, or country). Requires PLATFORM_ADMIN, SALES_MANAGER, or ownership."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved user territories by level",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserTerritoryResponseDTO.class))),
-        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions")
-    })
-    public ResponseEntity<List<UserTerritoryResponseDTO>> getUserTerritoriesByLevel(
-            @PathVariable Long userId,
-            @PathVariable TerritoryLevel level) {
-        
-        List<UserTerritoryResponseDTO> territories = userTerritoryService.getUserTerritoriesByLevel(userId, level);
-        
-        return new ResponseEntity<>(territories, HttpStatus.OK);
-    }
-    
-    /**
-     * Check if user has territory assignments
-     */
-    @GetMapping("/users/{userId}/has-territories")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or #userId == authentication.principal.id")
-    @Operation(
-        summary = "Check if user has territory assignments",
-        description = "Checks if a user has any active territory assignments. Requires PLATFORM_ADMIN, SALES_MANAGER, or ownership."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Check result",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Boolean.class))),
-        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions")
-    })
-    public ResponseEntity<Boolean> hasTerritoryAssignments(@PathVariable Long userId) {
-        boolean hasTerritories = userTerritoryService.hasTerritoryAssignments(userId);
-        
-        return new ResponseEntity<>(hasTerritories, HttpStatus.OK);
-    }
 
     /**
      * Get all accessible territories for a user (or current user if userId is null)
@@ -205,6 +162,12 @@ public class UserTerritoryController {
         summary = "Get all accessible territories for a user",
         description = "Returns all territories the user can access, including descendants of assigned territories. If userId is omitted, uses the current authenticated user."
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved accessible territories",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TerritoryResponseDTO.class))),
+        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     public ResponseEntity<List<TerritoryResponseDTO>> getAccessibleTerritories(@PathVariable(required = false) Long userId) {
         List<Territory> territories = userTerritoryService.getAllAccessibleTerritories(userId);
         List<TerritoryResponseDTO> dtos = territories.stream()

@@ -25,9 +25,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Territory Management", description = "APIs for managing territories and their database connections")
 public class TerritoryController {
-    
+
     private final TerritoryService territoryService;
-    
+
     /**
      * Create a new territory
      */
@@ -48,7 +48,7 @@ public class TerritoryController {
         TerritoryResponseDTO createdTerritory = territoryService.createTerritory(request);
         return new ResponseEntity<>(createdTerritory, HttpStatus.CREATED);
     }
-    
+
     /**
      * Get territory by code
      */
@@ -65,12 +65,12 @@ public class TerritoryController {
         @ApiResponse(responseCode = "404", description = "Territory not found")
     })
     public ResponseEntity<TerritoryResponseDTO> getTerritoryByCode(
-            @Parameter(description = "Territory code (e.g., N6B, LONDON)") 
+            @Parameter(description = "Territory code (e.g., N6B, LONDON)")
             @PathVariable String code) {
-        TerritoryResponseDTO territory = territoryService.getTerritoryByCode(code);
+        TerritoryResponseDTO territory = territoryService.getTerritoryResponseByCode(code);
         return ResponseEntity.ok(territory);
     }
-    
+
     /**
      * Get territory by code with hierarchical data
      */
@@ -87,12 +87,12 @@ public class TerritoryController {
         @ApiResponse(responseCode = "404", description = "Territory not found")
     })
     public ResponseEntity<TerritoryResponseDTO> getTerritoryWithHierarchy(
-            @Parameter(description = "Territory code (e.g., N6B, LONDON)") 
+            @Parameter(description = "Territory code (e.g., N6B, LONDON)")
             @PathVariable String code) {
         TerritoryResponseDTO territory = territoryService.getTerritoryByCodeWithHierarchy(code);
         return ResponseEntity.ok(territory);
     }
-    
+
     /**
      * Get all active territories
      */
@@ -111,7 +111,7 @@ public class TerritoryController {
         List<TerritoryResponseDTO> territories = territoryService.getAllActiveTerritories();
         return ResponseEntity.ok(territories);
     }
-    
+
     /**
      * Get territories by level
      */
@@ -127,12 +127,12 @@ public class TerritoryController {
         @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions")
     })
     public ResponseEntity<List<TerritoryResponseDTO>> getTerritoriesByLevel(
-            @Parameter(description = "Territory level (DISTRICT, CITY, PROVINCE, COUNTRY)") 
+            @Parameter(description = "Territory level (DISTRICT, CITY, PROVINCE, COUNTRY)")
             @PathVariable TerritoryLevel level) {
         List<TerritoryResponseDTO> territories = territoryService.getTerritoriesByLevel(level);
         return ResponseEntity.ok(territories);
     }
-    
+
     /**
      * Get child territories
      */
@@ -149,12 +149,12 @@ public class TerritoryController {
         @ApiResponse(responseCode = "404", description = "Parent territory not found")
     })
     public ResponseEntity<List<TerritoryResponseDTO>> getChildTerritories(
-            @Parameter(description = "Parent territory code") 
+            @Parameter(description = "Parent territory code")
             @PathVariable String code) {
         List<TerritoryResponseDTO> territories = territoryService.getChildTerritories(code);
         return ResponseEntity.ok(territories);
     }
-    
+
     /**
      * Update territory
      */
@@ -172,13 +172,13 @@ public class TerritoryController {
         @ApiResponse(responseCode = "404", description = "Territory not found")
     })
     public ResponseEntity<TerritoryResponseDTO> updateTerritory(
-            @Parameter(description = "Territory code to update") 
+            @Parameter(description = "Territory code to update")
             @PathVariable String code,
             @Valid @RequestBody TerritoryRequestDTO request) {
         TerritoryResponseDTO updatedTerritory = territoryService.updateTerritory(code, request);
         return ResponseEntity.ok(updatedTerritory);
     }
-    
+
     /**
      * Activate territory
      */
@@ -195,12 +195,12 @@ public class TerritoryController {
         @ApiResponse(responseCode = "404", description = "Territory not found")
     })
     public ResponseEntity<TerritoryResponseDTO> activateTerritory(
-            @Parameter(description = "Territory code to activate") 
+            @Parameter(description = "Territory code to activate")
             @PathVariable String code) {
         TerritoryResponseDTO activatedTerritory = territoryService.activateTerritory(code);
         return ResponseEntity.ok(activatedTerritory);
     }
-    
+
     /**
      * Deactivate territory
      */
@@ -218,12 +218,12 @@ public class TerritoryController {
         @ApiResponse(responseCode = "409", description = "Cannot deactivate territory with active children")
     })
     public ResponseEntity<TerritoryResponseDTO> deactivateTerritory(
-            @Parameter(description = "Territory code to deactivate") 
+            @Parameter(description = "Territory code to deactivate")
             @PathVariable String code) {
         TerritoryResponseDTO deactivatedTerritory = territoryService.deactivateTerritory(code);
         return ResponseEntity.ok(deactivatedTerritory);
     }
-    
+
     /**
      * Get all active territory codes
      */
@@ -242,7 +242,7 @@ public class TerritoryController {
         List<String> codes = territoryService.getAllActiveTerritoryCodes();
         return ResponseEntity.ok(codes);
     }
-    
+
     /**
      * Get territory codes by level
      */
@@ -258,9 +258,9 @@ public class TerritoryController {
         @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions")
     })
     public ResponseEntity<List<String>> getTerritoryCodesByLevel(
-            @Parameter(description = "Territory level (DISTRICT, CITY, PROVINCE, COUNTRY)") 
+            @Parameter(description = "Territory level (DISTRICT, CITY, PROVINCE, COUNTRY)")
             @PathVariable TerritoryLevel level) {
         List<String> codes = territoryService.getTerritoryCodesByLevel(level);
         return ResponseEntity.ok(codes);
     }
-} 
+}

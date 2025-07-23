@@ -8,9 +8,12 @@ import com.TreadX.district.sales.entity.Leads;
 import com.TreadX.district.sales.mapper.LeadsMapper;
 import com.TreadX.district.sales.repository.LeadsRepository;
 import com.TreadX.district.vendors.enums.LeadStatus;
+import com.TreadX.user.entity.Territory;
 import com.TreadX.user.service.AuthorizationService;
 import com.TreadX.utils.exception.ConflictException;
 import com.TreadX.utils.exception.ResourceNotFoundException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,11 +30,17 @@ import com.TreadX.user.entity.User;
 import com.TreadX.user.repository.UserRepository;
 import com.TreadX.district.vendors.dto.InitiateContactRequestDTO;
 import com.TreadX.district.sales.service.FileService;
-import com.TreadX.security.SecurityContextService;
+import com.TreadX.user.service.UserTerritoryService;
 import org.springframework.security.access.AccessDeniedException;
+import com.TreadX.config.TerritoryContextHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.TreadX.user.service.TerritoryService;
+import com.TreadX.user.repository.TerritoryRepository;
 
 @Service
 public class LeadsService {
+    private static final Logger log = LoggerFactory.getLogger(LeadsService.class);
     @Autowired
     private LeadsRepository leadsRepository;
     @Autowired
@@ -45,7 +54,13 @@ public class LeadsService {
     @Autowired
     private FileService fileService;
     @Autowired
-    private SecurityContextService securityContext;
+    private UserTerritoryService userTerritoryService;
+    @Autowired
+    private TerritoryService territoryService;
+    @Autowired
+    private TerritoryRepository territoryRepository;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Transactional
     public LeadsResponseDTO createLead(LeadsRequestDTO request, MultipartFile file) {
@@ -66,6 +81,13 @@ public class LeadsService {
         }
         leads.setStatus(PENDING);
         leads = leadsRepository.save(leads);
+        // Log the current DB name
+        try {
+            String dbName = (String) entityManager.createNativeQuery("SELECT current_database()").getSingleResult();
+            log.info("[LeadsService] Lead created in database: {}", dbName);
+        } catch (Exception e) {
+            log.warn("[LeadsService] Could not determine current database: {}", e.getMessage());
+        }
         return leadsMapper.toResponse(leads);
     }
 
@@ -112,7 +134,7 @@ public class LeadsService {
     public LeadsResponseDTO updateLeadPartial(Long id, LeadsRequestDTO request, MultipartFile file) {
         Leads leads = leadsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
-        
+
         // Status transition validation (only if status is being updated)
         if (request.getStatus() != null && !request.getStatus().equals(leads.getStatus())) {
             validateStatusTransition(leads.getStatus(), request.getStatus());
@@ -175,7 +197,7 @@ public class LeadsService {
     public void deleteLead(Long id) {
         Leads leads = leadsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
-        
+
         // Delete associated file
         if (leads.getUploadedFile() != null) {
             fileService.deleteLeadFile(leads.getUploadedFile());
@@ -227,47 +249,52 @@ public class LeadsService {
     /**
      * Get leads from current user's accessible territories (automatic)
      */
-    public List<LeadsResponseDTO> getMyLeads() {
-        List<String> accessibleTerritories = securityContext.getAccessibleTerritories();
-        
+    public List<LeadsResponseDTO> getMyLeads(Long userId) {
+        List<Territory> accessibleTerritories = userTerritoryService.getAllAccessibleTerritories(userId);
         if (accessibleTerritories.isEmpty()) {
             throw new SecurityException("User has no territory access");
         }
-        
         // For single territory users, return leads from that territory
         if (accessibleTerritories.size() == 1) {
-            return getLeadsByTerritory(accessibleTerritories.get(0));
+            return getLeadsByTerritory(accessibleTerritories.get(0).getId());
         }
-        
-        // For multi-territory users, return combined leads from all territories
+        // For multi-territory users, aggregate leads from all territories using dynamic DataSource context
         return accessibleTerritories.stream()
-                .flatMap(territory -> getLeadsByTerritory(territory).stream())
+                .flatMap(territory -> getLeadsByTerritory(territory.getId()).stream())
                 .collect(Collectors.toList());
     }
 
     /**
      * Get leads from specific territory (explicit)
+     * Implements dynamic DataSource context logic.
      */
-    public List<LeadsResponseDTO> getLeadsByTerritory(String territoryCode) {
-        // Check if user can access this territory
-        if (!securityContext.canAccessTerritory(territoryCode)) {
-            throw new AccessDeniedException("Cannot access territory: " + territoryCode);
+    public List<LeadsResponseDTO> getLeadsByTerritory(Long territoryId) {
+        if (!userTerritoryService.hasAccessToTerritory(null, territoryId)) {
+            throw new AccessDeniedException("Cannot access territory: " + territoryId);
         }
-        
-        // TODO: Implement district database connection logic
-        // For now, return leads from current database
-        return getAllLeads(Pageable.unpaged()).getContent();
+        // Set the territory context for dynamic DataSource routing
+        String territoryCode = null;
+        try {
+            // Get the territory code for the given ID
+            Territory territory = territoryService.getTerritoryById(territoryId);
+            territoryCode = territory.getCode();
+            TerritoryContextHolder.setTerritoryCode(territoryCode);
+            // Query leads for this territory (now routed to correct DB)
+            return getAllLeads(Pageable.unpaged()).getContent();
+        } finally {
+            // Always clear the context after the query
+            TerritoryContextHolder.clear();
+        }
     }
 
     /**
      * Get leads from specific territory with pagination (explicit)
      */
-    public Page<LeadsResponseDTO> getLeadsByTerritory(String territoryCode, Pageable pageable) {
+    public Page<LeadsResponseDTO> getLeadsByTerritory(Long territoryId, Pageable pageable) {
         // Check if user can access this territory
-        if (!securityContext.canAccessTerritory(territoryCode)) {
-            throw new AccessDeniedException("Cannot access territory: " + territoryCode);
+        if (!userTerritoryService.hasAccessToTerritory(null, territoryId)) {
+            throw new AccessDeniedException("Cannot access territory: " + territoryId);
         }
-        
         // TODO: Implement district database connection logic
         // For now, return leads from current database
         return getAllLeads(pageable);
@@ -276,33 +303,29 @@ public class LeadsService {
     /**
      * Get leads by status from current user's accessible territories (automatic)
      */
-    public List<LeadsResponseDTO> getMyLeadsByStatus(LeadStatus status) {
-        List<String> accessibleTerritories = securityContext.getAccessibleTerritories();
-        
+    public List<LeadsResponseDTO> getMyLeadsByStatus(Long userId, LeadStatus status) {
+        List<com.TreadX.user.entity.Territory> accessibleTerritories = userTerritoryService.getAllAccessibleTerritories(userId);
         if (accessibleTerritories.isEmpty()) {
             throw new SecurityException("User has no territory access");
         }
-        
         // For single territory users, return leads from that territory
         if (accessibleTerritories.size() == 1) {
-            return getLeadsByTerritoryAndStatus(accessibleTerritories.get(0), status);
+            return getLeadsByTerritoryAndStatus(accessibleTerritories.get(0).getId(), status);
         }
-        
         // For multi-territory users, return combined leads from all territories
         return accessibleTerritories.stream()
-                .flatMap(territory -> getLeadsByTerritoryAndStatus(territory, status).stream())
+                .flatMap(territory -> getLeadsByTerritoryAndStatus(territory.getId(), status).stream())
                 .collect(Collectors.toList());
     }
 
     /**
      * Get leads by status from specific territory (explicit)
      */
-    public List<LeadsResponseDTO> getLeadsByTerritoryAndStatus(String territoryCode, LeadStatus status) {
+    public List<LeadsResponseDTO> getLeadsByTerritoryAndStatus(Long territoryId, LeadStatus status) {
         // Check if user can access this territory
-        if (!securityContext.canAccessTerritory(territoryCode)) {
-            throw new AccessDeniedException("Cannot access territory: " + territoryCode);
+        if (!userTerritoryService.hasAccessToTerritory(null, territoryId)) {
+            throw new AccessDeniedException("Cannot access territory: " + territoryId);
         }
-        
         // TODO: Implement district database connection logic
         // For now, return leads from current database
         return getLeadsByStatus(status, Pageable.unpaged()).getContent();
@@ -320,12 +343,11 @@ public class LeadsService {
     /**
      * Get lead by ID from specific territory (explicit)
      */
-    public LeadsResponseDTO getLeadByTerritoryAndId(String territoryCode, Long id) {
+    public LeadsResponseDTO getLeadByTerritoryAndId(Long territoryId, Long id) {
         // Check if user can access this territory
-        if (!securityContext.canAccessTerritory(territoryCode)) {
-            throw new AccessDeniedException("Cannot access territory: " + territoryCode);
+        if (!userTerritoryService.hasAccessToTerritory(null, territoryId)) {
+            throw new AccessDeniedException("Cannot access territory: " + territoryId);
         }
-        
         // TODO: Implement district database connection logic
         // For now, return lead from current database
         return getLeadById(id);

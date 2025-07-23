@@ -17,9 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import com.TreadX.user.service.AuthorizationService;
+
 import com.TreadX.user.entity.User;
-import com.TreadX.user.service.UserTerritoryService;
 import com.TreadX.address.service.UniqueIdUtils;
 import com.TreadX.user.constants.TerritoryIdConstants;
 
@@ -168,15 +167,35 @@ public class TerritoryService {
     }
     
     /**
+     * Get territory response by code
+     */
+    public TerritoryResponseDTO getTerritoryResponseByCode(String code) {
+        Territory territory = getTerritoryByCode(code);
+        return territoryMapper.toResponseDTO(territory);
+    }
+
+    /**
      * Get territory by code
      */
-    public TerritoryResponseDTO getTerritoryByCode(String code) {
+    public Territory getTerritoryByCode(String code) {
         log.info("Getting territory by code: {}", code);
-        
-        Territory territory = territoryRepository.findByCodeAndIsActiveTrue(code)
+        return territoryRepository.findByCodeAndIsActiveTrue(code)
                 .orElseThrow(() -> new ResourceNotFoundException("Territory not found with code: " + code));
-        
-        return territoryMapper.toResponseDTO(territory);
+    }
+
+
+
+
+    /**
+     * Get territory by id
+     */
+    public Territory getTerritoryById(Long id) {
+        log.info("Getting territory by id: {}", id);
+
+        Territory territory = territoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Territory not found with id: " + id));
+
+        return territory;
     }
     
     /**

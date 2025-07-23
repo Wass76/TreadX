@@ -23,7 +23,7 @@ public class TerritoryDataSourceLookup {
     private final JdbcTemplate jdbcTemplate;
     
     @Autowired
-    public TerritoryDataSourceLookup(@Qualifier("dataSource") DataSource dataSource) {
+    public TerritoryDataSourceLookup(@Qualifier("defaultDataSource") DataSource dataSource) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
     }
     

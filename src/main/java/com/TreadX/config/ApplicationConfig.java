@@ -3,6 +3,7 @@ package com.TreadX.config;
 import com.TreadX.utils.auditing.ApplicationAuditingAware;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.zaxxer.hikari.HikariDataSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
@@ -25,12 +26,15 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import javax.sql.DataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Configuration
 @RequiredArgsConstructor
 @EnableCaching
 @Order(1)
 public class ApplicationConfig {
+    private static final Logger log = LoggerFactory.getLogger(ApplicationConfig.class);
 
     @Bean
     public ObjectMapper objectMapper() {
@@ -68,13 +72,16 @@ public class ApplicationConfig {
     }
 
     @Bean
-    @Primary
-    public DataSource dataSource(DataSourceProperties properties) {
-        return DataSourceBuilder.create()
-                .url(properties.getUrl())
-                .username(properties.getUsername())
-                .password(properties.getPassword())
-                .driverClassName(properties.getDriverClassName())
-                .build();
+    public DataSource defaultDataSource(DataSourceProperties properties) {
+        log.info("Default DataSource properties: url={}, username={}, password={}, driverClassName={}",
+            properties.getUrl(), properties.getUsername(), properties.getPassword(), properties.getDriverClassName());
+        HikariDataSource dataSource = new HikariDataSource();
+        dataSource.setJdbcUrl(properties.getUrl());
+        dataSource.setUsername(properties.getUsername());
+        dataSource.setPassword(properties.getPassword());
+        dataSource.setDriverClassName(properties.getDriverClassName());
+        dataSource.setMaximumPoolSize(5);
+        dataSource.setMinimumIdle(1);
+        return dataSource;
     }
 }

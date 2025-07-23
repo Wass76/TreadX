@@ -14,6 +14,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import org.springframework.beans.factory.ObjectProvider;
+import com.TreadX.user.service.UserTerritoryService;
+import com.TreadX.user.entity.Territory;
+import com.TreadX.user.util.TerritoryUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.TreadX.user.repository.TerritoryRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 
 /**
  * Filter to set the territory context for each request.
@@ -28,6 +37,8 @@ public class TerritoryContextFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(TerritoryContextFilter.class);
     
     // private final SecurityContextService securityContextService; // Will be used later
+    private final ObjectProvider<UserTerritoryService> userTerritoryServiceProvider;
+    private final ObjectProvider<TerritoryRepository> territoryRepositoryProvider;
     
     // Paths that don't need territory context
     private static final List<String> EXCLUDED_PATHS = List.of(
@@ -44,32 +55,58 @@ public class TerritoryContextFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, 
                                   HttpServletResponse response, 
                                   FilterChain filterChain) throws ServletException, IOException {
-        
         String requestPath = request.getRequestURI();
-        
+        log.info("[TerritoryContextFilter] Entered filter for path: {}", requestPath);
+        log.info("[TerritoryContextFilter] Headers: X-Territory-Code={}, territory param={}",
+            request.getHeader("X-Territory-Code"), request.getParameter("territory"));
         try {
-            // Skip territory context for excluded paths
             if (shouldSkipTerritoryContext(requestPath)) {
-                log.debug("Skipping territory context for path: {}", requestPath);
+                log.info("[TerritoryContextFilter] Skipping territory context for path: {}", requestPath);
                 filterChain.doFilter(request, response);
                 return;
             }
-            
-            // Determine territory code for this request
             String territoryCode = determineTerritoryCode(request);
-            
-            if (territoryCode != null) {
-                log.debug("Setting territory context for path {}: {}", requestPath, territoryCode);
+            log.info("[TerritoryContextFilter] Determined territory code: {} for path: {}", territoryCode, requestPath);
+            TerritoryRepository territoryRepository = territoryRepositoryProvider.getIfAvailable();
+            if (territoryCode != null && territoryRepository != null) {
+                // Validate territory code exists and is active
+                if (!territoryRepository.existsByCode(territoryCode)) {
+                    log.warn("[TerritoryContextFilter] Invalid or inactive territory code: {}", territoryCode);
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid or inactive territory code: " + territoryCode);
+                    return;
+                }
+                // Always set the context for DB routing
+                log.info("[TerritoryContextFilter] Setting territory context for path {}: {}", requestPath, territoryCode);
                 TerritoryContextHolder.setTerritoryCode(territoryCode);
+                // Only check user access if authenticated
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                boolean isAuthenticated = auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken);
+                if (isAuthenticated) {
+                    UserTerritoryService userTerritoryService = userTerritoryServiceProvider.getIfAvailable();
+                    if (userTerritoryService != null) {
+                        var territoryOpt = territoryRepository.findByCode(territoryCode);
+                        if (territoryOpt.isPresent()) {
+                            Long territoryId = territoryOpt.get().getId();
+                            boolean hasAccess = userTerritoryService.hasAccessToTerritory(null, territoryId);
+                            log.info("[TerritoryContextFilter] User access to territory {}: {}", territoryCode, hasAccess);
+                            if (!hasAccess) {
+                                log.warn("[TerritoryContextFilter] User does not have access to territory: {}", territoryCode);
+                                response.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have access to this territory: " + territoryCode);
+                                return;
+                            }
+                        }
+                    }
+                } else {
+                    log.info("[TerritoryContextFilter] User not authenticated yet; skipping user access check.");
+                }
+            } else if (territoryCode != null) {
+                log.warn("[TerritoryContextFilter] TerritoryRepository not available for validation");
             } else {
-                log.debug("No territory code determined for path: {}", requestPath);
+                log.info("[TerritoryContextFilter] No territory code determined for path: {}", requestPath);
             }
-            
-            // Continue with the filter chain
             filterChain.doFilter(request, response);
-            
         } finally {
-            // Always clear the territory context after the request
+            log.info("[TerritoryContextFilter] Clearing territory context for path: {}", requestPath);
             TerritoryContextHolder.clear();
         }
     }
@@ -145,9 +182,12 @@ public class TerritoryContextFilter extends OncePerRequestFilter {
      */
     private String getUserPrimaryTerritory() {
         try {
-            // This will be implemented when SecurityContextService is available
-            // For now, return null to avoid circular dependency
-            return null;
+            UserTerritoryService userTerritoryService = userTerritoryServiceProvider.getIfAvailable();
+            if (userTerritoryService == null) return null;
+            Long userId = userTerritoryService.getCurrentAuthenticatedUserId();
+            List<Territory> territories = userTerritoryService.getAllAccessibleTerritories(userId);
+            Territory primary = TerritoryUtils.getPrimaryTerritory(territories);
+            return primary != null ? primary.getCode() : null;
         } catch (Exception e) {
             log.debug("Error getting user's primary territory: {}", e.getMessage());
             return null;
