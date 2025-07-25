@@ -18,5 +18,7 @@ public class VendorResponseDTO {
     private String streetName;
     private String aptUnitBldg;
     private String postalCode;
+    private java.time.LocalDateTime createdAt;
+    private java.time.LocalDateTime updatedAt;
     // Add other fields as needed from your flowchart
 } 

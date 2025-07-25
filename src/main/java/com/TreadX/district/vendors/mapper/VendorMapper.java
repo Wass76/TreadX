@@ -37,6 +37,8 @@ public class VendorMapper {
                 .streetName(vendor.getStreetName())
                 .aptUnitBldg(vendor.getAptUnitBldg())
                 .postalCode(vendor.getPostalCode())
+                .createdAt(vendor.getCreatedAt())
+                .updatedAt(vendor.getUpdatedAt())
                 .build();
     }
 
