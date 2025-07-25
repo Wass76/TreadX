@@ -44,7 +44,7 @@ services:
       - "9003:9003" # Maps container port 9003 to host port 9003
     environment:
       # Database connection details, using the Docker Compose service name 'treadx-db' as the hostname
-      SPRING_DATASOURCE_URL: jdbc:postgresql://treadx-db:5444/treadx
+      SPRING_DATASOURCE_URL: jdbc:postgresql://treadx-db:5432/treadx
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_DATASOURCE_DATABASE: treadx
