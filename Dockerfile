@@ -12,4 +12,4 @@ COPY target/TreadX-0.0.1-SNAPSHOT.jar /app/treadx.jar
 EXPOSE 9003
 
 # Define the command to run your Spring Boot application
-ENTRYPOINT ["java", "-jar", "/app/treadx.jar"]
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/treadx.jar"]

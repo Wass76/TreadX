@@ -52,6 +52,16 @@ services:
       SPRING_FLYWAY_ENABLED: "true"
       SPRING_FLYWAY_LOCATIONS: "classpath:/db/migration"
       SPRING_FLYWAY_BASELINE_ON_MIGRATE: "true"
+      # JVM memory settings to prevent memory leaks
+      JAVA_OPTS: "-Xmx768m -Xms256m"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1024M
+        reservations:
+          cpus: '0.25'
+          memory: 512M
     networks:
       - treadx-net # Connects to the shared network
 
