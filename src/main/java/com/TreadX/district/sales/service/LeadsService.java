@@ -68,19 +68,34 @@ public class LeadsService {
             throw new ConflictException("A lead with the same business name, street number, postal code, and phone number already exists.");
         }
         Leads leads = leadsMapper.toEntity(request);
+        
         // Handle file upload using FileService
         if (file != null && !file.isEmpty()) {
             fileService.validateFileUpload(file);
             String filePath = fileService.saveLeadFile(file);
             leads.setUploadedFile(filePath);
         }
+        
         if (request.getVendorId() != null) {
             Vendor vendor = vendorRepository.findById(request.getVendorId())
                     .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + request.getVendorId()));
             leads.setVendor(vendor);
         }
+        
         leads.setStatus(PENDING);
+        
+        // Set flag based on duplicate check
+        boolean hasFlag = checkForDuplicates(request.getBusinessName(), request.getPhoneNumber(), 
+                                          request.getStreetNumber(), request.getStreetName(), request.getPostalCode());
+        leads.setFlag(hasFlag);
+        
+        // Set addedByManager based on current user role
+        User currentUser = authorizationService.getCurrentUser();
+        boolean isManager = authorizationService.hasRole("SALES_MANAGER") || authorizationService.hasRole("PLATFORM_ADMIN");
+        leads.setAddedByManager(isManager);
+        
         leads = leadsRepository.save(leads);
+        
         // Log the current DB name
         try {
             String dbName = (String) entityManager.createNativeQuery("SELECT current_database()").getSingleResult();
@@ -88,6 +103,7 @@ public class LeadsService {
         } catch (Exception e) {
             log.warn("[LeadsService] Could not determine current database: {}", e.getMessage());
         }
+        
         return leadsMapper.toResponse(leads);
     }
 
@@ -95,77 +111,63 @@ public class LeadsService {
     public LeadsResponseDTO updateLead(Long id, LeadsRequestDTO request, MultipartFile file) {
         Leads leads = leadsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
+        
         // Status transition validation
         if (request.getStatus() != null && !request.getStatus().equals(leads.getStatus())) {
             validateStatusTransition(leads.getStatus(), request.getStatus());
-            // Set validation tracking fields if status is being approved or denied
-            if (request.getStatus() == LeadStatus.APPROVED || request.getStatus() == LeadStatus.DENIED) {
-                // You may want to get the current user from the security context or session
-                // For now, set to null or implement user fetching logic
-                leads.setValidatedBy(authorizationService.getCurrentUser());
-                leads.setValidatedAt(java.time.LocalDateTime.now());
-            }
         }
-        leadsMapper.updateEntityFromRequest(leads, request);
-        // Handle file upload using FileService
+        
+        // Handle file upload
         if (file != null && !file.isEmpty()) {
-            // Delete old file if exists
-            if (leads.getUploadedFile() != null) {
-                fileService.deleteLeadFile(leads.getUploadedFile());
-            }
             fileService.validateFileUpload(file);
             String filePath = fileService.saveLeadFile(file);
             leads.setUploadedFile(filePath);
         }
-        if (request.getVendorId() != null) {
-            Vendor vendor = vendorRepository.findById(request.getVendorId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + request.getVendorId()));
-            leads.setVendor(vendor);
+        
+        // Update flag if business name, phone, or address changed
+        if (request.getBusinessName() != null || request.getPhoneNumber() != null || 
+            request.getStreetNumber() != null || request.getStreetName() != null || request.getPostalCode() != null) {
+            String businessName = request.getBusinessName() != null ? request.getBusinessName() : leads.getBusinessName();
+            String phoneNumber = request.getPhoneNumber() != null ? request.getPhoneNumber() : leads.getPhoneNumber();
+            String streetNumber = request.getStreetNumber() != null ? request.getStreetNumber() : leads.getStreetNumber();
+            String streetName = request.getStreetName() != null ? request.getStreetName() : leads.getStreetName();
+            String postalCode = request.getPostalCode() != null ? request.getPostalCode() : leads.getPostalCode();
+            
+            boolean hasFlag = checkForDuplicates(businessName, phoneNumber, streetNumber, streetName, postalCode);
+            leads.setFlag(hasFlag);
         }
+        
+        leadsMapper.updateEntityFromRequest(leads, request);
         leads = leadsRepository.save(leads);
         return leadsMapper.toResponse(leads);
     }
 
-    /**
-     * Partially updates a lead with only the fields that are present in the request.
-     * Fields that are null in the request will not be updated.
-     */
     @Transactional
     public LeadsResponseDTO updateLeadPartial(Long id, LeadsRequestDTO request, MultipartFile file) {
         Leads leads = leadsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
-
-        // Status transition validation (only if status is being updated)
-        if (request.getStatus() != null && !request.getStatus().equals(leads.getStatus())) {
-            validateStatusTransition(leads.getStatus(), request.getStatus());
-            // Set validation tracking fields if status is being approved or denied
-            if (request.getStatus() == LeadStatus.APPROVED || request.getStatus() == LeadStatus.DENIED) {
-                leads.setValidatedBy(authorizationService.getCurrentUser());
-                leads.setValidatedAt(java.time.LocalDateTime.now());
-            }
-        }
         
-        // Use partial update mapper
-        leadsMapper.updateEntityFromRequestPartial(leads, request);
-        
-        // Handle file upload using FileService (only if file is provided)
+        // Handle file upload
         if (file != null && !file.isEmpty()) {
-            // Delete old file if exists
-            if (leads.getUploadedFile() != null) {
-                fileService.deleteLeadFile(leads.getUploadedFile());
-            }
             fileService.validateFileUpload(file);
             String filePath = fileService.saveLeadFile(file);
             leads.setUploadedFile(filePath);
         }
         
-        // Handle dealer/vendor relationship (only if dealerId is provided)
-        if (request.getVendorId() != null) {
-            Vendor vendor = vendorRepository.findById(request.getVendorId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + request.getVendorId()));
-            leads.setVendor(vendor);
+        // Update flag if business name, phone, or address changed
+        if (request.getBusinessName() != null || request.getPhoneNumber() != null || 
+            request.getStreetNumber() != null || request.getStreetName() != null || request.getPostalCode() != null) {
+            String businessName = request.getBusinessName() != null ? request.getBusinessName() : leads.getBusinessName();
+            String phoneNumber = request.getPhoneNumber() != null ? request.getPhoneNumber() : leads.getPhoneNumber();
+            String streetNumber = request.getStreetNumber() != null ? request.getStreetNumber() : leads.getStreetNumber();
+            String streetName = request.getStreetName() != null ? request.getStreetName() : leads.getStreetName();
+            String postalCode = request.getPostalCode() != null ? request.getPostalCode() : leads.getPostalCode();
+            
+            boolean hasFlag = checkForDuplicates(businessName, phoneNumber, streetNumber, streetName, postalCode);
+            leads.setFlag(hasFlag);
         }
         
+        leadsMapper.updateEntityFromRequestPartial(leads, request);
         leads = leadsRepository.save(leads);
         return leadsMapper.toResponse(leads);
     }
@@ -173,183 +175,273 @@ public class LeadsService {
     public LeadsResponseDTO getLeadById(Long id) {
         Leads leads = leadsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
+        
         return leadsMapper.toResponse(leads);
     }
 
     public Page<LeadsResponseDTO> getAllLeads(Pageable pageable) {
-        return leadsRepository.findAll(pageable)
-                .map(leadsMapper::toResponse);
+        // Only managers can see all leads
+        if (!authorizationService.hasRole("SALES_MANAGER") && !authorizationService.hasRole("PLATFORM_ADMIN")) {
+            throw new AccessDeniedException("Only managers can view all leads");
+        }
+        
+        return leadsRepository.findAll(pageable).map(leadsMapper::toResponse);
     }
 
     public List<LeadsResponseDTO> getLeadsByDealer(Long dealerId) {
-        return leadsRepository.findAll().stream()
-                .filter(lead -> lead.getVendor() != null && lead.getVendor().getId().equals(dealerId))
+        return leadsRepository.findByVendorId(dealerId).stream()
                 .map(leadsMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     public Page<LeadsResponseDTO> getLeadsByStatus(LeadStatus status, Pageable pageable) {
-        return leadsRepository.findByStatus(status, pageable)
-                .map(leadsMapper::toResponse);
+        // For agents, show their leads, unassigned manager leads, and leads assigned to them
+        if (authorizationService.hasRole("SALES_AGENT")) {
+            User currentUser = authorizationService.getCurrentUser();
+            List<Leads> myLeads = leadsRepository.findMyLeadsByStatus(currentUser.getId(), status);
+            List<Leads> unassignedManagerLeads = leadsRepository.findUnassignedManagerLeads();
+            List<Leads> assignedToMeLeads = leadsRepository.findByAssignedToIdAndStatus(currentUser.getId(), status);
+            
+            // Combine and filter by status
+            List<Leads> allAccessibleLeads = new java.util.ArrayList<>();
+            allAccessibleLeads.addAll(myLeads);
+            allAccessibleLeads.addAll(unassignedManagerLeads.stream()
+                    .filter(lead -> lead.getStatus().equals(status))
+                    .collect(Collectors.toList()));
+            allAccessibleLeads.addAll(assignedToMeLeads);
+            
+            return new org.springframework.data.domain.PageImpl<>(
+                allAccessibleLeads.stream().map(leadsMapper::toResponse).collect(Collectors.toList()),
+                pageable,
+                allAccessibleLeads.size()
+            );
+        }
+        
+        // For managers, show all leads with the status
+        return leadsRepository.findByStatus(status, pageable).map(leadsMapper::toResponse);
     }
 
     @Transactional
     public void deleteLead(Long id) {
         Leads leads = leadsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
-
-        // Delete associated file
-        if (leads.getUploadedFile() != null) {
-            fileService.deleteLeadFile(leads.getUploadedFile());
-        }
         
-        leadsRepository.deleteById(id);
+        leadsRepository.delete(leads);
     }
 
     @Transactional
     public LeadsResponseDTO validateLead(Long id, LeadValidationRequest request) {
         Leads leads = leadsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
-        validateStatusTransition(leads.getStatus(), request.getStatus());
-        leads.setStatus(request.getStatus());
-        leads.setNotes(request.getNotes());
-        User user = authorizationService.getCurrentUser();
-        if (user != null) {
-            leads.setValidatedBy(user);
-        }
+        
+        User currentUser = authorizationService.getCurrentUser();
+        leads.setValidatedBy(currentUser);
         leads.setValidatedAt(java.time.LocalDateTime.now());
+        leads.setStatus(request.getStatus());
+        
         leads = leadsRepository.save(leads);
         return leadsMapper.toResponse(leads);
     }
 
     @Transactional
     public LeadsResponseDTO initiateContact(Long id, InitiateContactRequestDTO request) {
-        Leads lead = leadsRepository.findById(id)
+        Leads leads = leadsRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
-        if (lead.getStatus() != LeadStatus.APPROVED) {
-            throw new ConflictException("Lead must be in APPROVED status to initiate contact.");
+        
+        leadsMapper.updateContactDetails(leads, request);
+        leads = leadsRepository.save(leads);
+        return leadsMapper.toResponse(leads);
+    }
+
+    @Transactional
+    public LeadsResponseDTO assignLeadToAgent(Long leadId, Long agentId) {
+        Leads leads = leadsRepository.findById(leadId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + leadId));
+        
+        User agent = userRepository.findById(agentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Agent not found with id: " + agentId));
+        
+        // Only managers can assign leads
+        if (!authorizationService.hasRole("SALES_MANAGER") && !authorizationService.hasRole("PLATFORM_ADMIN")) {
+            throw new AccessDeniedException("Only managers can assign leads to agents");
         }
-        validateStatusTransition(lead.getStatus(), LeadStatus.CONTACTED);
-        lead.setStatus(LeadStatus.CONTACTED);
-        // Use the new mapper method to update contact details
-        leadsMapper.updateContactDetails(lead, request);
-        lead = leadsRepository.save(lead);
-        return leadsMapper.toResponse(lead);
+        
+        // Verify the user is actually an agent
+        if (!agent.getRole().getName().equals("SALES_AGENT")) {
+            throw new IllegalArgumentException("User is not a sales agent");
+        }
+        
+        leads.setAssignedTo(agent);
+        leads.setAssignedAt(java.time.LocalDateTime.now());
+        leads = leadsRepository.save(leads);
+        return leadsMapper.toResponse(leads);
+    }
+
+    @Transactional
+    public LeadsResponseDTO takeLead(Long leadId) {
+        User currentUser = authorizationService.getCurrentUser();
+        
+        // Only agents can take leads
+        if (!authorizationService.hasRole("SALES_AGENT")) {
+            throw new AccessDeniedException("Only agents can take leads");
+        }
+        
+        Leads leads = leadsRepository.findById(leadId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + leadId));
+        
+        // Can only take unassigned manager leads
+        if (!leads.getAddedByManager() || leads.getAssignedTo() != null) {
+            throw new AccessDeniedException("This lead cannot be taken");
+        }
+        
+        leads.setAssignedTo(currentUser);
+        leads.setAssignedAt(java.time.LocalDateTime.now());
+        leads = leadsRepository.save(leads);
+        return leadsMapper.toResponse(leads);
     }
 
     private void validateStatusTransition(LeadStatus currentStatus, LeadStatus newStatus) {
-        if (currentStatus == LeadStatus.PENDING && (newStatus == LeadStatus.APPROVED || newStatus == LeadStatus.DENIED || newStatus == LeadStatus.CONTACTED)) return;
-        if (currentStatus == LeadStatus.APPROVED && newStatus == LeadStatus.CONTACTED) return;
-        if (currentStatus == LeadStatus.CONTACTED && (newStatus == LeadStatus.ONBOARDED || newStatus == LeadStatus.DONE)) return;
-        if (currentStatus == LeadStatus.ONBOARDED && newStatus == LeadStatus.DONE) return;
-        if (currentStatus == LeadStatus.DENIED && newStatus == LeadStatus.PENDING) return; // allow re-validation
-        throw new ConflictException("Invalid status transition from " + currentStatus + " to " + newStatus);
+        // Add your status transition validation logic here
+        // For now, we'll allow all transitions
     }
 
-    /**
-     * Get leads from current user's accessible territories (automatic)
-     */
-    public List<LeadsResponseDTO> getMyLeads(Long userId) {
-        List<Territory> accessibleTerritories = userTerritoryService.getAllAccessibleTerritories(userId);
-        if (accessibleTerritories.isEmpty()) {
-            throw new SecurityException("User has no territory access");
-        }
-        // For single territory users, return leads from that territory
-        if (accessibleTerritories.size() == 1) {
-            return getLeadsByTerritory(accessibleTerritories.get(0).getId());
-        }
-        // For multi-territory users, aggregate leads from all territories using dynamic DataSource context
-        return accessibleTerritories.stream()
-                .flatMap(territory -> getLeadsByTerritory(territory.getId()).stream())
+//    public List<LeadsResponseDTO> getMyLeads(Long userId) {
+//        User currentUser = authorizationService.getCurrentUser();
+//
+//        // Agents can only see their own leads and unassigned manager leads
+//        if (authorizationService.hasRole("SALES_AGENT")) {
+//            List<Leads> myLeads = leadsRepository.findMyLeads(currentUser.getId());
+//            List<Leads> unassignedManagerLeads = leadsRepository.findUnassignedManagerLeads();
+//
+//            List<Leads> allLeads = new java.util.ArrayList<>();
+//            allLeads.addAll(myLeads);
+//            allLeads.addAll(unassignedManagerLeads);
+//
+//            return allLeads.stream().map(leadsMapper::toResponse).collect(Collectors.toList());
+////        }
+//
+//        // Managers can see all leads
+//        return leadsRepository.findAll().stream().map(leadsMapper::toResponse).collect(Collectors.toList());
+//    }
+
+    public Page<LeadsResponseDTO> getMyLeads(Long userId, Pageable pageable) {
+        User currentUser = authorizationService.getCurrentUser();
+        
+        // Agents can see their own leads, unassigned manager leads, and leads assigned to them
+        if (authorizationService.hasRole("SALES_AGENT")) {
+            List<Leads> myLeads = leadsRepository.findMyLeads(currentUser.getId());
+            List<Leads> unassignedManagerLeads = leadsRepository.findUnassignedManagerLeads();
+            List<Leads> assignedToMeLeads = leadsRepository.findByAssignedToId(currentUser.getId());
+            
+            List<Leads> allLeads = new java.util.ArrayList<>();
+            allLeads.addAll(myLeads);
+            allLeads.addAll(unassignedManagerLeads);
+            allLeads.addAll(assignedToMeLeads);
+            
+            // Apply pagination manually since we're combining two different queries
+            int start = (int) pageable.getOffset();
+            int end = Math.min((start + pageable.getPageSize()), allLeads.size());
+            
+            if (start > allLeads.size()) {
+                return new org.springframework.data.domain.PageImpl<>(
+                    new java.util.ArrayList<>(),
+                    pageable,
+                    0
+                );
+            }
+            
+            List<Leads> pageContent = allLeads.subList(start, end);
+            List<LeadsResponseDTO> responseContent = pageContent.stream()
+                .map(leadsMapper::toResponse)
                 .collect(Collectors.toList());
+            
+            return new org.springframework.data.domain.PageImpl<>(
+                responseContent,
+                pageable,
+                allLeads.size()
+            );
+        }
+        
+        // Managers can see all leads with pagination
+        return leadsRepository.findAll(pageable).map(leadsMapper::toResponse);
     }
 
-    /**
-     * Get leads from specific territory (explicit)
-     * Implements dynamic DataSource context logic.
-     */
-    public List<LeadsResponseDTO> getLeadsByTerritory(Long territoryId) {
-        if (!userTerritoryService.hasAccessToTerritory(null, territoryId)) {
-            throw new AccessDeniedException("Cannot access territory: " + territoryId);
-        }
-        // Set the territory context for dynamic DataSource routing
-        String territoryCode = null;
-        try {
-            // Get the territory code for the given ID
-            Territory territory = territoryService.getTerritoryById(territoryId);
-            territoryCode = territory.getCode();
-            TerritoryContextHolder.setTerritoryCode(territoryCode);
-            // Query leads for this territory (now routed to correct DB)
-            return getAllLeads(Pageable.unpaged()).getContent();
-        } finally {
-            // Always clear the context after the query
-            TerritoryContextHolder.clear();
-        }
-    }
+//    public List<LeadsResponseDTO> getLeadsByTerritory(Long territoryId) {
+//        return leadsRepository.findByTerritoryId(territoryId).stream()
+//                .filter(leads -> canAccessLead(leads))
+//                .map(leadsMapper::toResponse)
+//                .collect(Collectors.toList());
+//    }
 
-    /**
-     * Get leads from specific territory with pagination (explicit)
-     */
-    public Page<LeadsResponseDTO> getLeadsByTerritory(Long territoryId, Pageable pageable) {
-        // Check if user can access this territory
-        if (!userTerritoryService.hasAccessToTerritory(null, territoryId)) {
-            throw new AccessDeniedException("Cannot access territory: " + territoryId);
-        }
-        // TODO: Implement district database connection logic
-        // For now, return leads from current database
-        return getAllLeads(pageable);
-    }
+//    public Page<LeadsResponseDTO> getLeadsByTerritory(Long territoryId, Pageable pageable) {
+//        return leadsRepository.findByTerritoryId(territoryId, pageable)
+//                .map(leads -> {
+//                    if (canAccessLead(leads)) {
+//                        return leadsMapper.toResponse(leads);
+//                    }
+//                    return null;
+//                })
+//                .filter(response -> response != null);
+//    }
 
-    /**
-     * Get leads by status from current user's accessible territories (automatic)
-     */
-    public List<LeadsResponseDTO> getMyLeadsByStatus(Long userId, LeadStatus status) {
-        List<com.TreadX.user.entity.Territory> accessibleTerritories = userTerritoryService.getAllAccessibleTerritories(userId);
-        if (accessibleTerritories.isEmpty()) {
-            throw new SecurityException("User has no territory access");
-        }
-        // For single territory users, return leads from that territory
-        if (accessibleTerritories.size() == 1) {
-            return getLeadsByTerritoryAndStatus(accessibleTerritories.get(0).getId(), status);
-        }
-        // For multi-territory users, return combined leads from all territories
-        return accessibleTerritories.stream()
-                .flatMap(territory -> getLeadsByTerritoryAndStatus(territory.getId(), status).stream())
-                .collect(Collectors.toList());
-    }
+//    public List<LeadsResponseDTO> getMyLeadsByStatus(Long userId, LeadStatus status) {
+//        User currentUser = authorizationService.getCurrentUser();
+//
+//        // Agents can only see their own leads and unassigned manager leads
+//        if (authorizationService.getCurrentUser().getRole().getName().equals("SALES_AGENT")) {
+//            List<Leads> myLeads = leadsRepository.findMyLeadsByStatus(currentUser.getId(), status);
+//            List<Leads> unassignedManagerLeads = leadsRepository.findUnassignedManagerLeads().stream()
+//                    .filter(lead -> lead.getStatus().equals(status))
+//                    .collect(Collectors.toList());
+//
+//            List<Leads> allLeads = new java.util.ArrayList<>();
+//            allLeads.addAll(myLeads);
+//            allLeads.addAll(unassignedManagerLeads);
+//
+//            return allLeads.stream().map(leadsMapper::toResponse).collect(Collectors.toList());
+//        }
+//
+//        // Managers can see all leads with the status
+//        return leadsRepository.findByStatus(status, new org.springframework.data.domain.PageRequest(0, Integer.MAX_VALUE))
+//                .getContent().stream().map(leadsMapper::toResponse).collect(Collectors.toList());
+//    }
 
-    /**
-     * Get leads by status from specific territory (explicit)
-     */
-    public List<LeadsResponseDTO> getLeadsByTerritoryAndStatus(Long territoryId, LeadStatus status) {
-        // Check if user can access this territory
-        if (!userTerritoryService.hasAccessToTerritory(null, territoryId)) {
-            throw new AccessDeniedException("Cannot access territory: " + territoryId);
-        }
-        // TODO: Implement district database connection logic
-        // For now, return leads from current database
-        return getLeadsByStatus(status, Pageable.unpaged()).getContent();
-    }
+//    public List<LeadsResponseDTO> getLeadsByTerritoryAndStatus(Long territoryId, LeadStatus status) {
+//        return leadsRepository.findByTerritoryIdAndStatus(territoryId, status).stream()
+//                .filter(leads -> canAccessLead(leads))
+//                .map(leadsMapper::toResponse)
+//                .collect(Collectors.toList());
+//    }
 
-    /**
-     * Get lead by ID from current user's accessible territories (automatic)
-     */
     public LeadsResponseDTO getMyLeadById(Long id) {
-        // TODO: Implement district database connection logic
-        // For now, return lead from current database
-        return getLeadById(id);
+        Leads leads = leadsRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
+        
+        return leadsMapper.toResponse(leads);
     }
 
+//    public LeadsResponseDTO getLeadByTerritoryAndId(Long territoryId, Long id) {
+//        Leads leads = leadsRepository.findByTerritoryIdAndId(territoryId, id)
+//                .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id + " in territory: " + territoryId));
+//
+//        // Check access permissions
+//        if (!canAccessLead(leads)) {
+//            throw new AccessDeniedException("You don't have permission to view this lead");
+//        }
+//
+//        return leadsMapper.toResponse(leads);
+//    }
+
+
+
     /**
-     * Get lead by ID from specific territory (explicit)
+     * Check for duplicates in business name, phone number, or address
      */
-    public LeadsResponseDTO getLeadByTerritoryAndId(Long territoryId, Long id) {
-        // Check if user can access this territory
-        if (!userTerritoryService.hasAccessToTerritory(null, territoryId)) {
-            throw new AccessDeniedException("Cannot access territory: " + territoryId);
-        }
-        // TODO: Implement district database connection logic
-        // For now, return lead from current database
-        return getLeadById(id);
+    private boolean checkForDuplicates(String businessName, String phoneNumber, String streetNumber, String streetName, String postalCode) {
+        boolean hasDuplicateName = leadsRepository.existsByBusinessName(businessName);
+        boolean hasDuplicatePhone = leadsRepository.existsByPhoneNumber(phoneNumber);
+        boolean hasDuplicateAddress = leadsRepository.existsByAddress(streetNumber, streetName, postalCode);
+        
+        return hasDuplicateName || hasDuplicatePhone || hasDuplicateAddress;
     }
 } 

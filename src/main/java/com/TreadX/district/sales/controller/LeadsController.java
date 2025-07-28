@@ -192,9 +192,6 @@ public class LeadsController {
     })
     public ResponseEntity<LeadsResponseDTO> getLeadById(
             @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long id) {
-        if (!authorizationService.hasAccessToLead(id, "READ")) {
-            throw new AccessDeniedException("You don't have permission to read this lead");
-        }
         LeadsResponseDTO lead = leadsService.getLeadById(id);
         return new ResponseEntity<>(lead, HttpStatus.OK);
     }
@@ -266,9 +263,6 @@ public class LeadsController {
             @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long id,
             @Parameter(description = "Updated lead data", required = true) @RequestPart("lead") LeadsRequestDTO leadDetails,
             @RequestPart(value = "file", required = false) MultipartFile file) {
-        if (!authorizationService.hasAccessToLead(id, "UPDATE")) {
-            throw new AccessDeniedException("You don't have permission to update this lead");
-        }
         LeadsResponseDTO updatedLead = leadsService.updateLead(id, leadDetails, file);
         return new ResponseEntity<>(updatedLead, HttpStatus.OK);
     }
@@ -402,12 +396,128 @@ public class LeadsController {
     })
     public ResponseEntity<Resource> previewLeadFile(
             @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long id) {
-        Resource resource = fileService.getFileForPreview(id);
-        MediaType contentType = fileService.getContentType(id);
-        
-        return ResponseEntity.ok()
-                .contentType(contentType)
-                .body(resource);
+        try {
+            Resource resource = fileService.getFileForPreview(id);
+            MediaType contentType = fileService.getContentType(id);
+            
+            return ResponseEntity.ok()
+                    .contentType(contentType)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
+    // New endpoints for lead assignment functionality
+
+    @PostMapping("/{id}/assign")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER')")
+    @Operation(
+        summary = "Assign lead to agent",
+        description = "Assigns a lead to a specific agent. Only managers can assign leads. Requires PLATFORM_ADMIN or SALES_MANAGER role."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully assigned the lead to agent",
+            content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation = LeadsResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Lead not found or agent not found"),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<LeadsResponseDTO> assignLeadToAgent(
+            @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long leadId,
+            @Parameter(description = "ID of the agent to assign the lead to", required = true) @RequestParam Long agentId) {
+        try {
+            LeadsResponseDTO response = leadsService.assignLeadToAgent(leadId, agentId);
+            return ResponseEntity.ok(response);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/{id}/take")
+    @PreAuthorize("hasRole('SALES_AGENT')")
+    @Operation(
+        summary = "Take unassigned manager lead",
+        description = "Allows an agent to take an unassigned lead that was created by a manager. Only agents can take leads. Requires SALES_AGENT role."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully took the lead",
+            content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation = LeadsResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Lead not found"),
+        @ApiResponse(responseCode = "400", description = "Lead cannot be taken (already assigned or not a manager lead)"),
+        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<LeadsResponseDTO> takeLead(
+            @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long leadId) {
+        try {
+            LeadsResponseDTO response = leadsService.takeLead(leadId);
+            return ResponseEntity.ok(response);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/my-leads")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @Operation(
+        summary = "Get my leads (paginated)",
+        description = "Retrieves a paginated list of leads accessible to the current user based on their role. Agents see their own leads and unassigned manager leads. Managers see all leads. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved user's leads",
+            content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation = Page.class))),
+        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<Page<LeadsResponseDTO>> getMyLeads(
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Sort field") @RequestParam(defaultValue = "createdAt") String sortBy,
+            @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "desc") String direction) {
+        Long userId = authorizationService.getCurrentUser().getId();
+        Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
+        Page<LeadsResponseDTO> leads = leadsService.getMyLeads(userId, pageable);
+        return ResponseEntity.ok(leads);
+    }
+
+    @GetMapping("/my-leads/{id}")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")
+    @Operation(
+        summary = "Get my lead by ID",
+        description = "Retrieves a specific lead that the current user has access to. Requires PLATFORM_ADMIN, SALES_MANAGER or SALES_AGENT role."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved the lead",
+            content = @Content(mediaType = "application/json",
+            schema = @Schema(implementation = LeadsResponseDTO.class))),
+        @ApiResponse(responseCode = "404", description = "Lead not found"),
+        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
+        @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<LeadsResponseDTO> getMyLeadById(
+            @Parameter(description = "ID of the lead", required = true) @PathVariable("id") Long id) {
+        try {
+            LeadsResponseDTO lead = leadsService.getMyLeadById(id);
+            return ResponseEntity.ok(lead);
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 } 

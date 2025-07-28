@@ -29,10 +29,33 @@ public class LeadsMapper {
                 .uploadedFile(request.getUploadedFile())
                 .status(request.getStatus() == null ? LeadStatus.PENDING : request.getStatus())
                 .notes(request.getNotes())
+                .flag(false) // Will be set by service
+                .addedByManager(false) // Will be set by service
                 .build();
     }
 
     public LeadsResponseDTO toResponse(Leads leads) {
+        // Format address with default values
+        String city = "London";
+        String province = "Ontario";
+        String country = "Canada";
+        
+        // Build formatted address
+        StringBuilder formattedAddress = new StringBuilder();
+        if (leads.getStreetNumber() != null && !leads.getStreetNumber().trim().isEmpty()) {
+            formattedAddress.append(leads.getStreetNumber()).append(" ");
+        }
+        if (leads.getStreetName() != null && !leads.getStreetName().trim().isEmpty()) {
+            formattedAddress.append(leads.getStreetName());
+        }
+        if (leads.getAptUnitBldg() != null && !leads.getAptUnitBldg().trim().isEmpty()) {
+            formattedAddress.append(", ").append(leads.getAptUnitBldg());
+        }
+        if (leads.getPostalCode() != null && !leads.getPostalCode().trim().isEmpty()) {
+            formattedAddress.append(", ").append(leads.getPostalCode());
+        }
+        formattedAddress.append(", ").append(city).append(", ").append(province).append(", ").append(country);
+        
         return LeadsResponseDTO.builder()
                 .id(leads.getId())
                 .businessName(leads.getBusinessName())
@@ -41,6 +64,10 @@ public class LeadsMapper {
                 .streetName(leads.getStreetName())
                 .aptUnitBldg(leads.getAptUnitBldg())
                 .postalCode(leads.getPostalCode())
+                .city(city)
+                .province(province)
+                .country(country)
+                .formattedAddress(formattedAddress.toString())
                 .source(leads.getSource())
                 .sourceUrl(leads.getSourceUrl())
                 .uploadedFile(leads.getUploadedFile() != null ? "/api/v1/leads/" + leads.getId() + "/file" : null)
@@ -52,6 +79,7 @@ public class LeadsMapper {
                 .createdAt(leads.getCreatedAt())
                 .updatedAt(leads.getUpdatedAt())
                 .addedBy(leads.getCreatedBy())
+                .addedByName(getAddedByName(leads.getCreatedBy()))
                 .lastModifiedBy(leads.getLastModifiedBy())
                 .validatedBy(leads.getValidatedBy() != null ? leads.getValidatedBy().getId() : null)
                 .validatedByFirstName(leads.getValidatedBy()!= null ? leads.getValidatedBy().getFirstName() : null)
@@ -62,6 +90,12 @@ public class LeadsMapper {
                 .extensionNumber(leads.getExtensionNumber())
                 .contactName(leads.getContactName())
                 .position(leads.getPosition())
+                .flag(leads.getFlag())
+                .addedByManager(leads.getAddedByManager())
+                .assignedTo(leads.getAssignedTo() != null ? leads.getAssignedTo().getId() : null)
+                .assignedToFirstName(leads.getAssignedTo() != null ? leads.getAssignedTo().getFirstName() : null)
+                .assignedToLastName(leads.getAssignedTo() != null ? leads.getAssignedTo().getLastName() : null)
+                .assignedAt(leads.getAssignedAt())
                 .build();
     }
 
@@ -148,5 +182,19 @@ public class LeadsMapper {
 //            // Handle dealer/vendor relationship if needed
 //            // This might need additional logic depending on your requirements
 //        }
+    }
+
+    private String getAddedByName(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        
+        return userRepository.findById(userId)
+                .map(user -> {
+                    String firstName = user.getFirstName() != null ? user.getFirstName() : "";
+                    String lastName = user.getLastName() != null ? user.getLastName() : "";
+                    return (firstName + " " + lastName).trim();
+                })
+                .orElse(null);
     }
 } 

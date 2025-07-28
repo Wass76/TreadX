@@ -22,6 +22,11 @@ public class LeadsResponseDTO {
     private String streetName;
     private String aptUnitBldg;
     private String postalCode;
+    // Formatted address fields
+    private String city;
+    private String province;
+    private String country;
+    private String formattedAddress;
     // New lead source fields
     private LeadSource source;
     private String sourceUrl;
@@ -34,6 +39,7 @@ public class LeadsResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long addedBy;
+    private String addedByName;
     private Long lastModifiedBy;
     private Long validatedBy;
     private String validatedByFirstName;
@@ -44,4 +50,11 @@ public class LeadsResponseDTO {
     private String extensionNumber;
     private String contactName;
     private String position;
+    // New fields for flag feature and lead assignment
+    private Boolean flag;
+    private Boolean addedByManager;
+    private Long assignedTo;
+    private String assignedToFirstName;
+    private String assignedToLastName;
+    private LocalDateTime assignedAt;
 } 

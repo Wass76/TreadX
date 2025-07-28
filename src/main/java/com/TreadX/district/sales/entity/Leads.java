@@ -61,6 +61,19 @@ public class Leads extends AuditedEntity {
 
     private LocalDateTime validatedAt;
 
+    // New fields for flag feature and lead assignment
+    @Column(name = "flag", nullable = false)
+    private Boolean flag = false; // true if name, phone, or address already exists
+
+    @Column(name = "added_by_manager", nullable = false)
+    private Boolean addedByManager = false; // true if lead was added by a manager
+
+    @ManyToOne
+    @JoinColumn(name = "assigned_to_id")
+    private User assignedTo; // agent assigned to this lead
+
+    private LocalDateTime assignedAt; // timestamp when lead was assigned
+
     @Override
     protected String getSequenceName() {
         return "leads_id_seq";

@@ -36,7 +36,7 @@ public abstract class BaseSecurityService {
      */
     protected boolean isAdmin() {
         User currentUser = getCurrentUser();
-        return currentUser.getRole().getName().equals("PLATFORM_ADMIN");
+        return currentUser.getRole() != null && currentUser.getRole().getName().equals("PLATFORM_ADMIN");
     }
 
     /**
@@ -44,8 +44,13 @@ public abstract class BaseSecurityService {
      * @param roleName The name of the role to check
      * @return true if the user has the specified role
      */
-    protected boolean hasRole(String roleName) {
+    public boolean hasRole(String roleName) {
+        if (roleName == null || roleName.trim().isEmpty()) {
+            return false;
+        }
+        
         User currentUser = getCurrentUser();
-        return currentUser.getRole().getName().equals(roleName);
+        return currentUser.getRole() != null && currentUser.getRole().getName() != null 
+               && currentUser.getRole().getName().equals(roleName);
     }
 } 

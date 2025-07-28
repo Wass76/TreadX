@@ -52,12 +52,55 @@ public class SecurityExpressionService extends BaseSecurityService {
 
     /**
      * Checks if the current user owns the lead
+     * A user owns a lead if:
+     * 1. They created the lead, OR
+     * 2. The lead is assigned to them
      */
     public boolean isLeadOwner(Long leadId) {
         User currentUser = getCurrentUser();
         var lead = leadsRepository.findById(leadId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + leadId));
-        return lead.getCreatedBy().equals(currentUser.getId());
+        
+        // Check if the user created the lead
+        boolean isCreator = lead.getCreatedBy().equals(currentUser.getId());
+        
+        // Check if the lead is assigned to the user
+        boolean isAssigned = lead.getAssignedTo() != null && lead.getAssignedTo().getId().equals(currentUser.getId());
+        
+        return isCreator || isAssigned;
+    }
+
+    /**
+     * Checks if the current user can access the lead
+     * A user can access a lead if:
+     * 1. They are a manager/admin (full access), OR
+     * 2. They created the lead, OR
+     * 3. The lead is assigned to them, OR
+     * 4. They are an agent and the lead is an unassigned manager lead
+     */
+    public boolean canAccessLead(Long leadId) {
+        User currentUser = getCurrentUser();
+        var lead = leadsRepository.findById(leadId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + leadId));
+        
+        // Managers and admins can access all leads
+        if (isSalesManager() || isPlatformAdmin()) {
+            return true;
+        }
+        
+        // Check if the user created the lead
+        boolean isCreator = lead.getCreatedBy().equals(currentUser.getId());
+        
+        // Check if the lead is assigned to the user
+        boolean isAssigned = lead.getAssignedTo() != null && lead.getAssignedTo().getId().equals(currentUser.getId());
+        
+        // For agents, also check if it's an unassigned manager lead
+        if (isSalesAgent()) {
+            boolean isUnassignedManagerLead = lead.getAddedByManager() && lead.getAssignedTo() == null;
+            return isCreator || isAssigned || isUnassignedManagerLead;
+        }
+        
+        return isCreator || isAssigned;
     }
 
     /**
