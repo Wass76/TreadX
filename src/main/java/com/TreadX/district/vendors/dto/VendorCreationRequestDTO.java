@@ -1,29 +1,30 @@
 package com.TreadX.district.vendors.dto;
 
 import com.TreadX.district.vendors.enums.VendorStatus;
-import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
 @Data
-@Builder
-public class VendorResponseDTO {
-    private Long id;
+public class VendorCreationRequestDTO {
+    // Basic vendor information
+    private Long leadId;
     private String legalName;
     private String businessName;
-    private String email;
-    private String phoneNumber;
-    private String vendorUniqueId;
-    private VendorStatus status;
     private String streetNumber;
     private String streetName;
     private String aptUnitBldg;
     private String postalCode;
-    private java.time.LocalDateTime createdAt;
-    private java.time.LocalDateTime updatedAt;
+    private String email;
+    private String phoneNumber;
+    private VendorStatus status;
     
-    // User access information
+    // User access management
     private Integer totalUsers;
     private Map<String, Integer> userRoles; // e.g., {"VENDOR_ADMIN": 2, "VENDOR_EMPLOYEE": 5, "VENDOR_TECHNICIAN": 3}
+    
+    // Subscription plan
+    private Long subscriptionPlanId;
+    private Boolean autoRenew;
 } 

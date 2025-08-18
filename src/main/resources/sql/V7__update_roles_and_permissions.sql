@@ -13,7 +13,7 @@ UPDATE roles
 SET is_system_generated = true 
 WHERE name IN (
     'PLATFORM_ADMIN', 'SALES_MANAGER', 'SALES_AGENT', 'SUPPORT_AGENT',
-    'DEALER_ADMIN', 'DEALER_EMPLOYEE', 'DEALER_TECHNICIAN'
+    'VENDOR_ADMIN', 'VENDOR_EMPLOYEE', 'VENDOR_TECHNICIAN'
 );
 
 -- Add new permissions if they don't exist

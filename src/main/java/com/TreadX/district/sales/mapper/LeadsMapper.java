@@ -141,6 +141,8 @@ public class LeadsMapper {
         leads.setExtensionNumber(request.getExtensionNumber());
         leads.setContactName(request.getContactName());
         leads.setPosition(request.getPosition());
+        // Update status to CONTACTED when contact is initiated
+        leads.setStatus(LeadStatus.CONTACTED);
     }
 
     /**

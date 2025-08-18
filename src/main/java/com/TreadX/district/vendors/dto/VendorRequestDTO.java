@@ -3,6 +3,8 @@ package com.TreadX.district.vendors.dto;
 import com.TreadX.district.vendors.enums.VendorStatus;
 import lombok.Data;
 
+import java.util.Map;
+
 @Data
 public class VendorRequestDTO {
     private Long leadId;
@@ -15,5 +17,8 @@ public class VendorRequestDTO {
     private String email;
     private String phoneNumber;
     private VendorStatus status;
-    // Add other fields as needed from your flowchart
+    
+    // User access management
+    private Integer totalUsers;
+    private Map<String, Integer> userRoles; // e.g., {"VENDOR_ADMIN": 2, "VENDOR_EMPLOYEE": 5, "VENDOR_TECHNICIAN": 3}
 } 

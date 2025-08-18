@@ -28,6 +28,13 @@ public class Vendor extends AuditedEntity {
     private String phoneNumber;
     private VendorStatus vendorStatus;
     private String vendorUniqueId;
+    
+    // User access management fields
+    @Column(name = "total_users")
+    private Integer totalUsers;
+    
+    @Column(name = "user_roles_config", columnDefinition = "TEXT")
+    private String userRolesConfig; // JSON string storing role counts like {"VENDOR_ADMIN": 2, "VENDOR_EMPLOYEE": 5, "VENDOR_TECHNICIAN": 3}
 
     protected String getSequenceName() {
         return "dealer_id_seq";

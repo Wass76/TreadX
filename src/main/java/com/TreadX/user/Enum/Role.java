@@ -2,11 +2,8 @@ package com.TreadX.user.Enum;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 
 @RequiredArgsConstructor
@@ -19,9 +16,9 @@ public enum Role {
     SALES_AGENT(Set.of()),
     SUPPORT_AGENT(Set.of()),
 
-    DEALER_ADMIN(Set.of()),
-    DEALER_EMPLOYEE(Set.of()),
-    DEALER_TECHNICIAN(Set.of()),;
+    VENDOR_ADMIN(Set.of()),
+    VENDOR_EMPLOYEE(Set.of()),
+    VENDOR_TECHNICIAN(Set.of()),;
 
     @Getter
     private final Set<Permission> permissions;

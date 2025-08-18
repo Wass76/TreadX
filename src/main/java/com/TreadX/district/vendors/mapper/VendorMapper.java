@@ -4,12 +4,22 @@ import com.TreadX.district.vendors.dto.VendorRequestDTO;
 import com.TreadX.district.vendors.dto.VendorResponseDTO;
 import com.TreadX.district.vendors.entity.Vendor;
 import com.TreadX.district.vendors.enums.VendorStatus;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class VendorMapper {
+    
+    private final ObjectMapper objectMapper;
+    
     public Vendor toEntity(VendorRequestDTO request) {
         Vendor vendor = new Vendor();
         vendor.setLegalName(request.getLegalName());
@@ -21,6 +31,11 @@ public class VendorMapper {
         vendor.setEmail(request.getEmail());
         vendor.setPhoneNumber(request.getPhoneNumber());
         vendor.setVendorStatus(request.getStatus() != null ? request.getStatus() : VendorStatus.ACTIVE);
+        
+        // User access management
+        vendor.setTotalUsers(request.getTotalUsers());
+        vendor.setUserRolesConfig(convertUserRolesToJson(request.getUserRoles()));
+        
         return vendor;
     }
 
@@ -39,6 +54,8 @@ public class VendorMapper {
                 .postalCode(vendor.getPostalCode())
                 .createdAt(vendor.getCreatedAt())
                 .updatedAt(vendor.getUpdatedAt())
+                .totalUsers(vendor.getTotalUsers())
+                .userRoles(convertJsonToUserRoles(vendor.getUserRolesConfig()))
                 .build();
     }
 
@@ -87,6 +104,33 @@ public class VendorMapper {
         }
         if (request.getStatus() != null) {
             vendor.setVendorStatus(request.getStatus());
+        }
+        if (request.getTotalUsers() != null) {
+            vendor.setTotalUsers(request.getTotalUsers());
+        }
+        if (request.getUserRoles() != null) {
+            vendor.setUserRolesConfig(convertUserRolesToJson(request.getUserRoles()));
+        }
+    }
+    
+    private String convertUserRolesToJson(Map<String, Integer> userRoles) {
+        try {
+            return objectMapper.writeValueAsString(userRoles);
+        } catch (JsonProcessingException e) {
+            log.error("Error converting user roles to JSON", e);
+            return "{}";
+        }
+    }
+    
+    private Map<String, Integer> convertJsonToUserRoles(String userRolesJson) {
+        try {
+            if (userRolesJson == null || userRolesJson.trim().isEmpty()) {
+                return Map.of();
+            }
+            return objectMapper.readValue(userRolesJson, new TypeReference<Map<String, Integer>>() {});
+        } catch (JsonProcessingException e) {
+            log.error("Error converting JSON to user roles", e);
+            return Map.of();
         }
     }
 } 
