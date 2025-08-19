@@ -37,6 +37,6 @@ public class Vendor extends AuditedEntity {
     private String userRolesConfig; // JSON string storing role counts like {"VENDOR_ADMIN": 2, "VENDOR_EMPLOYEE": 5, "VENDOR_TECHNICIAN": 3}
 
     protected String getSequenceName() {
-        return "dealer_id_seq";
+        return "vendor_id_seq";
     }
 } 

@@ -5,32 +5,38 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CustomerResponseDTO {
-    private Long customerId;
+    
+    // Basic Information
+    private Long id;
     private String firstName;
     private String lastName;
     private String email;
-    private Long dealerId;
-    private String customerPhone;
-    private String homePhone;
-    private String businessPhone;
-    private String customerUniqueId;
-    private String dealerCustomerUniqueId;
     
-    // Address fields
+    // Address Information
     private String streetNumber;
     private String streetName;
+    private String aptUnitBldg;
     private String postalCode;
-    private String unitNumber;
-    private String specialInstructions;
-    private String countryName;
-    private String stateName;
-    private String cityName;
-    private String countryUniqueId;
-    private String stateUniqueId;
-    private String cityUniqueId;
+    
+    // Phone Numbers
+    private List<CustomerPhoneResponseDTO> phoneNumbers;
+    
+    // Vendor Information
+    private Long vendorId;
+    private String vendorName;
+    private String customerUniqueId;
+    
+    // Audit Information
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String createdBy;
+    private String updatedBy;
 } 

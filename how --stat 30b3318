@@ -1,0 +1,10 @@
+[33m30b3318[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m Add subscription plans and enhanced vendor management features
+[33mea3b3c3[m feat: implement comprehensive leads management system with assignment tracking
+[33m7e69de6[m Add Docker resource limits and JVM heap size for stability
+[33m63f5096[m Docker fix
+[33md8d05a5[m Docker fix vendors response
+[33me676882[m Docker fix 2
+[33m7aeaa2e[m Docker fix
+[33me903680[m Prepare APIs documentation
+[33medc207b[m Add Data source feature & vendor management
+[33m0027129[m Implement create vendor and contact logic

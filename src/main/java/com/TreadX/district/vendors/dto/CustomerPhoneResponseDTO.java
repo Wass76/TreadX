@@ -1,18 +1,35 @@
 package com.TreadX.district.vendors.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
-import lombok.Data;
-
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CustomerPhoneResponseDTO {
-    private Long phoneId;
-    private Long customerId;
+    
+    private Long id;
+    
     private String phoneNumber;
+    
     private String phoneType;
-    private LocalDateTime addedDate;
-    private LocalDateTime updatedDate;
-    private String addedBy;
-    private String updatedBy;
+    
     private String phoneStatus;
+    
+    private Boolean isPrimary;
+    
+    private String extension;
+    
+    private String notes;
+    
+    // Audit Information
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String createdBy;
+    private String updatedBy;
 } 

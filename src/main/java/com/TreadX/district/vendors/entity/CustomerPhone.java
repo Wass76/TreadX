@@ -1,7 +1,5 @@
 package com.TreadX.district.vendors.entity;
 
-import com.TreadX.district.vendors.enums.PhoneStatus;
-import com.TreadX.district.vendors.enums.PhoneType;
 import com.TreadX.utils.entity.AuditedEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,8 +7,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
 
 @Entity
 @Table(name = "customer_phone")
@@ -20,25 +16,46 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CustomerPhone extends AuditedEntity {
-    @ManyToMany
-    @JoinTable(
-            name = "CUSTOMER_PHONE_NUMBER",
-            joinColumns = @JoinColumn(name = "phone_number_id"),
-            inverseJoinColumns = @JoinColumn(name = "customer_id")
-    )
-    private List<Customer> dealerCustomer;
-
-    @Column(nullable = false)
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
+    private Customer customer;
+    
+    @Column(name = "phone_number", nullable = false)
     private String phoneNumber;
-
+    
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "phone_type", nullable = false)
     private PhoneType phoneType;
-
+    
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "phone_status", nullable = false)
     private PhoneStatus phoneStatus;
-
+    
+    @Column(name = "is_primary", nullable = false)
+    private Boolean isPrimary = false;
+    
+    @Column(name = "extension")
+    private String extension;
+    
+    @Column(name = "notes")
+    private String notes;
+    
+    public enum PhoneType {
+        CELL,
+        HOME,
+        BUSINESS,
+        FAX,
+        OTHER
+    }
+    
+    public enum PhoneStatus {
+        ACTIVE,
+        INACTIVE,
+        VERIFIED,
+        UNVERIFIED
+    }
+    
     @Override
     protected String getSequenceName() {
         return "customer_phone_id_seq";

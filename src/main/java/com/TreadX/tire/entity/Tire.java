@@ -30,9 +30,9 @@ public class Tire extends AuditedEntity {
     private LocalDateTime addedDate;
     private LocalDateTime updatedDate;
 
-    @ManyToOne
-    @JoinColumn(name = "customerUniqueId", referencedColumnName = "customerUniqueId")
-    private Customer customerUniqueId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", referencedColumnName = "id")
+    private Customer customer;
 
     @Column(unique = true)
     private String tireUniqueId;
