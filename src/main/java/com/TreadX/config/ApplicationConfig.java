@@ -29,6 +29,12 @@ import javax.sql.DataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
+
+import jakarta.annotation.PostConstruct;
+import java.util.Locale;
+
 @Configuration
 @RequiredArgsConstructor
 @EnableCaching
@@ -83,5 +89,42 @@ public class ApplicationConfig {
         dataSource.setMaximumPoolSize(5);
         dataSource.setMinimumIdle(1);
         return dataSource;
+    }
+
+    /**
+     * Configure default locale to US to prevent Arabic numeral formatting
+     */
+    @Bean
+    @Primary
+    public LocaleResolver localeResolver() {
+        SessionLocaleResolver resolver = new SessionLocaleResolver();
+        resolver.setDefaultLocale(Locale.US);
+        return resolver;
+    }
+    
+    /**
+     * Set JVM default locale to US to ensure consistent number formatting
+     * This method runs after the bean is constructed
+     */
+    @PostConstruct
+    public void setDefaultLocale() {
+        // Force US locale at multiple levels
+        Locale.setDefault(Locale.US);
+        
+        // Set system properties
+        System.setProperty("user.language", "en");
+        System.setProperty("user.country", "US");
+        System.setProperty("user.variant", "");
+        
+        // Force JVM locale settings
+        System.setProperty("java.locale.providers", "JRE,SPI");
+        System.setProperty("sun.locale.formatasdefault", "true");
+        
+        // Set default timezone to prevent locale-related issues
+        System.setProperty("user.timezone", "UTC");
+        
+        log.info("Forced application locale to US: {}", Locale.getDefault());
+        log.info("System properties set: language={}, country={}", 
+            System.getProperty("user.language"), System.getProperty("user.country"));
     }
 }

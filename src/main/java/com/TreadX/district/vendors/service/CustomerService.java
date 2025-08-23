@@ -9,8 +9,10 @@ import com.TreadX.district.vendors.mapper.CustomerMapper;
 import com.TreadX.district.vendors.repository.CustomerRepository;
 import com.TreadX.district.vendors.repository.VendorRepository;
 import com.TreadX.user.service.AuthorizationService;
+import com.TreadX.user.service.VendorContextService;
 import com.TreadX.utils.exception.ConflictException;
 import com.TreadX.utils.exception.ResourceNotFoundException;
+import com.TreadX.utils.CustomerIdGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -19,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,16 +33,19 @@ public class CustomerService {
     private final VendorRepository vendorRepository;
     private final CustomerMapper customerMapper;
     private final AuthorizationService authorizationService;
+    private final VendorContextService vendorContextService;
     
     /**
-     * Create a new customer for a vendor
+     * Create a new customer
      */
+    @Transactional
     public CustomerResponseDTO createCustomer(CustomerRequestDTO requestDTO) {
-        log.info("Creating customer for vendor: {}", requestDTO.getVendorId());
+        Long vendorId = vendorContextService.getCurrentVendorId();
+        log.info("Creating customer for vendor: {}", vendorId);
         
-        // Validate vendor exists
-        Vendor vendor = vendorRepository.findById(requestDTO.getVendorId())
-                .orElseThrow(() -> new ResourceNotFoundException("Vendor not found with ID: " + requestDTO.getVendorId()));
+        // Get vendor
+        Vendor vendor = vendorRepository.findById(vendorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Vendor not found with ID: " + vendorId));
         
         // Check for duplicate customer
         if (existsDuplicateCustomer(requestDTO, vendor.getId())) {
@@ -51,10 +55,17 @@ public class CustomerService {
         // Create customer entity
         Customer customer = customerMapper.toEntity(requestDTO);
         customer.setVendor(vendor);
-        customer.setCustomerUniqueId("CUST" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         
-        // Save customer first
+        // Save customer first to get the ID
         Customer savedCustomer = customerRepository.save(customer);
+        
+        // Generate customerUniqueId using the new format: vendorUniqueId + customerId (6 digits)
+        String vendorUniqueId = vendor.getVendorUniqueId();
+        if (vendorUniqueId == null) {
+            throw new IllegalStateException("Vendor does not have a unique ID set");
+        }
+        savedCustomer.setCustomerUniqueId(CustomerIdGenerator.generateCustomerUniqueId(vendorUniqueId, savedCustomer.getId()));
+        savedCustomer = customerRepository.save(savedCustomer);
         
         // Create phone numbers
         if (requestDTO.getPhoneNumbers() != null && !requestDTO.getPhoneNumbers().isEmpty()) {
@@ -62,7 +73,8 @@ public class CustomerService {
             savedCustomer.setPhoneNumbers(phoneNumbers);
         }
         
-        log.info("Customer created successfully with ID: {}", savedCustomer.getId());
+        log.info("Customer created successfully with ID: {} and unique ID: {}", 
+            savedCustomer.getId(), savedCustomer.getCustomerUniqueId());
         return customerMapper.toResponse(savedCustomer);
     }
     
@@ -102,7 +114,8 @@ public class CustomerService {
      */
     @Transactional(readOnly = true)
     public Page<CustomerResponseDTO> getMyVendorCustomers(Pageable pageable) {
-        Long vendorId = getCurrentUserVendorId();
+        Long vendorId = vendorContextService.getCurrentVendorId();
+        log.debug("Getting customers for current vendor: {}", vendorId);
         return getCustomersByVendor(vendorId, pageable);
     }
     
@@ -172,13 +185,5 @@ public class CustomerService {
                 requestDTO.getPostalCode(),
                 requestDTO.getPhoneNumbers().get(0).getPhoneNumber() // Check first phone number
         );
-    }
-    
-    /**
-     * Get current user's vendor ID
-     */
-    private Long getCurrentUserVendorId() {
-        // TODO: Implement vendor staff association
-        throw new UnsupportedOperationException("Vendor ID retrieval for vendor staff not yet implemented");
     }
 }

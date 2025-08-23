@@ -38,9 +38,5 @@ public class CustomerRequestDTO {
     @Valid
     @NotNull(message = "At least one phone number is required")
     private List<CustomerPhoneRequestDTO> phoneNumbers;
-    
-    // Vendor Information
-    @NotNull(message = "Vendor ID is required")
-    private Long vendorId;
 
 } 

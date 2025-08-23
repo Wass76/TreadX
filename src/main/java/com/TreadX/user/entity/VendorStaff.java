@@ -1,15 +1,19 @@
 package com.TreadX.user.entity;
 
-import com.TreadX.utils.entity.BaseEntity;
+import com.TreadX.utils.entity.AuditedEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "vendor_staff")
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class VendorStaff extends BaseEntity {
+@SuperBuilder
+@NoArgsConstructor
+public class VendorStaff extends AuditedEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -29,7 +33,12 @@ public class VendorStaff extends BaseEntity {
         OWNER,      // Full access to vendor data
         MANAGER,    // Manage customers, employees, basic operations
         MECHANIC,   // Tire operations, vehicle management
-        CASHIER,    // Customer transactions, basic customer data
+//        CASHIER,    // Customer transactions, basic customer data
         VIEWER      // Read-only access to vendor data
+    }
+
+    @Override
+    protected String getSequenceName() {
+        return "vendor_staff_id_seq";
     }
 } 

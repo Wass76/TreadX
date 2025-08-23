@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface VendorRepository extends JpaRepository<Vendor, Long> {
 
@@ -23,4 +25,6 @@ public interface VendorRepository extends JpaRepository<Vendor, Long> {
     Page<Vendor> searchVendors(@Param("query") String query, Pageable pageable);
 
     Page<Vendor> findByVendorStatus(VendorStatus status, Pageable pageable);
+    
+    Optional<Vendor> findByVendorUniqueId(String vendorUniqueId);
 } 

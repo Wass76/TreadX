@@ -4,6 +4,13 @@ server:
 spring:
   application:
     name: TreadX
+#  # Locale configuration to prevent Arabic numerals
+#  mvc:
+#    locale: en_US
+#    locale-resolver: session
+#  # JVM arguments to force US locale
+#  main:
+#    banner-mode: off
   datasource:
     url: jdbc:postgresql://localhost:5432/treadx
     username: postgres
@@ -47,6 +54,20 @@ spring:
         globally_quoted_identifiers_skip_column_definitions: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
+
+# Locale configuration
+locale:
+  default: en_US
+  fallback: en
+
+# JVM locale forcing
+jvm:
+  locale:
+    language: en
+    country: US
+    variant: ""
+    encoding: UTF-8
+
 jwtKey: 7402bb3c24c35f15d1a7f1422078d9c1a4d9ebf1a276ff01ac84e6407625532e
 
 # Dynamic DataSource Configuration (for territory-specific data only)
