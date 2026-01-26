@@ -11,7 +11,8 @@ COPY pom.xml .
 COPY src ./src
 
 # Build the application (Maven will download dependencies and cache them)
-RUN mvn clean package -DskipTests -B
+# -Dmaven.test.skip=true skips both test compilation and execution
+RUN mvn clean package -Dmaven.test.skip=true -B
 
 # Stage 2: Runtime image
 FROM eclipse-temurin:21-jdk-alpine
