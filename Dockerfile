@@ -1,5 +1,5 @@
-# Use a slim JDK 21 image
-FROM openjdk:21-jdk-slim
+# Use Eclipse Temurin JDK 21 image (replacement for deprecated openjdk images)
+FROM eclipse-temurin:21-jdk-alpine
 
 # Set the working directory inside the container
 WORKDIR /app
