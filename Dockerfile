@@ -4,12 +4,13 @@ FROM maven:3.9-eclipse-temurin-21-alpine AS builder
 # Set the working directory
 WORKDIR /build
 
-# Copy pom.xml and download dependencies (this layer will be cached if pom.xml doesn't change)
+# Copy pom.xml first for better layer caching
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
 
-# Copy source code and build the application
+# Copy source code
 COPY src ./src
+
+# Build the application (Maven will download dependencies and cache them)
 RUN mvn clean package -DskipTests -B
 
 # Stage 2: Runtime image
