@@ -33,8 +33,6 @@ public class UserRequestDTO {
     
     private Set<Long> permissionIds;
     
-    /**
-     * True if this user is active (can log in, not deactivated)
-     */
+    @Builder.Default
     private boolean isActive = true;
 } 

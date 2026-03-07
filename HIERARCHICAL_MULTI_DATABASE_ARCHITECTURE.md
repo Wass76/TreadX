@@ -37,13 +37,13 @@ This architecture creates a **modular monolith system** where each territory has
 
 #### **Sales Management System**
 - **Users** (sales team, admin, sales manager, vendor staff)
-- **Leads** (potential customers)
+- **Leads** (potential dealerDealerCustomers)
 - **Vendors** (dealers - one per territory)
 
 #### **Tire Management System**
-- **Vendor Customers** (customers of vendors)
+- **Vendor DealerCustomers** (dealerDealerCustomers of vendors)
 - **Vendor Employees** (staff working for vendors)
-- **Vehicles** (belonging to customers)
+- **Vehicles** (belonging to dealerDealerCustomers)
 - **Tires** (belonging to vehicles)
 - **Tire Transactions** (tire operations like installation, replacement)
 
@@ -51,12 +51,12 @@ This architecture creates a **modular monolith system** where each territory has
 ```sql
 -- N6B Database contains:
 ├── users (N6B sales team, N6B vendors, N6B admin)
-├── leads (N6B potential customers)
+├── leads (N6B potential dealerDealerCustomers)
 ├── vendors (N6B dealers only)
-├── vendor_customers (N6B vendor customers)
+├── vendor_dealerDealerCustomers (N6B vendor dealerDealerCustomers)
 ├── vendor_employees (N6B vendor staff)
-├── vehicles (N6B customer vehicles)
-├── tires (N6B customer tires)
+├── vehicles (N6B dealerDealerCustomer vehicles)
+├── tires (N6B dealerDealerCustomer tires)
 └── tire_transactions (N6B tire operations)
 ```
 
@@ -64,7 +64,7 @@ This architecture creates a **modular monolith system** where each territory has
 
 ### **District Level (N6B, N5V, N7A)**
 - **Owns**: All business data for that district
-- **Contains**: Users, leads, vendors, customers, vehicles, tires
+- **Contains**: Users, leads, vendors, dealerDealerCustomers, vehicles, tires
 - **Scope**: Single district operations
 
 ### **City Level (London, Toronto)**
@@ -83,9 +83,9 @@ This architecture creates a **modular monolith system** where each territory has
 ```java
 public enum VendorAccessLevel {
     OWNER,      // Full access to vendor data
-    MANAGER,    // Manage customers, employees, basic operations
+    MANAGER,    // Manage dealerDealerCustomers, employees, basic operations
     MECHANIC,   // Tire operations, vehicle management
-    CASHIER,    // Customer transactions, basic customer data
+    CASHIER,    // DealerCustomer transactions, basic dealerDealerCustomer data
     VIEWER      // Read-only access to vendor data
 }
 ```
@@ -167,7 +167,7 @@ public class SalesManagerAccessControl {
 
 #### **Sales Agent**
 - **Access**: Only their assigned district database
-- **Can Do**: Manage leads, customers, tires in their district
+- **Can Do**: Manage leads, dealerDealerCustomers, tires in their district
 - **Cannot Do**: Access other districts
 
 #### **Sales Manager**
@@ -186,7 +186,7 @@ public class SalesManagerAccessControl {
 
 #### **Vendor Staff**
 - **Access**: Only their vendor's district database
-- **Can Do**: Manage their vendor's customers, vehicles, tires (based on access level)
+- **Can Do**: Manage their vendor's dealerDealerCustomers, vehicles, tires (based on access level)
 - **Cannot Do**: Access other vendors or districts
 
 ## **4. Business Workflow**
@@ -196,8 +196,8 @@ public class SalesManagerAccessControl {
 1. Sales Agent creates lead in N6B database
 2. Sales Agent contacts lead
 3. Lead becomes vendor (vendor) in N6B database
-4. Vendor gets customers in N6B database
-5. Customers get vehicles in N6B database
+4. Vendor gets dealerDealerCustomers in N6B database
+5. DealerCustomers get vehicles in N6B database
 6. Vehicles get tires in N6B database
 7. Tire transactions tracked in N6B database
 ```

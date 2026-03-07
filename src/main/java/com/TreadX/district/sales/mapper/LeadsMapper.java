@@ -1,11 +1,13 @@
 package com.TreadX.district.sales.mapper;
 
+import com.TreadX.address.mapper.AddressMapper;
+import com.TreadX.address.service.AddressService;
+import com.TreadX.district.dealer.dto.InitiateContactRequestDTO;
+import com.TreadX.district.dealer.enums.LeadStatus;
 import com.TreadX.district.sales.dto.LeadsRequestDTO;
 import com.TreadX.district.sales.dto.LeadsResponseDTO;
 import com.TreadX.district.sales.entity.Leads;
-import com.TreadX.district.vendors.dto.InitiateContactRequestDTO;
-import com.TreadX.district.vendors.enums.LeadStatus;
-import com.TreadX.user.mapper.UserMapper;
+import com.TreadX.district.sales.entity.LeadsHistory;
 import com.TreadX.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,27 +16,25 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LeadsMapper {
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
+    private final AddressMapper addressMapper;
+    private final AddressService addressService;
 
     public Leads toEntity(LeadsRequestDTO request) {
         return Leads.builder()
                 .businessName(request.getBusinessName())
                 .phoneNumber(request.getPhoneNumber())
-                .streetNumber(request.getStreetNumber())
-                .streetName(request.getStreetName())
-                .aptUnitBldg(request.getAptUnitBldg())
-                .postalCode(request.getPostalCode())
+                .address(request.getAddress() != null ? addressService.createOrReturnAddress(request.getAddress()) : null)
                 .source(request.getSource())
                 .sourceUrl(request.getSourceUrl())
                 .uploadedFile(request.getUploadedFile())
                 .status(request.getStatus() == null ? LeadStatus.PENDING : request.getStatus())
                 .notes(request.getNotes())
                 .flag(false) // Will be set by service
-                .addedByManager(false) // Will be set by service
                 .build();
     }
 
     public LeadsResponseDTO toResponse(Leads leads) {
+        LeadsHistory currentHistory = leads.getCurrentHistory();
         // Format address with default values
         String city = "London";
         String province = "Ontario";
@@ -42,17 +42,11 @@ public class LeadsMapper {
         
         // Build formatted address
         StringBuilder formattedAddress = new StringBuilder();
-        if (leads.getStreetNumber() != null && !leads.getStreetNumber().trim().isEmpty()) {
-            formattedAddress.append(leads.getStreetNumber()).append(" ");
-        }
-        if (leads.getStreetName() != null && !leads.getStreetName().trim().isEmpty()) {
-            formattedAddress.append(leads.getStreetName());
-        }
-        if (leads.getAptUnitBldg() != null && !leads.getAptUnitBldg().trim().isEmpty()) {
-            formattedAddress.append(", ").append(leads.getAptUnitBldg());
-        }
-        if (leads.getPostalCode() != null && !leads.getPostalCode().trim().isEmpty()) {
-            formattedAddress.append(", ").append(leads.getPostalCode());
+        if (leads.getAddress() != null) {
+            formattedAddress.append(leads.getAddress().getStreetNumber()).append(" ");
+            formattedAddress.append(leads.getAddress().getStreetName());
+            formattedAddress.append(", ").append(leads.getAddress().getUnitNumber());
+            formattedAddress.append(", ").append(leads.getAddress().getPostalCode());
         }
         formattedAddress.append(", ").append(city).append(", ").append(province).append(", ").append(country);
         
@@ -60,10 +54,7 @@ public class LeadsMapper {
                 .id(leads.getId())
                 .businessName(leads.getBusinessName())
                 .phoneNumber(leads.getPhoneNumber())
-                .streetNumber(leads.getStreetNumber())
-                .streetName(leads.getStreetName())
-                .aptUnitBldg(leads.getAptUnitBldg())
-                .postalCode(leads.getPostalCode())
+                .address(addressMapper.toResponseDTO(leads.getAddress()))
                 .city(city)
                 .province(province)
                 .country(country)
@@ -74,28 +65,28 @@ public class LeadsMapper {
                 .previewUrl(leads.getUploadedFile() != null ? "/api/v1/leads/" + leads.getId() + "/preview" : null)
                 .status(leads.getStatus())
                 .notes(leads.getNotes())
-                .vendorId(leads.getVendor() != null ? leads.getVendor().getId() : null)
-                .vendorUniqueId(leads.getVendor() != null ? leads.getVendorUniqueId() : null)
+                .dealerId(leads.getDealer() != null ? leads.getDealer().getId() : null)
+                .dealerUniqueId(leads.getDealer() != null ? leads.getDealerUniqueId() : null)
                 .createdAt(leads.getCreatedAt())
                 .updatedAt(leads.getUpdatedAt())
                 .addedBy(leads.getCreatedBy())
                 .addedByName(getAddedByName(leads.getCreatedBy()))
                 .lastModifiedBy(leads.getLastModifiedBy())
-                .validatedBy(leads.getValidatedBy() != null ? leads.getValidatedBy().getId() : null)
-                .validatedByFirstName(leads.getValidatedBy()!= null ? leads.getValidatedBy().getFirstName() : null)
-                .validatedByLastName(leads.getValidatedBy() != null ? leads.getValidatedBy().getLastName() : null)
-                .validatedAt(leads.getValidatedAt())
+                .validatedBy(currentHistory != null && currentHistory.getValidatedBy() != null ? currentHistory.getValidatedBy().getId() : null)
+                .validatedByFirstName(currentHistory != null && currentHistory.getValidatedBy() != null ? currentHistory.getValidatedBy().getFirstName() : null)
+                .validatedByLastName(currentHistory != null && currentHistory.getValidatedBy() != null ? currentHistory.getValidatedBy().getLastName() : null)
+                .validatedAt(currentHistory != null ? currentHistory.getValidatedAt() : null)
                 .contactMethod(leads.getContactMethod())
                 .contactMethodDetails(leads.getContactMethodDetails())
                 .extensionNumber(leads.getExtensionNumber())
                 .contactName(leads.getContactName())
                 .position(leads.getPosition())
                 .flag(leads.getFlag())
-                .addedByManager(leads.getAddedByManager())
-                .assignedTo(leads.getAssignedTo() != null ? leads.getAssignedTo().getId() : null)
-                .assignedToFirstName(leads.getAssignedTo() != null ? leads.getAssignedTo().getFirstName() : null)
-                .assignedToLastName(leads.getAssignedTo() != null ? leads.getAssignedTo().getLastName() : null)
-                .assignedAt(leads.getAssignedAt())
+                .addedByManager(currentHistory != null && currentHistory.getAddedByManager() != null ? currentHistory.getAddedByManager() : false)
+                .assignedTo(currentHistory != null && currentHistory.getAssignedTo() != null ? currentHistory.getAssignedTo().getId() : null)
+                .assignedToFirstName(currentHistory != null && currentHistory.getAssignedTo() != null ? currentHistory.getAssignedTo().getFirstName() : null)
+                .assignedToLastName(currentHistory != null && currentHistory.getAssignedTo() != null ? currentHistory.getAssignedTo().getLastName() : null)
+                .assignedAt(currentHistory != null ? currentHistory.getAssignedAt() : null)
                 .build();
     }
 
@@ -106,17 +97,8 @@ public class LeadsMapper {
         if (request.getPhoneNumber() != null) {
             leads.setPhoneNumber(request.getPhoneNumber());
         }
-        if (request.getStreetNumber() != null) {
-            leads.setStreetNumber(request.getStreetNumber());
-        }
-        if (request.getStreetName() != null) {
-            leads.setStreetName(request.getStreetName());
-        }
-        if (request.getAptUnitBldg() != null) {
-            leads.setAptUnitBldg(request.getAptUnitBldg());
-        }
-        if (request.getPostalCode() != null) {
-            leads.setPostalCode(request.getPostalCode());
+        if (request.getAddress() != null) {
+            leads.setAddress(addressService.createOrReturnAddress(request.getAddress()));
         }
         if (request.getSource() != null) {
             leads.setSource(request.getSource());
@@ -153,17 +135,8 @@ public class LeadsMapper {
         if (request.getBusinessName() != null) {
             leads.setBusinessName(request.getBusinessName());
         }
-        if (request.getStreetNumber() != null) {
-            leads.setStreetNumber(request.getStreetNumber());
-        }
-        if (request.getStreetName() != null) {
-            leads.setStreetName(request.getStreetName());
-        }
-        if (request.getAptUnitBldg() != null) {
-            leads.setAptUnitBldg(request.getAptUnitBldg());
-        }
-        if (request.getPostalCode() != null) {
-            leads.setPostalCode(request.getPostalCode());
+        if (request.getAddress() != null) {
+            leads.setAddress(addressService.createOrReturnAddress(request.getAddress()));
         }
         if (request.getPhoneNumber() != null) {
             leads.setPhoneNumber(request.getPhoneNumber());

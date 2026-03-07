@@ -15,15 +15,11 @@ import com.TreadX.utils.exception.RequestNotValidException;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import com.TreadX.user.request.AuthenticationRequest;
 import com.TreadX.user.response.UserAuthenticationResponse;
-import com.TreadX.utils.Validator.ObjectsValidator;
 import com.TreadX.utils.exception.TooManyRequestException;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;  
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,7 +29,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,7 +39,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Transactional
 public class UserService {
-    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -55,58 +49,12 @@ public class UserService {
     private final RateLimiterConfig rateLimiterConfig;
     private final RateLimiterRegistry rateLimiterRegistry;
     private final UserMapper userMapper;
-    private final UserTerritoryService userTerritoryService;
 
-    @Autowired
-    private ObjectsValidator<AuthenticationRequest> authenticationRequestValidator;
-
+ 
     /**
      * Create a new user with territory assignments using BASE entity IDs
      */
-    @Transactional
-    public UserCreateWithTerritoryResponseDTO createUserWithTerritories(UserCreateWithTerritoryRequestDTO request) {
-        log.info("Creating user with territories: {}", request.getEmail());
-        
-        // Create the user first
-        UserCreateRequestDTO userRequest = UserCreateRequestDTO.builder()
-                .email(request.getEmail())
-                .password(request.getPassword())
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .roleId(1L) // Default role, should be handled properly
-                .isActive(true)
-                .build();
-        
-        UserResponseDTO userResponse = createUser(userRequest);
-        
-        // Assign territories using base entity IDs
-        List<UserTerritoryResponseDTO> territories = new ArrayList<>();
-        if (request.getTerritories() != null && !request.getTerritories().isEmpty()) {
-            List<UserTerritoryRequestDTO> territoryRequests = new ArrayList<>();
-            for (UserCreateWithTerritoryRequestDTO.TerritoryAssignmentDTO territoryRequest : request.getTerritories()) {
-                UserTerritoryRequestDTO dto = new UserTerritoryRequestDTO();
-                dto.setUserId(userResponse.getId());
-                dto.setTerritoryLevel(territoryRequest.getLevel());
-                dto.setBaseCountryId(territoryRequest.getCountryId());
-                dto.setBaseProvinceId(territoryRequest.getProvinceId());
-                dto.setBaseCityId(territoryRequest.getCityId());
-                territoryRequests.add(dto);
-            }
-            // Call the batch assignment method
-            List<com.TreadX.user.entity.UserTerritory> createdTerritories = userTerritoryService.assignTerritoriesToUser(userResponse.getId(), territoryRequests);
-            for (com.TreadX.user.entity.UserTerritory ut : createdTerritories) {
-                territories.add(userTerritoryService.getUserTerritories(userResponse.getId()).stream()
-                    .filter(t -> t.getId().equals(ut.getId()))
-                    .findFirst().orElse(null));
-            }
-        }
-        
-        return new UserCreateWithTerritoryResponseDTO(
-                userResponse,
-                territories,
-                "User created successfully with territory assignments"
-        );
-    }
+  
 
     public UserResponseDTO createUser(UserCreateRequestDTO request) {
         User creator = getCurrentUser();

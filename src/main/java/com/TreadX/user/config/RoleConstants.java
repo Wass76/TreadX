@@ -12,9 +12,9 @@ public final class RoleConstants {
     public static final String SUPPORT_AGENT = "SUPPORT_AGENT";
     
     // Vendor roles
-    public static final String VENDOR_ADMIN = "VENDOR_ADMIN";
-    public static final String VENDOR_EMPLOYEE = "VENDOR_EMPLOYEE";
-    public static final String VENDOR_TECHNICIAN = "VENDOR_TECHNICIAN";
+    public static final String DEALER_ADMIN = "DEALER_ADMIN";
+    public static final String DEALER_EMPLOYEE = "DEALER_EMPLOYEE";
+    public static final String DEALER_TECHNICIAN = "DEALER_TECHNICIAN";
     
     private RoleConstants() {
         // Utility class, prevent instantiation

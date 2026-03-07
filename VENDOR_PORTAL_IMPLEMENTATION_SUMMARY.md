@@ -46,13 +46,13 @@ This document summarizes the implementation of the **Vendor Staff Accounts Manag
 
 ### **3. Role-Based Permissions**
 ✅ **VENDOR_ADMIN**: Full access to vendor management
-  - Create/manage customers, employees, vehicles, tires
+  - Create/manage dealerDealerCustomers, employees, vehicles, tires
   - Make tire transactions
   - Manage staff accounts
   - Access vendor dashboard
 
-✅ **VENDOR_EMPLOYEE**: Customer and basic operations access
-  - Add/manage customers, vehicles, tires
+✅ **VENDOR_EMPLOYEE**: DealerCustomer and basic operations access
+  - Add/manage dealerDealerCustomers, vehicles, tires
   - Make tire transactions
   - View vendor dashboard
 
@@ -88,7 +88,7 @@ vendor_staff (
 
 ### **Access Level Mapping**
 - **OWNER**: VENDOR_ADMIN role → Full vendor access
-- **MANAGER**: VENDOR_EMPLOYEE role → Customer/employee management
+- **MANAGER**: VENDOR_EMPLOYEE role → DealerCustomer/employee management
 - **MECHANIC**: VENDOR_TECHNICIAN role → Tire/vehicle operations
 - **VIEWER**: Read-only access (fallback)
 
@@ -142,7 +142,7 @@ vendor_staff (
 ### **4. Daily Operations Flow**
 1. Staff members login to vendor portal
 2. Access features based on their role permissions
-3. Perform customer, vehicle, and tire management tasks
+3. Perform dealerDealerCustomer, vehicle, and tire management tasks
 4. Make tire transactions as needed
 5. Logout when finished
 

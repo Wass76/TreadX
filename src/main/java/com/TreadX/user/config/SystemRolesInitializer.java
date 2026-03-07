@@ -67,12 +67,12 @@ public class SystemRolesInitializer implements CommandLineRunner {
             createPermission("DEALER_DELETE", "Delete dealers", "DEALER", "DELETE"),
             
             // Vendor management permissions
-            createPermission("VENDOR_MANAGE", "Manage vendor operations", "VENDOR", "MANAGE"),
-            createPermission("USER_MANAGE", "Manage vendor users", "USER", "MANAGE"),
+            createPermission("DEALER_MANAGE", "Manage dealer operations", "DEALER", "MANAGE"),
+            createPermission("USER_MANAGE", "Manage dealer users", "USER", "MANAGE"),
             createPermission("TIRE_MANAGE", "Manage tire inventory", "TIRE", "MANAGE"),
             createPermission("TIRE_OPERATIONS", "Perform tire operations", "TIRE", "OPERATIONS"),
-            createPermission("CUSTOMER_MANAGE", "Manage customers", "CUSTOMER", "MANAGE"),
-            createPermission("CUSTOMER_VIEW", "View customer information", "CUSTOMER", "VIEW"),
+            createPermission("CUSTOMER_MANAGE", "Manage dealerDealerCustomers", "CUSTOMER", "MANAGE"),
+            createPermission("CUSTOMER_VIEW", "View dealerDealerCustomer information", "CUSTOMER", "VIEW"),
             createPermission("VEHICLE_VIEW", "View vehicle information", "VEHICLE", "VIEW"),
             createPermission("REPORT_VIEW", "View reports", "REPORT", "VIEW")
         );
@@ -127,27 +127,27 @@ public class SystemRolesInitializer implements CommandLineRunner {
             )));
         
         // Vendor roles with vendor-specific permissions
-        createSystemRole(RoleConstants.VENDOR_ADMIN, "Vendor Administrator",
+        createSystemRole(RoleConstants.DEALER_ADMIN, "Dealer Administrator",
             new HashSet<>(Arrays.asList(
-                permissions.get("VENDOR_MANAGE"), // Full vendor management
+                permissions.get("DEALER_MANAGE"), // Full dealer management
                 permissions.get("USER_MANAGE"),   // Manage vendor users
                 permissions.get("TIRE_MANAGE"),   // Manage tire inventory
-                permissions.get("CUSTOMER_MANAGE"), // Manage customers
+                permissions.get("CUSTOMER_MANAGE"), // Manage dealerDealerCustomers
                 permissions.get("REPORT_VIEW")    // View reports
             )));
         
-        createSystemRole(RoleConstants.VENDOR_EMPLOYEE, "Vendor Employee",
+        createSystemRole(RoleConstants.DEALER_EMPLOYEE, "Dealer Employee",
             new HashSet<>(Arrays.asList(
-                permissions.get("CUSTOMER_MANAGE"), // Manage customers
+                permissions.get("CUSTOMER_MANAGE"), // Manage dealerDealerCustomers
                 permissions.get("TIRE_OPERATIONS"), // Basic tire operations
                 permissions.get("REPORT_VIEW")     // View basic reports
             )));
         
-        createSystemRole(RoleConstants.VENDOR_TECHNICIAN, "Vendor Technician",
+        createSystemRole(RoleConstants.DEALER_TECHNICIAN, "Dealer Technician",
             new HashSet<>(Arrays.asList(
                 permissions.get("TIRE_OPERATIONS"), // Tire replacement operations
                 permissions.get("VEHICLE_VIEW"),   // View vehicle information
-                permissions.get("CUSTOMER_VIEW")   // View customer information
+                permissions.get("CUSTOMER_VIEW")   // View dealerDealerCustomer information
             )));
     }
 

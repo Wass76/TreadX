@@ -1,33 +1,17 @@
 package com.TreadX.user.service;
 
 
-import com.TreadX.district.vendors.repository.VendorRepository;
-import com.TreadX.district.sales.repository.DealerContactRepository;
-import com.TreadX.district.sales.repository.LeadsRepository;
-import com.TreadX.user.entity.User;
 import com.TreadX.user.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthorizationService extends BaseSecurityService {
 
-    @Autowired
-    private LeadsRepository leadsRepository;
-    @Autowired
-    private DealerContactRepository dealerContactRepository;
-    @Autowired
-    private VendorRepository vendorRepository;
 
     public AuthorizationService(
-            UserRepository userRepository,
-            LeadsRepository leadsRepository,
-            DealerContactRepository dealerContactRepository,
-            VendorRepository vendorRepository) {
+            UserRepository userRepository
+           ) {
         super(userRepository);
-        this.leadsRepository = leadsRepository;
-        this.dealerContactRepository = dealerContactRepository;
-        this.vendorRepository = vendorRepository;
     }
 
     /**
@@ -37,7 +21,6 @@ public class AuthorizationService extends BaseSecurityService {
      * @return true if the user has access
      */
     public boolean hasAccessToLead(Long leadId, String operation) {
-        User currentUser = getCurrentUser();
         
         // Platform admin has full access
         if (isAdmin()) {
@@ -60,42 +43,12 @@ public class AuthorizationService extends BaseSecurityService {
     }
 
     /**
-     * Checks if the current user has access to a dealer contact
-     * @param contactId ID of the contact to check access for
-     * @param operation Type of operation (READ, UPDATE, DELETE)
-     * @return true if the user has access
-     */
-    public boolean hasAccessToDealerContact(Long contactId, String operation) {
-        User currentUser = getCurrentUser();
-        
-        // Platform admin has full access
-        if (isAdmin()) {
-            return true;
-        }
-        
-        // Sales manager has full access
-        if (hasRole("SALES_MANAGER")) {
-            return true;
-        }
-        
-        // Sales agent can only access contacts they created
-//        if (hasRole("SALES_AGENT")) {
-//            return dealerContactRepository.findById(contactId)
-//                    .map(contact -> contact.getCreatedBy().equals(currentUser.getId()))
-//                    .orElse(false);
-//        }
-        
-        return false;
-    }
-
-    /**
      * Checks if the current user has access to a dealer
      * @param dealerId ID of the dealer to check access for
      * @param operation Type of operation (READ, UPDATE, DELETE)
      * @return true if the user has access
      */
     public boolean hasAccessToDealer(Long dealerId, String operation) {
-        User currentUser = getCurrentUser();
         
         // Platform admin has full access
         if (isAdmin()) {
@@ -122,7 +75,6 @@ public class AuthorizationService extends BaseSecurityService {
      * @return true if the user has permission
      */
     public boolean hasContactConversionAccess() {
-        User currentUser = getCurrentUser();
         return hasRole("PLATFORM_ADMIN") || hasRole("SALES_MANAGER") || hasRole("SALES_AGENT");
     }
 
@@ -131,7 +83,6 @@ public class AuthorizationService extends BaseSecurityService {
      * @return true if the user has permission
      */
     public boolean hasDealerConversionAccess() {
-        User currentUser = getCurrentUser();
         return hasRole("PLATFORM_ADMIN") || hasRole("SALES_MANAGER") || hasRole("SALES_AGENT");
     }
 

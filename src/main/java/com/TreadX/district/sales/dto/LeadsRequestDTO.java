@@ -1,7 +1,9 @@
 package com.TreadX.district.sales.dto;
 
-import com.TreadX.district.vendors.enums.LeadSource;
-import com.TreadX.district.vendors.enums.LeadStatus;
+import com.TreadX.address.dto.AddressRequestDTO;
+import com.TreadX.district.dealer.enums.LeadSource;
+import com.TreadX.district.dealer.enums.LeadStatus;
+
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,13 +22,8 @@ public class LeadsRequestDTO {
     private String phoneNumber;
 
     // Flattened address fields
-    @NotBlank(message = "Street number is required")
-    private String streetNumber;
-    @NotBlank(message = "Street name is required")
-    private String streetName;
-    private String aptUnitBldg;
-    @NotBlank(message = "Postal code is required")
-    private String postalCode;
+    @NotBlank(message = "Address is required")
+    private AddressRequestDTO address;
 
     // New lead source fields
 //    @ValidEnum(enumClass = LeadSource.class)
@@ -37,5 +34,5 @@ public class LeadsRequestDTO {
 //    @ValidEnum(enumClass = LeadStatus.class)
     private LeadStatus status;
     private String notes;
-    private Long vendorId;
+    private Long dealerId;
 }

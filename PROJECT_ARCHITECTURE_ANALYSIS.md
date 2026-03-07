@@ -49,7 +49,7 @@ This system uses a **modular monolith architecture** with separated district dat
 │  │             │ │             │ │             │         │
 │  │ • Sales     │ │ • Sales     │ │ • Sales     │         │
 │  │ • Vendors   │ │ • Vendors   │ │ • Vendors   │         │
-│  │ • Customers │ │ • Customers │ │ • Customers │         │
+│  │ • DealerCustomers │ │ • DealerCustomers │ │ • DealerCustomers │         │
 │  │ • Tires     │ │ • Tires     │ │ • Tires     │         │
 │  │ • Vehicles  │ │ • Vehicles  │ │ • Vehicles  │         │
 │  └─────────────┘ └─────────────┘ └─────────────┘         │
@@ -110,14 +110,14 @@ This system uses a **modular monolith architecture** with separated district dat
 - **Access**: Multi-district access with role-based permissions
 
 #### **4. Vendor Portal**
-- **Purpose**: Self-service interface for vendor customers
+- **Purpose**: Self-service interface for vendor dealerDealerCustomers
 - **Technology**: React / Angular / Vue.js
 - **Key Features**:
   - Tire storage management
   - Storage status monitoring
   - Transaction history
   - Fee tracking and billing
-  - Customer management
+  - DealerCustomer management
   - Vehicle registration
 - **Users**: Vendor staff (Owner, Manager, Mechanic, Assistant)
 - **Access**: District-specific access (vendors only see their data)

@@ -1,6 +1,6 @@
 package com.TreadX.tire.entity;
 
-import com.TreadX.district.vendors.entity.Customer;
+import com.TreadX.district.dealer.DealerCustomer.entity.DealerCustomer;
 import com.TreadX.utils.entity.AuditedEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -31,8 +31,8 @@ public class Tire extends AuditedEntity {
     private LocalDateTime updatedDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", referencedColumnName = "id")
-    private Customer customer;
+    @JoinColumn(name = "dealerDealerCustomer_id", referencedColumnName = "id")
+    private DealerCustomer dealerDealerCustomer;
 
     @Column(unique = true)
     private String tireUniqueId;
@@ -40,9 +40,6 @@ public class Tire extends AuditedEntity {
     private String brand;
     private String model;
     private String size;
-    private String type;
-    private Double price;
-    private Integer stock;
     private String description;
 
     @Override

@@ -1,7 +1,6 @@
 package com.TreadX.user.entity;
 
 import com.TreadX.utils.entity.AuditedEntity;
-import com.TreadX.utils.entity.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

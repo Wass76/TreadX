@@ -81,16 +81,16 @@ public boolean canManageStaff() {
 
 ## Usage Examples
 
-### In Customer Service
+### In DealerCustomer Service
 
 ```java
 @Service
-public class CustomerService {
+public class DealerCustomerService {
     private final VendorContextService vendorContextService;
     
-    public Page<CustomerResponseDTO> getMyVendorCustomers(Pageable pageable) {
+    public Page<DealerCustomerResponseDTO> getMyVendorDealerCustomers(Pageable pageable) {
         Long vendorId = vendorContextService.getCurrentVendorId();
-        return getCustomersByVendor(vendorId, pageable);
+        return getDealerCustomersByVendor(vendorId, pageable);
     }
 }
 ```

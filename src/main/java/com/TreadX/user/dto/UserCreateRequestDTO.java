@@ -36,5 +36,6 @@ public class UserCreateRequestDTO {
 
     private Set<Long> permissionIds;
 
+    @Builder.Default
     private boolean isActive = true;
 }

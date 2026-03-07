@@ -2,10 +2,8 @@ package com.TreadX.security;
 
 import com.TreadX.user.entity.User;
 import com.TreadX.user.service.UserService;
-import com.TreadX.user.repository.UserTerritoryAccessRepository;
-import com.TreadX.user.repository.VendorStaffRepository;
-import com.TreadX.user.entity.UserTerritoryAccess;
-import com.TreadX.user.entity.VendorStaff;
+import com.TreadX.user.repository.DealerStaffRepository;
+import com.TreadX.user.entity.DealerStaff;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,9 +21,7 @@ public class SecurityContextService {
     @Autowired
     private UserService userService;
     @Autowired
-    private UserTerritoryAccessRepository userTerritoryAccessRepository;
-    @Autowired
-    private VendorStaffRepository vendorStaffRepository;
+    private DealerStaffRepository dealerStaffRepository;
 
     /**
      * Get current authenticated user
@@ -49,72 +44,37 @@ public class SecurityContextService {
         return getCurrentUser().getId();
     }
 
-    /**
-     * Get all territories that current user can access
-     */
-    public List<String> getAccessibleTerritories() {
-        User currentUser = getCurrentUser();
-        
-        // Platform Admin can access all territories
-        if (hasRole("PLATFORM_ADMIN")) {
-            return getAllTerritoryCodes();
-        }
-        
-        // Get user's territory access
-        List<UserTerritoryAccess> territoryAccess = userTerritoryAccessRepository
-                .findByUserId(currentUser.getId());
-        
-        return territoryAccess.stream()
-                .map(UserTerritoryAccess::getTerritoryCode)
-                .collect(Collectors.toList());
-    }
 
     /**
-     * Check if current user can access specific territory
+     * Check if current user can access dealer data
      */
-    public boolean canAccessTerritory(String territoryCode) {
+    public boolean canAccessDealerData(Long dealerId, String districtCode, String operation) {
         User currentUser = getCurrentUser();
         
-        // Platform Admin can access any territory
+        // Platform Admin can access any dealer data
         if (hasRole("PLATFORM_ADMIN")) {
             return true;
         }
         
-        // Check user's territory access
-        return userTerritoryAccessRepository
-                .existsByUserIdAndTerritoryCode(currentUser.getId(), territoryCode);
-    }
-
-    /**
-     * Check if current user can access vendor data
-     */
-    public boolean canAccessVendorData(Long vendorId, String districtCode, String operation) {
-        User currentUser = getCurrentUser();
-        
-        // Platform Admin can access any vendor data
-        if (hasRole("PLATFORM_ADMIN")) {
-            return true;
-        }
-        
-        // Check if user is vendor staff
-        VendorStaff vendorStaff = vendorStaffRepository
-                .findByUserIdAndVendorIdAndDistrictCode(currentUser.getId(), vendorId, districtCode)
+        // Check if user is dealer staff
+        DealerStaff dealerStaff = dealerStaffRepository
+                .findByUserIdAndDealerIdAndDistrictCode(currentUser.getId(), dealerId, districtCode)
                 .orElse(null);
         
-        if (vendorStaff == null) {
+        if (dealerStaff == null) {
             return false;
         }
         
-        // Check vendor access level permissions
-        return checkVendorAccessLevel(vendorStaff.getAccessLevel().name(), operation);
+        // Check dealer access level permissions
+        return checkDealerAccessLevel(dealerStaff.getAccessLevel().name(), operation);
     }
 
     /**
-     * Get vendor staff info for current user
+     * Get dealer staff info for current user
      */
-    public VendorStaff getVendorStaffInfo() {
+    public DealerStaff getDealerStaffInfo() {
         User currentUser = getCurrentUser();
-        return vendorStaffRepository.findByUserId(currentUser.getId()).orElse(null);
+        return dealerStaffRepository.findByUserId(currentUser.getId()).orElse(null);
     }
 
     /**
@@ -152,35 +112,17 @@ public class SecurityContextService {
     }
 
     /**
-     * Check if current user is Vendor Staff
+     * Check if current user is Dealer Staff
      */
-    public boolean isVendorStaff() {
-        return hasRole("VENDOR_STAFF");
+    public boolean isDealerStaff() {
+        return hasRole("DEALER_STAFF");
     }
 
-    /**
-     * Get primary territory for current user (for single-territory users)
-     */
-    public String getPrimaryTerritory() {
-        List<String> accessibleTerritories = getAccessibleTerritories();
-        
-        if (accessibleTerritories.isEmpty()) {
-            throw new SecurityException("User has no territory access");
-        }
-        
-        // For single territory users, return the only territory
-        if (accessibleTerritories.size() == 1) {
-            return accessibleTerritories.get(0);
-        }
-        
-        // For multi-territory users, they need to specify territory
-        throw new SecurityException("User has access to multiple territories. Please specify territory.");
-    }
 
     /**
-     * Check vendor access level permissions
+     * Check dealer access level permissions
      */
-    private boolean checkVendorAccessLevel(String accessLevel, String operation) {
+    private boolean checkDealerAccessLevel(String accessLevel, String operation) {
         switch (accessLevel) {
             case "OWNER":
                 return true; // Full access
@@ -202,12 +144,5 @@ public class SecurityContextService {
         }
     }
 
-    /**
-     * Get all territory codes (for Platform Admin)
-     */
-    private List<String> getAllTerritoryCodes() {
-        // This will be implemented when we have territory management
-        // For now, return hardcoded list
-        return List.of("N6B", "N5V", "N7A");
-    }
+
 } 

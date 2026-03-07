@@ -1,14 +1,10 @@
 package com.TreadX.district.sales.service;
 
-import com.TreadX.district.vendors.entity.Vendor;
-import com.TreadX.district.vendors.repository.VendorRepository;
 import com.TreadX.district.sales.dto.LeadsRequestDTO;
 import com.TreadX.district.sales.dto.LeadsResponseDTO;
 import com.TreadX.district.sales.entity.Leads;
 import com.TreadX.district.sales.mapper.LeadsMapper;
 import com.TreadX.district.sales.repository.LeadsRepository;
-import com.TreadX.district.vendors.enums.LeadStatus;
-import com.TreadX.user.entity.Territory;
 import com.TreadX.user.service.AuthorizationService;
 import com.TreadX.utils.exception.ConflictException;
 import com.TreadX.utils.exception.ResourceNotFoundException;
@@ -21,22 +17,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import static com.TreadX.district.dealer.enums.LeadStatus.PENDING;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.TreadX.district.vendors.enums.LeadStatus.PENDING;
+import com.TreadX.district.dealer.dto.InitiateContactRequestDTO;
+import com.TreadX.district.dealer.entity.Dealer;
+import com.TreadX.district.dealer.enums.LeadStatus;
+import com.TreadX.district.dealer.repository.DealerRepository;
 import com.TreadX.district.sales.dto.LeadValidationRequest;
+import com.TreadX.district.sales.entity.LeadsHistory;
+import com.TreadX.district.sales.repository.LeadsHistoryRepository;
 import com.TreadX.user.entity.User;
 import com.TreadX.user.repository.UserRepository;
-import com.TreadX.district.vendors.dto.InitiateContactRequestDTO;
-import com.TreadX.district.sales.service.FileService;
-import com.TreadX.user.service.UserTerritoryService;
 import org.springframework.security.access.AccessDeniedException;
-import com.TreadX.config.TerritoryContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.TreadX.user.service.TerritoryService;
-import com.TreadX.user.repository.TerritoryRepository;
 
 @Service
 public class LeadsService {
@@ -46,7 +43,7 @@ public class LeadsService {
     @Autowired
     private LeadsMapper leadsMapper;
     @Autowired
-    private VendorRepository vendorRepository;
+    private DealerRepository dealerRepository;
     @Autowired
     private AuthorizationService authorizationService;
     @Autowired
@@ -54,21 +51,17 @@ public class LeadsService {
     @Autowired
     private FileService fileService;
     @Autowired
-    private UserTerritoryService userTerritoryService;
-    @Autowired
-    private TerritoryService territoryService;
-    @Autowired
-    private TerritoryRepository territoryRepository;
+    private LeadsHistoryRepository leadsHistoryRepository;
     @PersistenceContext
     private EntityManager entityManager;
 
     @Transactional
     public LeadsResponseDTO createLead(LeadsRequestDTO request, MultipartFile file) {
-        if (leadsRepository.existsDuplicateLead(request.getBusinessName(), request.getStreetNumber(), request.getPostalCode(), request.getPhoneNumber())) {
-            throw new ConflictException("A lead with the same business name, street number, postal code, and phone number already exists.");
+        if (leadsRepository.existsDuplicateLead(request.getBusinessName(), request.getAddress().getStreetNumber(), request.getAddress().getPostalCode(), request.getPhoneNumber())) {
+            throw new ConflictException("A lead with the same business name, address, and phone number already exists.");
         }
         Leads leads = leadsMapper.toEntity(request);
-        
+
         // Handle file upload using FileService
         if (file != null && !file.isEmpty()) {
             fileService.validateFileUpload(file);
@@ -76,25 +69,26 @@ public class LeadsService {
             leads.setUploadedFile(filePath);
         }
         
-        if (request.getVendorId() != null) {
-            Vendor vendor = vendorRepository.findById(request.getVendorId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + request.getVendorId()));
-            leads.setVendor(vendor);
+        if (request.getDealerId() != null) {
+            Dealer dealer = dealerRepository.findById(request.getDealerId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Dealer not found with id: " + request.getDealerId()));
+            leads.setDealer(dealer);
         }
         
         leads.setStatus(PENDING);
         
         // Set flag based on duplicate check
         boolean hasFlag = checkForDuplicates(request.getBusinessName(), request.getPhoneNumber(), 
-                                          request.getStreetNumber(), request.getStreetName(), request.getPostalCode());
+                                          request.getAddress().getStreetNumber(), request.getAddress().getStreetName(), request.getAddress().getPostalCode());
         leads.setFlag(hasFlag);
         
-        // Set addedByManager based on current user role
-        User currentUser = authorizationService.getCurrentUser();
         boolean isManager = authorizationService.hasRole("SALES_MANAGER") || authorizationService.hasRole("PLATFORM_ADMIN");
-        leads.setAddedByManager(isManager);
-        
         leads = leadsRepository.save(leads);
+        LeadsHistory initialHistory = LeadsHistory.builder()
+                .lead(leads)
+                .addedByManager(isManager)
+                .build();
+        leadsHistoryRepository.save(initialHistory);
         
         // Log the current DB name
         try {
@@ -126,12 +120,12 @@ public class LeadsService {
         
         // Update flag if business name, phone, or address changed
         if (request.getBusinessName() != null || request.getPhoneNumber() != null || 
-            request.getStreetNumber() != null || request.getStreetName() != null || request.getPostalCode() != null) {
+            request.getAddress().getStreetNumber() != null || request.getAddress().getStreetName() != null || request.getAddress().getPostalCode() != null) {
             String businessName = request.getBusinessName() != null ? request.getBusinessName() : leads.getBusinessName();
             String phoneNumber = request.getPhoneNumber() != null ? request.getPhoneNumber() : leads.getPhoneNumber();
-            String streetNumber = request.getStreetNumber() != null ? request.getStreetNumber() : leads.getStreetNumber();
-            String streetName = request.getStreetName() != null ? request.getStreetName() : leads.getStreetName();
-            String postalCode = request.getPostalCode() != null ? request.getPostalCode() : leads.getPostalCode();
+            String streetNumber = request.getAddress().getStreetNumber() != null ? request.getAddress().getStreetNumber() : leads.getAddress().getStreetNumber();
+            String streetName = request.getAddress().getStreetName() != null ? request.getAddress().getStreetName() : leads.getAddress().getStreetName();
+            String postalCode = request.getAddress().getPostalCode() != null ? request.getAddress().getPostalCode() : leads.getAddress().getPostalCode();
             
             boolean hasFlag = checkForDuplicates(businessName, phoneNumber, streetNumber, streetName, postalCode);
             leads.setFlag(hasFlag);
@@ -156,12 +150,12 @@ public class LeadsService {
         
         // Update flag if business name, phone, or address changed
         if (request.getBusinessName() != null || request.getPhoneNumber() != null || 
-            request.getStreetNumber() != null || request.getStreetName() != null || request.getPostalCode() != null) {
+            request.getAddress().getStreetNumber() != null || request.getAddress().getStreetName() != null || request.getAddress().getPostalCode() != null) {
             String businessName = request.getBusinessName() != null ? request.getBusinessName() : leads.getBusinessName();
             String phoneNumber = request.getPhoneNumber() != null ? request.getPhoneNumber() : leads.getPhoneNumber();
-            String streetNumber = request.getStreetNumber() != null ? request.getStreetNumber() : leads.getStreetNumber();
-            String streetName = request.getStreetName() != null ? request.getStreetName() : leads.getStreetName();
-            String postalCode = request.getPostalCode() != null ? request.getPostalCode() : leads.getPostalCode();
+            String streetNumber = request.getAddress().getStreetNumber() != null ? request.getAddress().getStreetNumber() : leads.getAddress().getStreetNumber();
+            String streetName = request.getAddress().getStreetName() != null ? request.getAddress().getStreetName() : leads.getAddress().getStreetName();
+            String postalCode = request.getAddress().getPostalCode() != null ? request.getAddress().getPostalCode() : leads.getAddress().getPostalCode();
             
             boolean hasFlag = checkForDuplicates(businessName, phoneNumber, streetNumber, streetName, postalCode);
             leads.setFlag(hasFlag);
@@ -189,7 +183,7 @@ public class LeadsService {
     }
 
     public List<LeadsResponseDTO> getLeadsByDealer(Long dealerId) {
-        return leadsRepository.findByVendorId(dealerId).stream()
+        return leadsRepository.findByDealerId(dealerId).stream()
                 .map(leadsMapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -235,12 +229,18 @@ public class LeadsService {
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
         
         User currentUser = authorizationService.getCurrentUser();
-        leads.setValidatedBy(currentUser);
-        leads.setValidatedAt(java.time.LocalDateTime.now());
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
         leads.setStatus(request.getStatus());
-        
         leads = leadsRepository.save(leads);
-        return leadsMapper.toResponse(leads);
+        LeadsHistory current = leads.getCurrentHistory();
+        LeadsHistory historyEntry = LeadsHistory.builder()
+                .lead(leads)
+                .validatedBy(currentUser)
+                .validatedAt(now)
+                .addedByManager(current != null && Boolean.TRUE.equals(current.getAddedByManager()))
+                .build();
+        leadsHistoryRepository.save(historyEntry);
+        return leadsMapper.toResponse(leadsRepository.findById(id).orElseThrow());
     }
 
     @Transactional
@@ -270,11 +270,16 @@ public class LeadsService {
         if (!agent.getRole().getName().equals("SALES_AGENT")) {
             throw new IllegalArgumentException("User is not a sales agent");
         }
-        
-        leads.setAssignedTo(agent);
-        leads.setAssignedAt(java.time.LocalDateTime.now());
-        leads = leadsRepository.save(leads);
-        return leadsMapper.toResponse(leads);
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        LeadsHistory current = leads.getCurrentHistory();
+        LeadsHistory historyEntry = LeadsHistory.builder()
+                .lead(leads)
+                .assignedTo(agent)
+                .assignedAt(now)
+                .addedByManager(current != null && Boolean.TRUE.equals(current.getAddedByManager()))
+                .build();
+        leadsHistoryRepository.save(historyEntry);
+        return leadsMapper.toResponse(leadsRepository.findById(leadId).orElseThrow());
     }
 
     @Transactional
@@ -289,15 +294,21 @@ public class LeadsService {
         Leads leads = leadsRepository.findById(leadId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + leadId));
         
-        // Can only take unassigned manager leads
-        if (!leads.getAddedByManager() || leads.getAssignedTo() != null) {
+        LeadsHistory current = leads.getCurrentHistory();
+        boolean addedByManager = current != null && Boolean.TRUE.equals(current.getAddedByManager());
+        boolean hasAssignment = current != null && current.getAssignedTo() != null;
+        if (!addedByManager || hasAssignment) {
             throw new AccessDeniedException("This lead cannot be taken");
         }
-        
-        leads.setAssignedTo(currentUser);
-        leads.setAssignedAt(java.time.LocalDateTime.now());
-        leads = leadsRepository.save(leads);
-        return leadsMapper.toResponse(leads);
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        LeadsHistory historyEntry = LeadsHistory.builder()
+                .lead(leads)
+                .assignedTo(currentUser)
+                .assignedAt(now)
+                .addedByManager(true)
+                .build();
+        leadsHistoryRepository.save(historyEntry);
+        return leadsMapper.toResponse(leadsRepository.findById(leadId).orElseThrow());
     }
 
     private void validateStatusTransition(LeadStatus currentStatus, LeadStatus newStatus) {

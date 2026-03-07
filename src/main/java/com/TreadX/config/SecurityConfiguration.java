@@ -74,7 +74,7 @@ public class SecurityConfiguration {
                                 .requestMatchers("/api/v1/leads/**").authenticated()
                                 .requestMatchers("/api/v1/dealer-contacts/**").authenticated()
                                 .requestMatchers("api/v1/dealers/**").authenticated()
-                                .requestMatchers("api/v1/customers/**").authenticated()
+                                .requestMatchers("api/v1/dealerDealerCustomers/**").authenticated()
                                 .requestMatchers("api/v1/users/with-territories/**").authenticated()
                                 .anyRequest().permitAll()
                 )

@@ -16,9 +16,9 @@ public enum Role {
     SALES_AGENT(Set.of()),
     SUPPORT_AGENT(Set.of()),
 
-    VENDOR_ADMIN(Set.of()),
-    VENDOR_EMPLOYEE(Set.of()),
-    VENDOR_TECHNICIAN(Set.of()),;
+    DEALER_ADMIN(Set.of()),
+    DEALER_EMPLOYEE(Set.of()),
+    DEALER_TECHNICIAN(Set.of()),;
 
     @Getter
     private final Set<Permission> permissions;

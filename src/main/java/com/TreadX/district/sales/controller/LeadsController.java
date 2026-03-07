@@ -2,11 +2,11 @@ package com.TreadX.district.sales.controller;
 
 import com.TreadX.district.sales.dto.LeadsRequestDTO;
 import com.TreadX.district.sales.dto.LeadsResponseDTO;
+import com.TreadX.district.dealer.dto.InitiateContactRequestDTO;
+import com.TreadX.district.dealer.enums.LeadStatus;
 import com.TreadX.district.sales.dto.LeadValidationRequest;
 import com.TreadX.district.sales.service.LeadsService;
 import com.TreadX.user.service.AuthorizationService;
-import com.TreadX.district.vendors.enums.LeadStatus;
-import com.TreadX.district.vendors.dto.InitiateContactRequestDTO;
 import com.TreadX.utils.exception.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,15 +31,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
 import com.TreadX.district.sales.service.FileService;
-import java.util.List;
-import org.springframework.data.domain.PageImpl;
-import com.TreadX.user.service.TerritoryService;
-import com.TreadX.config.TerritoryContextHolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import com.TreadX.utils.exception.ConflictException;
-import com.TreadX.user.entity.Territory;
-import com.TreadX.user.service.UserTerritoryService;
+
+
 
 @RestController
 @RequestMapping("/api/v1/leads")
@@ -48,13 +41,10 @@ import com.TreadX.user.service.UserTerritoryService;
 @CrossOrigin("*")
 public class LeadsController {
 
-    private static final Logger log = LoggerFactory.getLogger(LeadsController.class);
     private final LeadsService leadsService;
-//    private final ConversionService conversionService;
     private final AuthorizationService authorizationService;
     private final FileService fileService;
-    private final TerritoryService territoryService;
-    private final UserTerritoryService userTerritoryService;
+
 
     @GetMapping
     @PreAuthorize("hasRole('PLATFORM_ADMIN') or hasRole('SALES_MANAGER') or hasRole('SALES_AGENT')")

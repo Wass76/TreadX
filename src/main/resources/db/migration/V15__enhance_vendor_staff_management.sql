@@ -42,5 +42,5 @@ CREATE SEQUENCE IF NOT EXISTS vendor_staff_id_seq START WITH 1 INCREMENT BY 1;
 
 -- Add comments for documentation
 COMMENT ON TABLE vendor_staff IS 'Vendor staff management table for vendor portal access control';
-COMMENT ON COLUMN vendor_staff.access_level IS 'Access level: OWNER (full access), MANAGER (customer/employee management), MECHANIC (tire operations), VIEWER (read-only)';
+COMMENT ON COLUMN vendor_staff.access_level IS 'Access level: OWNER (full access), MANAGER (dealerDealerCustomer/employee management), MECHANIC (tire operations), VIEWER (read-only)';
 COMMENT ON COLUMN vendor_staff.district_code IS 'Territory/district code for multi-tenant support';

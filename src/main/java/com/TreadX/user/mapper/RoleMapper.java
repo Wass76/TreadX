@@ -4,16 +4,9 @@ import com.TreadX.user.dto.RoleResponseDTO;
 import com.TreadX.user.entity.Role;
 import org.springframework.stereotype.Component;
 
-import java.util.stream.Collectors;
-
 @Component
 public class RoleMapper {
 
-    private final PermissionMapper permissionMapper;
-
-    public RoleMapper(PermissionMapper permissionMapper) {
-        this.permissionMapper = permissionMapper;
-    }
 
     public RoleResponseDTO toResponse(Role role) {
         if (role == null) {

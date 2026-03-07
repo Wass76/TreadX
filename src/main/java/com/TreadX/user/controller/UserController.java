@@ -1,7 +1,6 @@
 package com.TreadX.user.controller;
 
 import com.TreadX.user.dto.*;
-import com.TreadX.user.entity.User;
 import com.TreadX.user.service.UserService;
 import com.TreadX.user.request.AuthenticationRequest;
 import com.TreadX.user.response.UserAuthenticationResponse;
@@ -215,25 +214,4 @@ public class UserController {
         return ResponseEntity.ok(userService.getCurrentUserDto());
     }
 
-    /**
-     * Create user with territory assignments
-     */
-    @PostMapping("/with-territories")
-    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    @Operation(
-        summary = "Create user with territories",
-        description = "Creates a new user and assigns territories. Requires PLATFORM_ADMIN role."
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "User with territories created successfully",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserCreateWithTerritoryResponseDTO.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid input data"),
-        @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public ResponseEntity<?> createUserWithTerritories(
-            @RequestBody UserCreateWithTerritoryRequestDTO request) {
-        UserCreateWithTerritoryResponseDTO response = userService.createUserWithTerritories(request);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
 } 

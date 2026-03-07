@@ -39,4 +39,19 @@ public class AddressMapper {
                 .specialInstructions(address.getSpecialInstructions())
                 .build();
     }
+
+    /**
+     * Maps AddressRequestDTO to AddressResponseDTO (e.g. when entity stores request DTO).
+     * id, city, province, country are null as they are not present on the request.
+     */
+    public AddressResponseDTO toResponseDTO(AddressRequestDTO requestDTO) {
+        if (requestDTO == null) return null;
+        return AddressResponseDTO.builder()
+                .streetName(requestDTO.getStreetName())
+                .streetNumber(requestDTO.getStreetNumber())
+                .postalCode(requestDTO.getPostalCode())
+                .unitNumber(requestDTO.getUnitNumber())
+                .specialInstructions(requestDTO.getSpecialInstructions())
+                .build();
+    }
 }

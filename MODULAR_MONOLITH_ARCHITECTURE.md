@@ -49,7 +49,7 @@ This approach uses a **single application** with **multiple databases** and **cl
 │  │             │ │             │ │             │         │
 │  │ • Sales     │ │ • Sales     │ │ • Sales     │         │
 │  │ • Vendors   │ │ • Vendors   │ │ • Vendors   │         │
-│  │ • Customers │ │ • Customers │ │ • Customers │         │
+│  │ • DealerCustomers │ │ • DealerCustomers │ │ • DealerCustomers │         │
 │  │ • Tires     │ │ • Tires     │ │ • Tires     │         │
 │  │ • Vehicles  │ │ • Vehicles  │ │ • Vehicles  │         │
 │  └─────────────┘ └─────────────┘ └─────────────┘         │
@@ -89,7 +89,7 @@ com.treadx/
 │   │   ├── service/
 │   │   ├── repository/
 │   │   ├── entity/
-│   │   ├── customer/            # Customer Management (sub-submodule)
+│   │   ├── dealerDealerCustomer/            # DealerCustomer Management (sub-submodule)
 │   │   │   ├── controller/
 │   │   │   ├── service/
 │   │   │   ├── repository/

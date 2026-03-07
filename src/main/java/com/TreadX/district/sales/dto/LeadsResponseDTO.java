@@ -1,13 +1,15 @@
 package com.TreadX.district.sales.dto;
 
-import com.TreadX.district.vendors.enums.LeadSource;
-import com.TreadX.district.vendors.enums.LeadStatus;
-import com.TreadX.district.vendors.enums.ContactMethod;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
+
+import com.TreadX.address.dto.AddressResponseDTO;
+import com.TreadX.district.dealer.enums.ContactMethod;
+import com.TreadX.district.dealer.enums.LeadSource;
+import com.TreadX.district.dealer.enums.LeadStatus;
 
 @Data
 @Builder
@@ -18,10 +20,7 @@ public class LeadsResponseDTO {
     private String businessName;
     private String phoneNumber;
     // Flattened address fields
-    private String streetNumber;
-    private String streetName;
-    private String aptUnitBldg;
-    private String postalCode;
+    private AddressResponseDTO address;
     // Formatted address fields
     private String city;
     private String province;
@@ -34,8 +33,8 @@ public class LeadsResponseDTO {
     private String previewUrl; // URL to preview the file: /api/v1/leads/{id}/preview
     private LeadStatus status;
     private String notes;
-    private Long vendorId;
-    private String vendorUniqueId;
+    private Long dealerId;
+    private String dealerUniqueId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long addedBy;

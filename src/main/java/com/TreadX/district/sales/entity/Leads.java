@@ -1,8 +1,10 @@
 package com.TreadX.district.sales.entity;
 
-import com.TreadX.district.vendors.enums.LeadSource;
-import com.TreadX.district.vendors.enums.LeadStatus;
-import com.TreadX.user.entity.User;
+import com.TreadX.address.entity.Address;
+import com.TreadX.district.dealer.entity.Dealer;
+import com.TreadX.district.dealer.enums.ContactMethod;
+import com.TreadX.district.dealer.enums.LeadSource;
+import com.TreadX.district.dealer.enums.LeadStatus;
 import com.TreadX.utils.entity.AuditedEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -10,10 +12,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import com.TreadX.district.vendors.entity.Vendor;
-import com.TreadX.district.vendors.enums.ContactMethod;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "leads")
@@ -27,10 +28,9 @@ public class Leads extends AuditedEntity {
     private String businessName;
     private String phoneNumber;
 
-    private String streetNumber;
-    private String streetName;
-    private String aptUnitBldg;
-    private String postalCode;
+    @OneToOne
+    @JoinColumn(name = "address_id")
+    private Address address;
 
     // New lead source fields
     @Enumerated(EnumType.STRING)
@@ -52,27 +52,24 @@ public class Leads extends AuditedEntity {
 
     @ManyToOne
     @JoinColumn(name = "dealer_id")
-    private Vendor vendor;
-    private String vendorUniqueId;
+    private Dealer dealer;
+    private String dealerUniqueId;
 
-    @ManyToOne
-    @JoinColumn(name = "validated_by_id")
-    private User validatedBy;
-
-    private LocalDateTime validatedAt;
-
-    // New fields for flag feature and lead assignment
+    // Validation/assignment state lives in LeadsHistory; use getCurrent*() for latest.
     @Column(name = "flag", nullable = false)
+    @lombok.Builder.Default
     private Boolean flag = false; // true if name, phone, or address already exists
 
-    @Column(name = "added_by_manager", nullable = false)
-    private Boolean addedByManager = false; // true if lead was added by a manager
+    /** History of validation and assignment for this lead (current state = first entry). */
+    @OneToMany(mappedBy = "lead", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("createdAt DESC")
+    @lombok.Builder.Default
+    private List<LeadsHistory> history = new ArrayList<>();
 
-    @ManyToOne
-    @JoinColumn(name = "assigned_to_id")
-    private User assignedTo; // agent assigned to this lead
-
-    private LocalDateTime assignedAt; // timestamp when lead was assigned
+    /** Current state from latest history entry (validatedBy, assignedTo, etc.). */
+    public LeadsHistory getCurrentHistory() {
+        return (history != null && !history.isEmpty()) ? history.get(0) : null;
+    }
 
     @Override
     protected String getSequenceName() {

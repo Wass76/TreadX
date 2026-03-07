@@ -64,7 +64,7 @@
 
 ### **6. Tire Management** 🚗
 - **Status**: Basic entity structure exists
-- **What's There**: Tire entity with specifications, customer association
+- **What's There**: Tire entity with specifications, dealerDealerCustomer association
 - **What's Missing**: Integration with vendor operations, inventory workflows
 - **Issues**: Standalone entity, not connected to business logic
 

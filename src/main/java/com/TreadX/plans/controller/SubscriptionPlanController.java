@@ -1,8 +1,8 @@
 package com.TreadX.plans.controller;
 
-import com.TreadX.plans.dto.SubscriptionPlanRequestDTO;
-import com.TreadX.plans.dto.SubscriptionPlanResponseDTO;
-import com.TreadX.plans.service.SubscriptionPlanService;
+import com.TreadX.plans.dto.PlanRequestDTO;
+import com.TreadX.plans.dto.PlanResponseDTO;
+import com.TreadX.plans.service.PlanService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,7 +29,7 @@ import java.util.List;
 @CrossOrigin("*")
 public class SubscriptionPlanController {
     
-    private final SubscriptionPlanService subscriptionPlanService;
+    private final PlanService planService;
     
     @PostMapping
     @PreAuthorize("hasRole('PLATFORM_ADMIN')")
@@ -40,13 +40,13 @@ public class SubscriptionPlanController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Successfully created the subscription plan",
             content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = SubscriptionPlanResponseDTO.class))),
+            schema = @Schema(implementation = PlanResponseDTO.class))),
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<SubscriptionPlanResponseDTO> createSubscriptionPlan(@RequestBody SubscriptionPlanRequestDTO request) {
-        SubscriptionPlanResponseDTO plan = subscriptionPlanService.createSubscriptionPlan(request);
+    public ResponseEntity<PlanResponseDTO> createSubscriptionPlan(@RequestBody PlanRequestDTO request) {
+        PlanResponseDTO plan = planService.createPlan(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(plan);
     }
     
@@ -59,14 +59,14 @@ public class SubscriptionPlanController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully retrieved the subscription plan",
             content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = SubscriptionPlanResponseDTO.class))),
+            schema = @Schema(implementation = PlanResponseDTO.class))),
         @ApiResponse(responseCode = "404", description = "Subscription plan not found"),
         @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<SubscriptionPlanResponseDTO> getSubscriptionPlanById(
+    public ResponseEntity<PlanResponseDTO> getSubscriptionPlanById(
             @Parameter(description = "ID of the subscription plan", required = true) @PathVariable("id") Long id) {
-        SubscriptionPlanResponseDTO plan = subscriptionPlanService.getSubscriptionPlanById(id);
+        PlanResponseDTO plan = planService.getPlanById(id);
         return ResponseEntity.ok(plan);
     }
     
@@ -83,14 +83,14 @@ public class SubscriptionPlanController {
         @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Page<SubscriptionPlanResponseDTO>> getAllSubscriptionPlans(
+    public ResponseEntity<Page<PlanResponseDTO>> getAllPlans(
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "Sort field") @RequestParam(defaultValue = "createdAt") String sortBy,
             @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "desc") String direction) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        Page<SubscriptionPlanResponseDTO> plans = subscriptionPlanService.getAllSubscriptionPlans(pageable);
+        Page<PlanResponseDTO> plans = planService.getAllPlans(pageable);
         return ResponseEntity.ok(plans);
     }
     
@@ -107,14 +107,14 @@ public class SubscriptionPlanController {
         @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<Page<SubscriptionPlanResponseDTO>> getActiveSubscriptionPlans(
+    public ResponseEntity<Page<PlanResponseDTO>> getActivePlans(
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Number of items per page") @RequestParam(defaultValue = "10") int size,
             @Parameter(description = "Sort field") @RequestParam(defaultValue = "createdAt") String sortBy,
             @Parameter(description = "Sort direction (asc/desc)") @RequestParam(defaultValue = "desc") String direction) {
         Sort.Direction sortDirection = Sort.Direction.fromString(direction.toUpperCase());
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortBy));
-        Page<SubscriptionPlanResponseDTO> plans = subscriptionPlanService.getActiveSubscriptionPlans(pageable);
+        Page<PlanResponseDTO> plans = planService.getActivePlans(pageable);
         return ResponseEntity.ok(plans);
     }
     
@@ -131,9 +131,9 @@ public class SubscriptionPlanController {
         @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<List<SubscriptionPlanResponseDTO>> getPlansByUserCount(
+    public ResponseEntity<List<PlanResponseDTO>> getPlansByUserCount(
             @Parameter(description = "Number of users", required = true) @RequestParam Integer userCount) {
-        List<SubscriptionPlanResponseDTO> plans = subscriptionPlanService.getPlansByUserCount(userCount);
+        List<PlanResponseDTO> plans = planService.getPlansByUserCount(userCount);
         return ResponseEntity.ok(plans);
     }
     
@@ -146,16 +146,16 @@ public class SubscriptionPlanController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Successfully updated the subscription plan",
             content = @Content(mediaType = "application/json",
-            schema = @Schema(implementation = SubscriptionPlanResponseDTO.class))),
+            schema = @Schema(implementation = PlanResponseDTO.class))),
         @ApiResponse(responseCode = "404", description = "Subscription plan not found"),
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse(responseCode = "403", description = "Access denied - insufficient permissions"),
         @ApiResponse(responseCode = "500", description = "Internal server error")
     })
-    public ResponseEntity<SubscriptionPlanResponseDTO> updateSubscriptionPlan(
+    public ResponseEntity<PlanResponseDTO> updateSubscriptionPlan(
             @Parameter(description = "ID of the subscription plan", required = true) @PathVariable("id") Long id,
-            @RequestBody SubscriptionPlanRequestDTO request) {
-        SubscriptionPlanResponseDTO plan = subscriptionPlanService.updateSubscriptionPlan(id, request);
+            @RequestBody PlanRequestDTO request) {
+        PlanResponseDTO plan = planService.updatePlan(id, request);
         return ResponseEntity.ok(plan);
     }
     
@@ -173,7 +173,7 @@ public class SubscriptionPlanController {
     })
     public ResponseEntity<Void> deleteSubscriptionPlan(
             @Parameter(description = "ID of the subscription plan", required = true) @PathVariable("id") Long id) {
-        subscriptionPlanService.deleteSubscriptionPlan(id);
+        planService.deletePlan(id);
         return ResponseEntity.noContent().build();
     }
 } 

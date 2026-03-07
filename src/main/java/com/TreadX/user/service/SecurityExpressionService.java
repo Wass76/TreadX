@@ -1,8 +1,6 @@
 package com.TreadX.user.service;
 
 
-import com.TreadX.district.vendors.repository.VendorRepository;
-import com.TreadX.district.sales.repository.DealerContactRepository;
 import com.TreadX.district.sales.repository.LeadsRepository;
 import com.TreadX.user.entity.User;
 import com.TreadX.user.repository.UserRepository;
@@ -13,14 +11,10 @@ import org.springframework.stereotype.Service;
 @Service("authz")
 public class SecurityExpressionService extends BaseSecurityService {
 
-    @Autowired
-    private UserRepository userRepository;
+    
     @Autowired
     private LeadsRepository leadsRepository;
-    @Autowired
-    private DealerContactRepository dealerContactRepository;
-    @Autowired
-    private VendorRepository vendorRepository;
+
 
     public SecurityExpressionService(UserRepository userRepository) {
         super(userRepository);
@@ -64,8 +58,8 @@ public class SecurityExpressionService extends BaseSecurityService {
         // Check if the user created the lead
         boolean isCreator = lead.getCreatedBy().equals(currentUser.getId());
         
-        // Check if the lead is assigned to the user
-        boolean isAssigned = lead.getAssignedTo() != null && lead.getAssignedTo().getId().equals(currentUser.getId());
+        var current = lead.getCurrentHistory();
+        boolean isAssigned = current != null && current.getAssignedTo() != null && current.getAssignedTo().getId().equals(currentUser.getId());
         
         return isCreator || isAssigned;
     }
@@ -91,12 +85,11 @@ public class SecurityExpressionService extends BaseSecurityService {
         // Check if the user created the lead
         boolean isCreator = lead.getCreatedBy().equals(currentUser.getId());
         
-        // Check if the lead is assigned to the user
-        boolean isAssigned = lead.getAssignedTo() != null && lead.getAssignedTo().getId().equals(currentUser.getId());
+        var current = lead.getCurrentHistory();
+        boolean isAssigned = current != null && current.getAssignedTo() != null && current.getAssignedTo().getId().equals(currentUser.getId());
         
-        // For agents, also check if it's an unassigned manager lead
         if (isSalesAgent()) {
-            boolean isUnassignedManagerLead = lead.getAddedByManager() && lead.getAssignedTo() == null;
+            boolean isUnassignedManagerLead = current != null && Boolean.TRUE.equals(current.getAddedByManager()) && current.getAssignedTo() == null;
             return isCreator || isAssigned || isUnassignedManagerLead;
         }
         
@@ -106,12 +99,12 @@ public class SecurityExpressionService extends BaseSecurityService {
     /**
      * Checks if the current user owns the contact
      */
-    public boolean isContactOwner(Long contactId) {
-        User currentUser = getCurrentUser();
-        var contact = dealerContactRepository.findById(contactId)
-                .orElseThrow(() -> new ResourceNotFoundException("Contact not found with id: " + contactId));
-        return contact.getOwner().getId().equals(currentUser.getId());
-    }
+    // public boolean isContactOwner(Long contactId) {
+    //     User currentUser = getCurrentUser();
+    //     var contact = dealerContactRepository.findById(contactId)
+    //             .orElseThrow(() -> new ResourceNotFoundException("Contact not found with id: " + contactId));
+    //     return contact.getOwner().getId().equals(currentUser.getId());
+    // }
 
     /**
      * Checks if the current user is the same as the requested user
